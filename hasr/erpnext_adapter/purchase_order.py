@@ -91,7 +91,7 @@ def get_open_purchase_orders(
 			"per_received",
 		],
 		order_by="schedule_date asc, name asc",
-		limit_page_length=limit,
+		limit=limit,
 	)
 	if not orders:
 		return []
