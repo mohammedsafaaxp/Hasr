@@ -7,7 +7,7 @@ Dev bench: `hasr-bench` (Python 3.11, Node 20), site `hasr.test`.
 
 | # | Task | Files |
 |---|---|---|
-| 1 | Scaffold | `pyproject.toml`, `license.txt` (GPLv3), `README.md`, `hasr/__init__.py`, `hasr/hooks.py`, `hasr/modules.txt`, `hasr/patches.txt`, `hasr/fixtures/role.json`, `hasr/hasr/doctype/hasr_settings/*`, `hasr/install.py`, `.github/workflows/ci.yml` |
+| 1 | Scaffold | `pyproject.toml`, `LICENSE` (GPLv3), `README.md`, `hasr/__init__.py`, `hasr/hooks.py`, `hasr/modules.txt`, `hasr/patches.txt`, `hasr/fixtures/role.json`, `hasr/hasr/doctype/hasr_settings/*`, `hasr/install.py`, `.github/workflows/ci.yml` |
 | 2 | Adapter | `hasr/erpnext_adapter/__init__.py` (version detection + public API), `purchase_order.py`, `items.py`, `stock.py`, `purchase_receipt.py`, `testing.py` |
 | 3 | DocTypes | `hasr_receiving_session`, `hasr_receiving_line`, `hasr_scan`, `hasr_unknown_barcode` under `hasr/hasr/doctype/` |
 | 4 | API | `hasr/api/__init__.py` (role guards), `receiving.py`, `sync.py`, `items.py`, `i18n.py` |
