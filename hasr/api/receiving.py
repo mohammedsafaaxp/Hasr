@@ -2,15 +2,22 @@
 
 import frappe
 
+from hasr import erpnext_adapter as erp
 from hasr import receiving
 from hasr.api import parse_json_arg
-from hasr.permissions import require_counter, require_supervisor
+from hasr.permissions import get_allowed_warehouses, require_counter, require_supervisor
 
 
 @frappe.whitelist()
 def list_open_orders(warehouse=None, search=None):
 	require_counter()
 	return receiving.list_open_orders(warehouse=warehouse or None, search=(search or "").strip() or None)
+
+
+@frappe.whitelist()
+def list_warehouses():
+	require_counter()
+	return erp.get_warehouses(get_allowed_warehouses())
 
 
 @frappe.whitelist(methods=["POST"])

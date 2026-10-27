@@ -16,7 +16,7 @@ from hasr.erpnext_adapter.purchase_receipt import (
 	get_purchase_receipt_docstatus,
 	submit_purchase_receipt,
 )
-from hasr.erpnext_adapter.stock import get_over_receipt_allowance, get_over_receipt_limit
+from hasr.erpnext_adapter.stock import get_over_receipt_allowance, get_over_receipt_limit, get_warehouses
 from hasr.erpnext_adapter.version import erpnext_major, erpnext_version, uses_serial_batch_bundle
 
 __all__ = [
@@ -33,6 +33,7 @@ __all__ = [
 	"get_purchase_order",
 	"get_purchase_order_warehouses",
 	"get_purchase_receipt_docstatus",
+	"get_warehouses",
 	"is_receivable",
 	"resolve_barcode",
 	"submit_purchase_receipt",
