@@ -1,0 +1,15 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom Field",
+  "dt": "Item",
+  "fieldname": "hasr_storage",
+  "fieldtype": "Select",
+  "insert_after": "shelf_life_in_days",
+  "label": "Storage",
+  "module": "Hasr",
+  "name": "Item-hasr_storage",
+  "options": "\nAmbient\nChilled\nFrozen",
+  "description": "Shown on hasr item details."
+ }
+]

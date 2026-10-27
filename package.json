@@ -1,0 +1,10 @@
+{
+  "name": "hasr",
+  "private": true,
+  "license": "GPL-3.0",
+  "scripts": {
+    "postinstall": "cd frontend && yarn install --frozen-lockfile || (cd frontend && yarn install)",
+    "dev": "cd frontend && yarn dev",
+    "build": "cd frontend && yarn build"
+  }
+}

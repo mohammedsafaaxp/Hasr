@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+concurrency:
+  group: ci-hasr-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Server (ERPNext ${{ matrix.erpnext }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - erpnext: version-15
+            python: "3.11"
+            node: 20
+          - erpnext: version-16
+            python: "3.14"
+            node: 24
+
+    services:
+      redis-cache:
+        image: redis:alpine
+        ports: ["13000:6379"]
+      redis-queue:
+        image: redis:alpine
+        ports: ["11000:6379"]
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+        ports: ["3306:3306"]
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=5
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install MariaDB client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+
+      - name: Setup bench
+        run: |
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets \
+            --frappe-branch ${{ matrix.erpnext }} --python "$(which python)" ~/frappe-bench
+          mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
+          mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
+
+      - name: Install ERPNext and hasr
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app erpnext --branch ${{ matrix.erpnext }}
+          bench get-app hasr $GITHUB_WORKSPACE
+          bench setup requirements --dev
+          bench new-site --db-root-password root --admin-password admin test_site
+          bench --site test_site install-app erpnext
+          bench --site test_site install-app hasr
+          bench build --app hasr
+          test -f apps/hasr/hasr/www/hasr.html
+        env:
+          CI: "Yes"
+
+      - name: Run tests
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench --site test_site set-config allow_tests true
+          bench --site test_site run-tests --app hasr
+        env:
+          TYPE: server
