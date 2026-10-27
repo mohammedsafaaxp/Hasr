@@ -1,5 +1,5 @@
 // Copyright (c) 2026, hasr contributors
-// License: GNU General Public License v3. See license.txt
+// License: GNU General Public License v3. See LICENSE
 
 const HASR_API = "hasr.api.receiving.";
 const STATUS_COLORS = {

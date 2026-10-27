@@ -1,64 +1,142 @@
-# hasr · حَصر
+<div align="center">
+  <img src="assets/logo.svg" width="80" height="80" alt="hasr logo">
+  <h1>hasr · حَصر</h1>
+  <p><b>Receive goods and count stock from a phone, on top of ERPNext.</b></p>
+  <p>
+    <a href="https://github.com/koke3/Hasr/actions/workflows/ci.yml"><img src="https://github.com/koke3/Hasr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <img src="https://img.shields.io/badge/ERPNext-v15%20%7C%20v16-blue" alt="ERPNext v15 | v16">
+    <img src="https://img.shields.io/badge/license-GPLv3-green" alt="GPLv3">
+  </p>
+</div>
 
-Receive goods and count stock from a phone, on top of ERPNext.
+<p align="center">
+  <img src="docs/screenshots/en-home.png" width="230" alt="Home: purchase orders waiting to be received">
+  <img src="docs/screenshots/en-receive.png" width="230" alt="Receiving a purchase order">
+  <img src="docs/screenshots/ar-receive.png" width="230" alt="The same screen in Arabic">
+</p>
 
-hasr is an open-source Frappe app installed on the same site as ERPNext. Warehouse staff open
-`https://<your-site>/hasr` on their phone, pick a purchase order and scan what arrives. hasr only
-creates **draft** Purchase Receipts; a supervisor reviews and approves in Desk. ERPNext stays the
-source of truth for items, barcodes, units, orders and stock.
+## What is hasr?
 
-Status: **0.1, online receiving against a purchase order.** Counting, offline mode and batches come in
-later milestones (see [docs/MILESTONES.md](docs/MILESTONES.md)).
+In most warehouses that run ERPNext, receiving still happens on paper and is typed into the
+system later. hasr puts that work on the phone the worker already carries.
 
-Supports ERPNext **v15** and **v16**. License: GPLv3.
+hasr is a Frappe app installed **on the same site as ERPNext**. Warehouse staff open
+`https://<your-site>/hasr`, pick a purchase order and scan what arrives. hasr only ever creates
+**draft** documents; a supervisor reviews them in Desk and approves. ERPNext stays the source of
+truth for items, barcodes, units, orders and stock, and hasr never changes ERPNext's code.
 
-## Install
+> **Status: 0.1, online receiving against a purchase order.** Offline mode, batches and expiry come in
+> 0.2, stock counts in 0.3. See [docs/MILESTONES.md](docs/MILESTONES.md).
+
+## Features (0.1)
+
+- **Scan to receive.** Camera scanning (works on iOS Safari) or any keyboard-wedge hardware scanner.
+  Sound and vibration on every scan, with undo.
+- **Three checks on every scan.** The barcode is known, the item is on the order, and the quantity
+  is within ERPNext's over-receipt allowance.
+- **Cases convert to units.** A case barcode adds its conversion factor in the stock unit
+  (1 box = 12 units), using the item's barcode UOM.
+- **Unknown barcodes** are sent to the supervisor with a photo and a note. The phone never creates items.
+- **Rejected quantity** for damaged goods, posted to the rejected warehouse.
+- **Safe to retry.** Every scan carries an ID from the phone, so sending it twice counts it once.
+- **One open session per order**, enforced in the database.
+- **Supervisor review in Desk:** accept or cap an over-receipt, link or dismiss unknown barcodes, send
+  back, then *Approve and create Purchase Receipt* (draft, or submitted if you choose).
+- **Item details** with zoomable photos, units, barcodes, shelf life and last receipt. Stock balances
+  are never shown on the phone.
+- **English and Arabic** (right-to-left) from day one; the app follows the device language.
+
+<p align="center">
+  <img src="docs/screenshots/en-line-sheet.png" width="200" alt="Line sheet: quantity, unit and rejected quantity">
+  <img src="docs/screenshots/en-unknown.png" width="200" alt="Unknown barcode sheet">
+  <img src="docs/screenshots/en-item-details.png" width="200" alt="Item details">
+  <img src="docs/screenshots/en-finish.png" width="200" alt="Finish shipment">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/desk-review.png" width="760" alt="Supervisor review in Desk">
+</p>
+
+## Installation
+
+You need a [Frappe bench](https://github.com/frappe/bench) with **ERPNext v15 or v16** installed.
 
 ```bash
-cd frappe-bench
-bench get-app https://github.com/<you>/hasr
-bench --site <site> install-app hasr
+cd ~/frappe-bench
+bench get-app https://github.com/koke3/Hasr
+bench --site your-site.local install-app hasr
 ```
 
-No extra steps: the roles **Hasr Counter** and **Hasr Supervisor**, the `Hasr Settings` page and
-the Item field *Storage* are created on install. The built phone app is part of the install;
-to rebuild it yourself run `cd apps/hasr/frontend && yarn && yarn build`.
+That's it. Installing creates the **Hasr Counter** and **Hasr Supervisor** roles, the
+**Hasr Settings** page and an Item field *Storage*. `bench get-app` builds the phone app for you
+(Node 20+ for v15, Node 24 for v16).
 
-## Try 0.1
+On a production bench, restart afterwards:
 
-1. In ERPNext, create (or use) a submitted **Purchase Order** whose items have barcodes
-   (Item → Barcodes). Give a case barcode a UOM such as *Box* and add the *Box* conversion factor
-   under Item → Units of Measure.
-2. Create a user with the **Hasr Counter** role (plus ERPNext's *Stock User* if they also use Desk).
-   To limit them to some warehouses, add **User Permissions** on *Warehouse*.
-3. Give your supervisor the **Hasr Supervisor** role and permission to create Purchase Receipts
+```bash
+bench restart
+```
+
+### Frappe Cloud
+
+Add the app from this repository to your bench group, then install it on the site. Shared hosting plans
+that do not allow custom apps cannot run hasr.
+
+## Setup
+
+1. **Items:** add barcodes under *Item → Barcodes*. For a case barcode set its UOM (e.g. *Box*) and add
+   the conversion under *Item → Units of Measure* (1 Box = 12 Nos).
+2. **Counters:** give warehouse workers the **Hasr Counter** role. To limit someone to some warehouses,
+   add ERPNext **User Permissions** on *Warehouse*.
+3. **Supervisors:** give the **Hasr Supervisor** role plus the right to create Purchase Receipts
    (for example *Stock User* or *Purchase User*).
-4. Optional: set **Hasr Settings → Default Rejected Warehouse**; it is used for rejected quantity,
-   because the Purchase Order line has no rejected warehouse in ERPNext.
-5. On the phone open `https://<site>/hasr`, sign in, pick the order and scan:
-   - a unit barcode adds 1, a case barcode adds the case's conversion factor in stock units;
-   - a barcode nobody knows opens the *Unknown barcode* sheet (photo + note for the supervisor);
-   - an item that is not on the order is refused and not counted;
-   - tap a line to type the quantity, choose the unit and enter rejected (damaged) quantity.
-6. Tap **Finish shipment and send for review**.
-7. In Desk open **Hasr Receiving Session**, decide any over-receipt (Accept / Cap), link or dismiss
-   unknown barcodes, then **Approve and create Purchase Receipt**. The receipt is a draft unless you
-   tick *Submit now*.
+4. **Hasr Settings → Default Rejected Warehouse:** used for rejected quantity, because the Purchase
+   Order line in ERPNext has no rejected warehouse.
 
-Camera scanning needs HTTPS (or `localhost`). Hardware (keyboard-wedge) scanners work anywhere.
+## How it works
+
+1. The worker opens **`/hasr`** on the phone and signs in with their ERPNext account.
+2. They pick a purchase order (only submitted, open orders for their warehouses are listed) and scan.
+3. They tap a line to type a quantity, change the unit or record rejected (damaged) goods.
+4. **Finish shipment and send for review** moves the session to *Pending Approval*.
+5. The supervisor opens it in **Desk → Hasr Receiving Session**, decides any over-receipt, handles
+   unknown barcodes and clicks **Approve and create Purchase Receipt**. Stock moves only when that
+   Purchase Receipt is submitted in ERPNext.
+
+Camera scanning needs HTTPS (or `localhost`). Hardware scanners work anywhere.
 
 ## Development
 
 ```bash
-bench --site <site> set-config allow_tests true
-bench --site <site> run-tests --app hasr
+# tests
+bench --site your-site.local set-config allow_tests true
+bench --site your-site.local run-tests --app hasr
 
+# phone app
 cd apps/hasr/frontend
 yarn
-yarn dev        # http://localhost:8080/hasr, proxies API calls to the bench on :8000 (VITE_BENCH_PORT)
-yarn build      # writes hasr/public/frontend and hasr/www/hasr.html
+yarn dev      # Vite dev server, proxies to your bench
+yarn build    # writes hasr/public/frontend and hasr/www/hasr.html
 ```
 
-Read [CLAUDE.md](CLAUDE.md) and [docs/TECH_SPEC.md](docs/TECH_SPEC.md) before contributing.
-All ERPNext calls go through `hasr/erpnext_adapter/`. Open questions live in
-[docs/QUESTIONS.md](docs/QUESTIONS.md).
+- Read [CLAUDE.md](CLAUDE.md) and [docs/TECH_SPEC.md](docs/TECH_SPEC.md) first.
+- All ERPNext calls go through [`hasr/erpnext_adapter/`](hasr/erpnext_adapter), the only place that
+  imports `erpnext`; that is what keeps v15 and v16 working.
+- Translations: [`hasr/translations/ar.csv`](hasr/translations/ar.csv). A test fails if a UI string has
+  no Arabic translation or if the UI uses left/right instead of start/end.
+- Open questions and verified ERPNext behaviour: [docs/QUESTIONS.md](docs/QUESTIONS.md).
+
+## حَصر بالعربي
+
+حَصر تطبيق مفتوح المصدر على Frappe يخلي عامل المخزن يستلم البضاعة من موبايله مباشرة على ERPNext:
+يختار أمر الشراء، يمسح الباركود بالكاميرا أو بالسكانر، والكارتون يتحول لحبات تلقائياً. الموبايل يسوي
+**مسودات بس**، والمشرف يراجع ويوافق من الواجهة الإدارية. الواجهة كاملة بالعربي ومن اليمين لليسار.
+
+<p align="center">
+  <img src="docs/screenshots/ar-home.png" width="230" alt="الشاشة الرئيسية بالعربي">
+  <img src="docs/screenshots/ar-item-details.png" width="230" alt="تفاصيل الصنف بالعربي">
+</p>
+
+## License
+
+[GNU General Public License v3](LICENSE). Test data and screenshots use invented names.
