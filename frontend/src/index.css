@@ -1,0 +1,33 @@
+@import 'frappe-ui/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  font-family: Inter, 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  color: #171717;
+  -webkit-tap-highlight-color: transparent;
+}
+html[lang='ar'] body {
+  font-family: 'IBM Plex Sans Arabic', Inter, system-ui, sans-serif;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+/* Barcodes and document numbers read left-to-right inside RTL text */
+.ltr-text {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* quantity inputs use the +/- buttons, not the browser spinner */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

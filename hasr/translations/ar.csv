@@ -1,0 +1,220 @@
+1 day late,متأخر يوم
+1 item,صنف واحد
+1 order,أمر واحد
+1 {0} = {1} {2},1 {0} = {1} {2}
+A draft Purchase Receipt is created from this session. Stock changes only when the receipt is submitted.,راح ينسوى إيصال استلام مسودة من هاي الجلسة. المخزون ما يتغير إلا لما ينعتمد الإيصال.
+Accept {0},اقبل {0}
+Accept {0} only,اقبل {0} بس
+Accepted,مقبول
+Account,الحساب
+Added 1 {0} of {1},انضاف {0} {1}
+Added {0},انضاف {0}
+Added {0} {1} of {2},انضاف {0} {1} من {2}
+All,الكل
+All warehouses,كل المخازن
+Already received.,مستلم من قبل.
+Ambient,حرارة الغرفة
+Another shipment of this purchase order is open. Finish or cancel it first.,أكو شحنة ثانية مفتوحة على نفس أمر الشراء. أنهيها أو ألغيها أول.
+Approve,وافق
+Approve and create Purchase Receipt,وافق وأنشئ إيصال الاستلام
+Approved,تمت الموافقة
+Arrived in full,وصلت كاملة
+Arrived in part,وصلت جزئياً
+Back,رجوع
+Back to line,رجوع للسطر
+Barcode is required.,الباركود مطلوب.
+Barcode linked,انربط الباركود
+Barcode unit,وحدة الباركود
+Barcode {0} already belongs to item {1}.,الباركود {0} مربوط أصلاً بالصنف {1}.
+Barcode {0} is linked to an item now. Scan it again.,الباركود {0} صار مربوط بصنف. امسحه مرة ثانية.
+Barcode {0} is not linked to any item.,الباركود {0} ما مربوط بأي صنف.
+Barcodes,الباركودات
+Batch and expiry tracked,عليه باج وانتهاء
+Being received,ديستلمه غيرك
+Box,كارتون
+Brand,العلامة التجارية
+Cancel,إلغاء
+Cancel session,ألغِ الجلسة
+Cancel this receiving session? Nothing is posted to stock.,تلغي جلسة الاستلام؟ ما راح يتسجل شي بالمخزون.
+Cancelled,ملغاة
+Capped,محدد
+Chilled,مبرّد
+Class A share cannot be greater than class B share.,نسبة الفئة A ما تصير أكبر من نسبة الفئة B.
+Close,سدّ
+Could not open the camera. Check the browser permission.,ما گدرنا نفتح الكاميرا. شوف صلاحية المتصفح.
+Count,الجرد
+Counting arrives in a later version.,الجرد يجي بنسخة جاية.
+"Damaged or expired, goes to the rejected warehouse",تالفة أو منتهية، تروح لمخزن المرفوضات
+Decide on the over-receipt first: {0},قرر على الزيادة بالاستلام أول: {0}
+Decision must be Accept or Cap.,القرار لازم يكون قبول أو تحديد.
+Decision: {0},القرار: {0}
+Decrease,نقّص
+Disabled,معطّل
+Dismiss,تجاهل
+Dismiss this barcode? Its quantity is not received.,تتجاهل هذا الباركود؟ كميته ما راح تنستلم.
+Dismissed,متجاهل
+Done,مكتمل
+"ERPNext considers these lines fully received already, so they cannot be added: {0}",ERPNext يعتبر هاي الأسطر مستلمة بالكامل، فما تنضاف: {0}
+Email or username,الإيميل أو اسم المستخدم
+Everything on purchase order {0} has been received or is waiting for approval.,كل شي بأمر الشراء {0} انستلم أو ينتظر الموافقة.
+Finish and send for review,أنهِ الشحنة وابعثها للمشرف
+Finish shipment and send for review,إنهاء الاستلام وإرساله للمشرف
+Finish shipment {0},إنهاء الشحنة {0}
+For now hasr receives purchase orders.,حالياً حَصر يستلم أوامر الشراء.
+Frozen,مجمّد
+In progress,قيد الاستلام
+Increase,زيّد
+Invalid value for remaining quantity.,قيمة غير صحيحة للكمية الباقية.
+Issues,مشكلة
+Item,الصنف
+Item details,تفاصيل الصنف
+Item group,المجموعة
+Item {0} is disabled.,الصنف {0} معطّل.
+Item {0} not found.,الصنف {0} مو موجود.
+Keep it open for another shipment,خلّيه مفتوح لشحنة ثانية
+Kg,كغم
+Language,اللغة
+Last received,آخر استلام
+Leave empty when the barcode is on a single unit.,خليها فارغة إذا الباركود على حبة وحدة.
+Line {0} is not part of session {1}.,السطر {0} مو من الجلسة {1}.
+Link,اربط
+Link barcode {0} to an item,اربط الباركود {0} بصنف
+Link or dismiss the unknown barcodes first.,اربط أو تجاهل الباركودات غير المعروفة أول.
+Link to item,اربط بصنف
+Linked,مربوط
+Missing or invalid scan id.,رقم المسح ناقص أو غلط.
+Needs your decision,يحتاج قرارك
+No connection. Try again.,ماكو اتصال. جرّب مرة ثانية.
+No conversion factor from {0} to {1} for {2}.,ماكو معامل تحويل من {0} إلى {1} للصنف {2}.
+No photo in ERPNext yet,ماكو صورة بـ ERPNext بعد
+No purchase orders are waiting.,ماكو أوامر شراء بالانتظار.
+Nos,حبة
+Not a whole number of {0},مو عدد صحيح من {0}
+Not in this shipment,ما وصلت بهالشحنة
+Note for the supervisor,ملاحظة للمشرف
+Note: {0},ملاحظة: {0}
+Nothing needs your decision.,ماكو شي يحتاج قرارك.
+Nothing to undo.,ماكو شي نتراجع عنه.
+Nothing was received in this session.,ما انستلم شي بهالجلسة.
+OK,تمام
+Offline,بدون نت
+One clear photo of the pack is enough,صورة وحدة واضحة للعلبة تكفي
+Online · {0},متزامن · آخر مزامنة {0}
+Only a Hasr Supervisor can cancel a session waiting for approval.,بس مشرف حَصر يگدر يلغي جلسة تنتظر الموافقة.
+Only a Hasr Supervisor can do this.,بس مشرف حَصر يگدر يسوي هذا.
+Only {0} can finish this session.,بس {0} يگدر ينهي هاي الجلسة.
+Open,متبقي
+Open Desk,افتح الواجهة الإدارية
+Open Purchase Receipt,افتح إيصال الاستلام
+Open source,مفتوح المصدر
+Over,فوق الحد
+Partial {0} of {1},جزئي {0} من {1}
+Password,كلمة السر
+Pending Approval,بانتظار الموافقة
+Photo,الصورة
+Point the camera at a barcode,وجّه الكاميرا على الباركود
+Purchase Receipt created,انسوى إيصال الاستلام
+Purchase order {0} already has an open receiving session {1} by {2}. Finish it first.,أمر الشراء {0} بيه جلسة استلام مفتوحة {1} بيد {2}. لازم تنتهي أول.
+Purchase order {0} already has an open receiving session. Finish it first.,أمر الشراء {0} بيه جلسة استلام مفتوحة. لازم تنتهي أول.
+Purchase order {0} is not open for receiving.,أمر الشراء {0} مو مفتوح للاستلام.
+Purchase order {0} not found.,أمر الشراء {0} مو موجود.
+Qty,الكمية
+Quantities cannot be negative.,الكميات ما تصير سالبة.
+Quantity must be greater than zero.,الكمية لازم تكون أكثر من صفر.
+Receive,الاستلام
+Received quantity,الكمية المستلمة
+"Received with hasr, session {0}",انستلم بحَصر، الجلسة {0}
+Receiving and stock counts for ERPNext,الاستلام والجرد لـ ERPNext
+Receiving session {0} not found.,جلسة الاستلام {0} مو موجودة.
+Refresh,تحديث
+Rejected quantity,الكمية المرفوضة
+Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: {1} بيه كمية مرفوضة بس ماكو مخزن مرفوضات. حدد مخزن افتراضي بإعدادات حَصر.
+Save line,احفظ السطر
+Saving…,دنحفظ…
+Scan again,امسح مرة ثانية
+Scan at least one item before sending the shipment for review.,امسح صنف واحد على الأقل قبل لا تبعث الشحنة للمشرف.
+Scan or type a barcode,امسح الباركود أو اكتبه
+Scan undone,تراجعنا عن المسح
+Scan undone.,تراجعنا عن المسح.
+Scan with camera,امسح بالكاميرا
+Scanned {0},انمسح {0}
+Search by PO number or supplier,ابحث برقم أمر الشراء أو المورد
+Send at most {0} scans at a time.,ابعث {0} مسحة كحد أقصى بالمرة.
+Send back,رجّعها للعدّاد
+Send to supervisor,ابعث للمشرف
+Sending…,دنبعث…
+Sent Back,مرجّعة
+Sent back,انرجعت
+Sent back by the supervisor,المشرف رجّعها
+Sent for review,انبعثت للمشرف
+Sent for review. The supervisor will approve it.,انبعثت للمشرف، هو راح يوافق عليها.
+Sent to the supervisor,انبعث للمشرف
+Session already open,الجلسة مفتوحة
+Session {0} is {1} and can no longer be changed.,الجلسة {0} حالتها {1} وما تتغير بعد.
+Session {0} is {1} and cannot be cancelled.,الجلسة {0} حالتها {1} وما تنلغي.
+"Session {0} is {1}, not waiting for approval.",الجلسة {0} حالتها {1}، مو بانتظار الموافقة.
+Shelf life,مدة الصلاحية
+Sign in,تسجيل الدخول
+Sign out,تسجيل الخروج
+Signing in…,ديسجل دخول…
+Something went wrong. Try again.,صار خطأ. جرّب مرة ثانية.
+Stock counts are coming in version 0.3,الجرد يجي بنسخة 0.3
+Submit the Purchase Receipt now,اعتمد إيصال الاستلام هسه
+Supplier delivery note,رقم وصل المورد
+Take a photo of the product,صوّر المنتج
+The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.,الكاميرا تحتاج اتصال آمن (HTTPS). استخدم السكانر أو اكتب الباركود.
+The photo is too large.,الصورة كلش كبيرة.
+"The photo must be a JPEG, PNG or WebP image.",الصورة لازم تكون JPEG أو PNG أو WebP.
+The rest stays on the same purchase order,الباقي يبقى على نفس أمر الشراء
+The supervisor decides whether to close the order,المشرف يقرر يغلق الأمر أو يبقيه
+The supervisor reviews it before anything changes in stock,المشرف يراجعها قبل لا يتغير أي شي بالمخزون
+The supplier will not send the rest,المورد ما راح يجيب الباقي
+This barcode is not linked to any item. Take a photo and send it to the supervisor to link it. You can keep receiving the rest.,هذا الباركود ما مربوط بأي صنف. صوّر المنتج وابعثه للمشرف حتى يربطه، وتگدر تكمل باقي الاستلام.
+This receiving session belongs to {0}.,جلسة الاستلام هاي مال {0}.
+This shipment can no longer be changed.,هاي الشحنة ما تتغير بعد.
+Today,اليوم
+Tomorrow,باچر
+Undo,تراجع
+Unit,الوحدة
+Units,الوحدات
+Unknown barcode,باركود غير معروف
+Unknown barcode {0} is already {1}.,الباركود غير المعروف {0} حالته {1} أصلاً.
+Unknown barcode {0} · {1} units,باركود غير معروف {0} · {1} حبة
+Use your ERPNext account,استخدم حساب ERPNext مالتك
+Waiting to be received,بانتظار الاستلام
+Warehouse,المخزن
+Weight,الوزن
+What about the rest?,شنو نسوي بالباقي؟
+What should the counter fix?,شنو لازم يصلح العدّاد؟
+Wrong email or password.,الإيميل أو كلمة السر غلط.
+You do not have access to this warehouse.,ما عندك صلاحية على هذا المخزن.
+You need permission to create Purchase Receipts.,تحتاج صلاحية إنشاء إيصالات الاستلام.
+You need permission to submit Purchase Receipts.,تحتاج صلاحية اعتماد إيصالات الاستلام.
+You need the Hasr Counter role to use hasr.,تحتاج دور «عدّاد حَصر» حتى تستخدم حَصر.
+Zoom,تكبير
+complete,مكتمل
+hasr,حَصر
+not scanned,ما انمسح بعد
+ordered {0} {1},المطلوب {0} {1}
+scans must be a list.,المسحات لازم تكون قائمة.
+shipment {0},الشحنة {0}
+waiting for the supervisor,ينتظر المشرف
+{0} days,{0} يوم
+{0} days late,متأخر {0} أيام
+{0} is already fully received on purchase order {1}.,{0} مستلم بالكامل على أمر الشراء {1}.
+{0} is not an open line on purchase order {1}. Dismiss the barcode instead.,{0} مو سطر مفتوح بأمر الشراء {1}. تجاهل الباركود بدالها.
+{0} is not on purchase order {1}. It was not counted.,{0} مو موجود بأمر الشراء {1}. ما انحسب.
+{0} is within the allowance; nothing to decide.,{0} ضمن المسموح، ماكو شي يحتاج قرار.
+{0} items,{0} صنف
+{0} of {1},{0} من {1}
+{0} of {1} items complete,{0} من {1} صنف مكتمل
+{0} orders,{0} أوامر
+{0} over the limit,فوق الحد المسموح بـ {0}
+{0} over the limit. The supervisor will decide.,فوق الحد المسموح بـ {0}. المشرف يقرر.
+{0} rejected,{0} مرفوض
+"{0} scans applied, {1} rejected, {2} undone.",{0} مسحة انحسبت، {1} انرفضت، {2} تراجع.
+{0} to go,متبقي {0}
+{0} {1} = {2} {3},{0} {1} = {2} {3}
+{0} {1} over the {2}% over-receipt allowance,{0} {1} فوق نسبة السماح {2}%
+"{0}: received {1}, ordered {2}",{0}: المستلم {1}، المطلوب {2}
+"{0}: {1} received and {2} rejected {3} is not a whole number of {4} (1 {4} = {5} {3}). Adjust the quantity, or change the unit on the purchase order.",{0}: المستلم {1} والمرفوض {2} {3} مو عدد صحيح من {4} (1 {4} = {5} {3}). عدّل الكمية أو غيّر الوحدة بأمر الشراء.
