@@ -36,6 +36,7 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 			self.assertNotIn(closed.name, names)
 			self.assertRaises(frappe.PermissionError, api.start_session, second.name)
 			self.assertRaises(frappe.PermissionError, api.list_open_orders, fx.warehouse("Hasr Second"))
+			self.assertEqual([w.name for w in api.list_warehouses()], [fx.warehouse("Hasr Main")])
 
 			frappe.set_user(fx.COUNTER)  # no user permissions: every warehouse
 			names = {o.name for o in api.list_open_orders()}
