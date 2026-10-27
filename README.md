@@ -3,7 +3,7 @@
   <h1>hasr · حَصر</h1>
   <p><b>Receive goods and count stock from a phone, on top of ERPNext.</b></p>
   <p>
-    <a href="https://github.com/koke3/Hasr/actions/workflows/ci.yml"><img src="https://github.com/koke3/Hasr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://github.com/mohammedsafaaxp/Hasr/actions/workflows/ci.yml"><img src="https://github.com/mohammedsafaaxp/Hasr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/ERPNext-v15%20%7C%20v16-blue" alt="ERPNext v15 | v16">
     <img src="https://img.shields.io/badge/license-GPLv3-green" alt="GPLv3">
   </p>
@@ -63,7 +63,7 @@ You need a [Frappe bench](https://github.com/frappe/bench) with **ERPNext v15 or
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/koke3/Hasr
+bench get-app https://github.com/mohammedsafaaxp/Hasr
 bench --site your-site.local install-app hasr
 ```
 
