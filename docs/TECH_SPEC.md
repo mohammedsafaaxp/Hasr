@@ -25,7 +25,7 @@ ERPNext  (Purchase Order, Purchase Receipt, Stock Reconciliation, Item, Batch, B
 
 ```
 hasr/
-├── CLAUDE.md, AGENTS.md, README.md, license.txt (GPLv3)
+├── README.md, CONTRIBUTING.md, LICENSE (GPLv3)
 ├── docs/                         PRD, this spec, milestones, design
 ├── hasr/
 │   ├── hooks.py

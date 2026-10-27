@@ -119,7 +119,7 @@ yarn dev      # Vite dev server, proxies to your bench
 yarn build    # writes hasr/public/frontend and hasr/www/hasr.html
 ```
 
-- Read [CLAUDE.md](CLAUDE.md) and [docs/TECH_SPEC.md](docs/TECH_SPEC.md) first.
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/TECH_SPEC.md](docs/TECH_SPEC.md) first.
 - All ERPNext calls go through [`hasr/erpnext_adapter/`](hasr/erpnext_adapter), the only place that
   imports `erpnext`; that is what keeps v15 and v16 working.
 - Translations: [`hasr/translations/ar.csv`](hasr/translations/ar.csv). A test fails if a UI string has
