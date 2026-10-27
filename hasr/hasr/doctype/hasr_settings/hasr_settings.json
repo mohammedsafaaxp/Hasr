@@ -1,0 +1,170 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "receiving_section",
+  "default_rejected_warehouse",
+  "expiry_warning_pct",
+  "column_break_rcv",
+  "gs1_enabled",
+  "counting_section",
+  "allow_freeze",
+  "freeze_max_hours",
+  "test_count_sample_pct",
+  "column_break_cnt",
+  "abc_a_share",
+  "abc_b_share",
+  "tolerance_section",
+  "tolerance_a_pct",
+  "tolerance_b_pct",
+  "tolerance_c_pct",
+  "column_break_freq",
+  "frequency_a_days",
+  "frequency_b_days",
+  "frequency_c_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "receiving_section",
+   "fieldtype": "Section Break",
+   "label": "Receiving"
+  },
+  {
+   "description": "Used when the purchase order item has no rejected warehouse.",
+   "fieldname": "default_rejected_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Rejected Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "description": "Warn when remaining shelf life is below this share of the item's shelf life. [TBD]",
+   "fieldname": "expiry_warning_pct",
+   "fieldtype": "Percent",
+   "label": "Expiry Warning (%)"
+  },
+  {
+   "fieldname": "column_break_rcv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "gs1_enabled",
+   "fieldtype": "Check",
+   "label": "Parse GS1 Barcodes"
+  },
+  {
+   "fieldname": "counting_section",
+   "fieldtype": "Section Break",
+   "label": "Counting"
+  },
+  {
+   "default": "1",
+   "fieldname": "allow_freeze",
+   "fieldtype": "Check",
+   "label": "Allow Stock Freeze"
+  },
+  {
+   "description": "[TBD]",
+   "fieldname": "freeze_max_hours",
+   "fieldtype": "Int",
+   "label": "Maximum Freeze (Hours)"
+  },
+  {
+   "description": "[TBD]",
+   "fieldname": "test_count_sample_pct",
+   "fieldtype": "Percent",
+   "label": "Test Count Sample (%)"
+  },
+  {
+   "fieldname": "column_break_cnt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "80",
+   "fieldname": "abc_a_share",
+   "fieldtype": "Percent",
+   "label": "Class A Cumulative Value Share"
+  },
+  {
+   "default": "95",
+   "fieldname": "abc_b_share",
+   "fieldtype": "Percent",
+   "label": "Class B Cumulative Value Share"
+  },
+  {
+   "fieldname": "tolerance_section",
+   "fieldtype": "Section Break",
+   "label": "Variance Tolerance and Frequency"
+  },
+  {
+   "default": "1",
+   "fieldname": "tolerance_a_pct",
+   "fieldtype": "Percent",
+   "label": "Tolerance A (%)"
+  },
+  {
+   "default": "2",
+   "fieldname": "tolerance_b_pct",
+   "fieldtype": "Percent",
+   "label": "Tolerance B (%)"
+  },
+  {
+   "default": "5",
+   "fieldname": "tolerance_c_pct",
+   "fieldtype": "Percent",
+   "label": "Tolerance C (%)"
+  },
+  {
+   "fieldname": "column_break_freq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "30",
+   "fieldname": "frequency_a_days",
+   "fieldtype": "Int",
+   "label": "Count Every (Days) A"
+  },
+  {
+   "default": "90",
+   "fieldname": "frequency_b_days",
+   "fieldtype": "Int",
+   "label": "Count Every (Days) B"
+  },
+  {
+   "default": "180",
+   "fieldname": "frequency_c_days",
+   "fieldtype": "Int",
+   "label": "Count Every (Days) C"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hasr",
+ "name": "Hasr Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Hasr Supervisor",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
