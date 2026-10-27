@@ -31,3 +31,8 @@ input[type='number']::-webkit-inner-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
 }
+
+/* the forms plugin draws the select chevron on the physical right; move it to the inline end */
+[dir='rtl'] select {
+  background-position: left 0.5rem center;
+}
