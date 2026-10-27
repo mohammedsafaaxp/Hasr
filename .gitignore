@@ -6,6 +6,7 @@ tags
 node_modules
 __pycache__
 dist/
-hasr/public/frontend/*
-!hasr/public/frontend/.gitkeep
+hasr/public/frontend/
 hasr/www/hasr.html
+frontend/auto-imports.d.ts
+frontend/components.d.ts
