@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "po_item",
+  "stock_uom",
+  "warehouse",
+  "column_break_q",
+  "ordered_qty",
+  "already_received_qty",
+  "pending_qty",
+  "allowed_qty",
+  "column_break_r",
+  "received_qty",
+  "rejected_qty",
+  "scanned_qty",
+  "manual_adjust_qty",
+  "over_allowance_state",
+  "batches_json"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "po_item",
+   "fieldtype": "Data",
+   "label": "Purchase Order Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_q",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "ordered_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Ordered",
+   "read_only": 1
+  },
+  {
+   "fieldname": "already_received_qty",
+   "fieldtype": "Float",
+   "label": "Already Received",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "pending_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Remaining",
+   "read_only": 1
+  },
+  {
+   "description": "Ordered quantity plus the over-receipt allowance.",
+   "fieldname": "allowed_qty",
+   "fieldtype": "Float",
+   "label": "Allowed Up To",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_r",
+   "fieldtype": "Column Break"
+  },
+  {
+   "columns": 1,
+   "fieldname": "received_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Received",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "rejected_qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rejected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scanned_qty",
+   "fieldtype": "Float",
+   "label": "Scanned",
+   "read_only": 1
+  },
+  {
+   "fieldname": "manual_adjust_qty",
+   "fieldtype": "Float",
+   "label": "Manual Adjustment",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "default": "OK",
+   "fieldname": "over_allowance_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Over Allowance",
+   "options": "OK\nOver\nAccepted\nCapped",
+   "read_only": 1
+  },
+  {
+   "fieldname": "batches_json",
+   "fieldtype": "JSON",
+   "label": "Batches",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hasr",
+ "name": "Hasr Receiving Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
