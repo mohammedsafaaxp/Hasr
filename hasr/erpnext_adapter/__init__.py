@@ -3,6 +3,7 @@
 Everything else imports from here, so version differences (v15 / v16) stay in this package.
 """
 
+from hasr.erpnext_adapter.batches import get_batch_settings
 from hasr.erpnext_adapter.items import add_item_barcode, get_conversion_factor, get_item_details, resolve_barcode
 from hasr.erpnext_adapter.purchase_order import (
 	get_open_purchase_orders,
@@ -24,6 +25,7 @@ __all__ = [
 	"create_draft_purchase_receipt",
 	"erpnext_major",
 	"erpnext_version",
+	"get_batch_settings",
 	"get_conversion_factor",
 	"get_item_details",
 	"get_open_purchase_orders",

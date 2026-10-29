@@ -10,6 +10,8 @@
   "item_name",
   "po_item",
   "stock_uom",
+  "uom",
+  "conversion_factor",
   "warehouse",
   "column_break_q",
   "ordered_qty",
@@ -51,6 +53,19 @@
    "fieldtype": "Link",
    "label": "Stock UOM",
    "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "Ordered UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "conversion_factor",
+   "fieldtype": "Float",
+   "label": "Ordered UOM Conversion",
    "read_only": 1
   },
   {
@@ -145,7 +160,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-10-27 12:00:00.000000",
+ "modified": "2026-10-29 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Receiving Line",

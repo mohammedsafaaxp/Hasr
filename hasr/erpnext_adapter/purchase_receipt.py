@@ -4,6 +4,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from hasr.erpnext_adapter.batches import attach_batch, create_batch, get_batch_settings, link_batches_to_voucher
+
 
 def create_draft_purchase_receipt(
 	purchase_order: str,
@@ -14,7 +16,9 @@ def create_draft_purchase_receipt(
 ):
 	"""Insert a draft Purchase Receipt for `lines` of `purchase_order`.
 
-	Each line: {"po_item", "qty", "rejected_qty", "rejected_warehouse"?} with quantities in stock UOM.
+	Each line: {"po_item", "qty", "rejected_qty", "rejected_warehouse"?, "batches"?} with quantities in stock
+	UOM. `batches` is [{"expiry_date", "qty"}] for batch-tracked items: one Batch is created per expiry date and
+	the PO row is split into one Purchase Receipt row per batch (rejected qty goes on the first one).
 	Returns the inserted (docstatus 0) Purchase Receipt.
 	"""
 	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
@@ -27,13 +31,37 @@ def create_draft_purchase_receipt(
 
 	pr = make_purchase_receipt(purchase_order, args={"filtered_children": list(wanted)})
 
-	items = []
+	planned = []  # (template row, accepted, rejected, batch_no)
+	created_batches = {}
 	for row in pr.items:
 		line = wanted.get(row.purchase_order_item)
 		if not line:
 			continue
-		_set_row_quantities(row, flt(line.get("qty")), flt(line.get("rejected_qty")))
+		accepted, rejected = flt(line.get("qty")), flt(line.get("rejected_qty"))
+		batches = line.get("batches") or []
+		if not get_batch_settings(row.item_code).has_batch_no:
+			planned.append((row, accepted, rejected, None))
+			continue
+		if not batches:
+			frappe.throw(_("{0} is batch tracked. Enter the expiry date for what was received.").format(row.item_code))
+		for i, entry in enumerate(batches):
+			key = (row.item_code, str(entry["expiry_date"]))
+			if key not in created_batches:
+				created_batches[key] = create_batch(row.item_code, entry["expiry_date"], entry.get("manufacturing_date"))
+			qty, rej = flt(entry.get("qty")), rejected if i == 0 else 0.0
+			if qty or rej:
+				planned.append((row, qty, rej, created_batches[key]))
+
+	items = []
+	for row, accepted, rejected, batch_no in planned:
+		if any(r is row for r in items):
+			row = frappe._dict(row.as_dict(no_default_fields=True))  # another batch of the same PO line
+			row = pr.append("items", row)
+		_set_row_quantities(row, accepted, rejected)
+		if batch_no:
+			attach_batch(row, batch_no)
 		if flt(row.rejected_qty):
+			line = wanted[row.purchase_order_item]
 			row.rejected_warehouse = line.get("rejected_warehouse") or default_rejected_warehouse
 			if not row.rejected_warehouse:
 				frappe.throw(
@@ -60,6 +88,7 @@ def create_draft_purchase_receipt(
 	if remarks:
 		pr.remarks = remarks
 	pr.insert()
+	link_batches_to_voucher(list(created_batches.values()), pr.doctype, pr.name)
 	return pr
 
 
