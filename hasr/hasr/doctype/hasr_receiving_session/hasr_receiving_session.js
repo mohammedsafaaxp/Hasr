@@ -250,7 +250,7 @@ function hasr_render_review(frm, is_supervisor) {
 				.hasr-card-title { font-weight: 500; }
 				.hasr-photo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
 				.hasr-invoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-				.hasr-invoice { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px;
+				.hasr-invoice { display: flex; align-items: center; justify-content: center; width: 120px; height: 160px;
 					border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
 				.hasr-invoice img { width: 100%; height: 100%; object-fit: cover; }
 				.hasr-batches { margin: 8px 0 0; }

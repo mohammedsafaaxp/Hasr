@@ -120,3 +120,50 @@ left in the v16 test log comes from inside Frappe while inserting an Item, not f
 ### ✅ V12. CI matrix
 v16 requires Python `>=3.14,<3.15` and Node `>=24` (from `frappe/version-16` pyproject and package.json); the CI
 workflow uses 3.11/20 for v15 and 3.14/24 for v16.
+
+---
+
+## Batches, expiry and supplier invoice (brought forward from 0.2, 2026-10-29)
+
+Asked by the product owner: receive batch-tracked items with expiry dates, and keep the supplier's invoice
+with the receipt. Checked on ERPNext 15.124.1 and 16.52.1.
+
+### ✅ V13. Batches on a Purchase Receipt row
+Setting `use_serial_batch_fields = 1` and `batch_no` on a draft row is enough: on submit ERPNext builds the
+Serial and Batch Bundle (`make_bundle_using_old_serial_batch_fields`), for accepted **and** rejected qty with the
+same batch. Verified by submitting in tests on both versions.
+
+### ✅ V14. Batch names
+`Batch.autoname` uses the item's `batch_number_series` when `create_new_batch` is set, and otherwise **requires** a
+Batch ID. hasr then numbers it `BT-.YYYY.-.#####`. See Q12.
+
+### ✅ V15. v16 needs "Activate Serial / Batch No for Item"
+v16 adds `Stock Settings.enable_serial_and_batch_no_for_item` (off on new sites); items cannot be batch tracked
+until it is on. Nothing to do in hasr: if an item is batch tracked, the switch is already on.
+
+### ✅ V16. Copying the invoice to the Purchase Receipt
+A new File row pointing at the same `file_url` is enough on v15 (same stored file). v16 stores a sanitized copy
+of PDFs under a new name. Either way the receipt gets the invoice as a private attachment.
+
+### ❓ Q11. Where do rejected units of a batch item go?
+Assumed: on the first expiry date's row (same batch). Should rejected quantity get its own expiry date?
+
+### ❓ Q12. Batch numbers for items without automatic batch numbering
+Assumed: `BT-.YYYY.-.#####` (matches the design mockups). Should hasr use the supplier's batch number instead when
+it is known (GS1 AI 10, 0.2)?
+
+### ❓ Q13. Expired goods
+An expiry date in the past is refused with "record expired goods as rejected quantity". OK, or should the
+supervisor be able to accept them?
+
+### ❓ Q14. Short shelf life
+Shown as a warning when the remaining days are below **Hasr Settings → Expiry Warning (%)** of the item's shelf
+life. Should it ever block receiving?
+
+### ❓ Q15. Is the invoice mandatory?
+Today it is optional (the supervisor sees "No supplier invoice was attached"). Make it required before
+finishing?
+
+### ❓ Q16. Fractions of a case with several batches
+Splitting a PO line ordered in a whole-number unit (Box) per batch can produce fractions (30 + 18 units of a
+box of 12). ERPNext then refuses the row, and approval stops with the existing clear message (see Q3).
