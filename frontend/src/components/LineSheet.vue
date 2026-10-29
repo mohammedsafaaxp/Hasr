@@ -15,7 +15,12 @@
             <span class="ltr-text tabular font-medium">{{ b.barcode }}</span>
             <span class="whitespace-nowrap rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
           </p>
-          <button type="button" class="text-sm text-hasr-info" @click="$emit('details', line.item_code)">{{ __('Item details') }}</button>
+          <div class="flex flex-wrap gap-x-4">
+            <button type="button" class="text-sm text-hasr-info" @click="$emit('details', line.item_code)">{{ __('Item details') }}</button>
+            <button v-if="editable" type="button" class="text-sm text-hasr-warning" @click="$emit('mismatch', line)">
+              {{ __('Does not match?') }}
+            </button>
+          </div>
         </div>
         <IconButton :label="__('Close')" @click="$emit('close')"><LucideX class="size-5" /></IconButton>
       </div>
@@ -138,7 +143,7 @@ import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'
 
 const props = defineProps({ line: Object, session: String, editable: Boolean, expiryWarningPct: Number })
-const emit = defineEmits(['close', 'saved', 'details'])
+const emit = defineEmits(['close', 'saved', 'details', 'mismatch'])
 
 const qty = ref(0)
 const uom = ref('')

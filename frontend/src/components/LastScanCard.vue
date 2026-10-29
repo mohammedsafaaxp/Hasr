@@ -18,6 +18,14 @@
       <p class="tabular text-[15px]">
         <b>{{ formatNumber(line.received_qty) }}</b> / {{ formatNumber(line.pending_qty) }} {{ __(line.stock_uom) }}
       </p>
+      <button
+        v-if="editable"
+        type="button"
+        class="inline-flex h-10 items-center gap-1.5 rounded-hasr bg-hasr-warning-bg px-3 text-[14px] font-medium text-hasr-warning"
+        @click="$emit('mismatch')"
+      >
+        <LucideScanSearch class="size-4" />{{ __('Does not match?') }}
+      </button>
     </div>
   </div>
 </template>
@@ -28,6 +36,6 @@ import Pill from './Pill.vue'
 import { formatNumber } from '../i18n'
 import { conversionText } from '../uom'
 
-defineProps({ line: Object, scan: Object })
-defineEmits(['zoom'])
+defineProps({ line: Object, scan: Object, editable: Boolean })
+defineEmits(['zoom', 'mismatch'])
 </script>

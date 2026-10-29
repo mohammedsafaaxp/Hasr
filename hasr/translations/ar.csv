@@ -45,24 +45,29 @@ Check the received quantities against it. It is attached to the Purchase Receipt
 Chilled,مبرَّد
 Class A share cannot be greater than class B share.,لا يمكن أن تكون نسبة الفئة A أكبر من نسبة الفئة B.
 Close,إغلاق
+Correct item,الصنف صحيح
 Could not open the camera. Check the browser permission.,تعذّر فتح الكاميرا. تحقّق من إذن المتصفح.
 Count,الجرد
 Counting arrives in a later version.,الجرد متاح في إصدار لاحق.
 "Damaged or expired, goes to the rejected warehouse",تالفة أو منتهية الصلاحية، تُنقل إلى مستودع المرفوضات
 Decide on the over-receipt first: {0},اتخذ قرارًا بشأن الزيادة في الاستلام أولًا: {0}
+Decide on the reported item mismatches first.,اتخذ قرارًا بشأن بلاغات عدم مطابقة الأصناف أولًا.
 Decision must be Accept or Cap.,يجب أن يكون القرار قبولًا أو تحديدًا.
+Decision must be Correct or Wrong.,يجب أن يكون القرار: صحيح أو خاطئ.
 Decision: {0},القرار: {0}
 Decrease,إنقاص
 Disabled,معطّل
 Dismiss,تجاهل
 Dismiss this barcode? Its quantity is not received.,هل تريد تجاهل هذا الباركود؟ لن تُستلم كميته.
 Dismissed,متجاهَل
+Does not match?,غير مطابق؟
 Done,مكتمل
 "ERPNext considers these lines fully received already, so they cannot be added: {0}",يعتبر ERPNext هذه الأسطر مستلمة بالكامل، لذا لا يمكن إضافتها: {0}
 Email or username,البريد الإلكتروني أو اسم المستخدم
 Enter an expiry date for every row.,أدخل تاريخ انتهاء لكل سطر.
 Enter the expiry date for: {0},أدخل تاريخ الانتهاء لـ: {0}
 Everything on purchase order {0} has been received or is waiting for approval.,تم استلام كل ما في أمر الشراء {0} أو أنه بانتظار الاعتماد.
+Expected item,الصنف المطلوب
 Expiry and batch,تاريخ الانتهاء والدفعة
 Expiry date,تاريخ الانتهاء
 Expiry date needed,يلزم تاريخ الانتهاء
@@ -134,6 +139,7 @@ Password,كلمة المرور
 Pending Approval,بانتظار الاعتماد
 Photo,الصورة
 Photograph every page so the supervisor can check the receipt against it,صوّر كل صفحة ليطابق المشرف الاستلام معها
+Photograph what you received. The supervisor compares it with the item and decides.,صوّر ما استلمته، وسيقارنه المشرف بالصنف ويقرر.
 Point the camera at a barcode,وجّه الكاميرا نحو الباركود
 Purchase Receipt created,تم إنشاء إيصال الاستلام
 Purchase order {0} already has an open receiving session {1} by {2}. Finish it first.,لأمر الشراء {0} جلسة استلام مفتوحة {1} لدى {2}. يجب إنهاؤها أولًا.
@@ -142,6 +148,7 @@ Purchase order {0} is not open for receiving.,أمر الشراء {0} غير م�
 Purchase order {0} not found.,أمر الشراء {0} غير موجود.
 Qty,الكمية
 Quantities cannot be negative.,لا يمكن أن تكون الكميات سالبة.
+Quantity in {0}. Keep scanning the rest normally.,الكمية بوحدة {0}. تابع مسح بقية الأصناف كالمعتاد.
 Quantity is not a whole unit,الكمية ليست وحدة كاملة
 Quantity must be greater than zero.,يجب أن تكون الكمية أكبر من صفر.
 Receive,الاستلام
@@ -152,6 +159,7 @@ Receiving session {0} not found.,جلسة الاستلام {0} غير موجود
 Refresh,تحديث
 Rejected quantity,الكمية المرفوضة
 Remove,حذف
+Remove this quantity from the receipt? It will not be received.,هل تريد حذف هذه الكمية من الاستلام؟ لن تُستلم.
 Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: للصنف {1} كمية مرفوضة دون مستودع مرفوضات. حدّد مستودعًا افتراضيًا في إعدادات حَصر.
 Save line,حفظ السطر
 Saving…,جارٍ الحفظ…
@@ -188,12 +196,14 @@ Submit the Purchase Receipt now,اعتماد إيصال الاستلام الآ�
 Supplier delivery note,رقم إشعار تسليم المورد
 Supplier invoice,فاتورة المورد
 Take a photo of the product,التقط صورة للمنتج
+Take a photo of the product so the supervisor can compare it.,التقط صورة للمنتج ليتمكن المشرف من مقارنتها.
 The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.,تتطلب الكاميرا اتصالًا آمنًا (HTTPS). استخدم قارئ الباركود أو اكتب الباركود.
 "The expiry quantities add up to {0}, but the received quantity is {1}.",مجموع كميات تواريخ الانتهاء {0}، بينما الكمية المستلمة {1}.
 The invoice file is too large.,ملف الفاتورة كبير جدًا.
 "The invoice must be a photo (JPEG, PNG, WebP) or a PDF.",يجب أن تكون الفاتورة صورة (JPEG أو PNG أو WebP) أو ملف PDF.
 The photo is too large.,الصورة كبيرة جدًا.
 "The photo must be a JPEG, PNG or WebP image.",يجب أن تكون الصورة بصيغة JPEG أو PNG أو WebP.
+The product does not match,المنتج غير مطابق
 The rest stays on the same purchase order,يبقى المتبقي على أمر الشراء نفسه
 The supervisor decides whether to close the order,يقرر المشرف إغلاق الأمر أو إبقاءه
 The supervisor reviews it before anything changes in stock,يراجعها المشرف قبل أي تغيير في المخزون
@@ -201,6 +211,7 @@ The supplier will not send the rest,لن يرسل المورد المتبقي
 This barcode is not linked to any item. Take a photo and send it to the supervisor to link it. You can keep receiving the rest.,هذا الباركود غير مرتبط بأي صنف. التقط صورة للمنتج وأرسلها إلى المشرف لربطه، ويمكنك متابعة استلام بقية الأصناف.
 This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot finish the shipment until this is fixed.,هذا الأمر بوحدة {0} (1 {0} = {1} {2}). أدخل {0} كاملة فقط: {3}… لا يمكن إنهاء الشحنة قبل تصحيح ذلك.
 This receiving session belongs to {0}.,جلسة الاستلام هذه تخص {0}.
+This report was already decided.,تم البت في هذا البلاغ مسبقًا.
 This shipment can no longer be changed.,لم يعد بالإمكان تعديل هذه الشحنة.
 Today,اليوم
 Tomorrow,غدًا
@@ -216,8 +227,13 @@ Waiting to be received,بانتظار الاستلام
 Warehouse,المستودع
 Weight,الوزن
 What about the rest?,ماذا عن الكمية المتبقية؟
+What is different?,ما الاختلاف؟
 What should the counter fix?,ما الذي يجب أن يصححه العدّاد؟
+What was received,ما تم استلامه
+What you received,ما استلمته
 Wrong email or password.,البريد الإلكتروني أو كلمة المرور غير صحيحة.
+Wrong item,صنف خاطئ
+Wrong item: remove {0},صنف خاطئ: حذف {0}
 You do not have access to this warehouse.,ليست لديك صلاحية على هذا المستودع.
 You need permission to create Purchase Receipts.,تحتاج إلى صلاحية إنشاء إيصالات الاستلام.
 You need permission to submit Purchase Receipts.,تحتاج إلى صلاحية اعتماد إيصالات الاستلام.
@@ -229,12 +245,14 @@ hasr,حَصر
 not scanned,لم يُمسح بعد
 number given on approval,يُحدَّد رقمها عند الاعتماد
 ordered {0} {1},المطلوب {0} {1}
+reported: does not match,مُبلَّغ عنه: غير مطابق
 scans must be a list.,يجب أن تكون عمليات المسح قائمة.
 shipment {0},الشحنة {0}
 waiting for the supervisor,بانتظار المشرف
 whole {0} only,{0} كاملة فقط
 {0} days,{0} يومًا
 {0} days late,متأخر {0} أيام
+{0} does not match · {1} {2},{0} غير مطابق · {1} {2}
 {0} expired on {1}. Record expired goods as rejected quantity.,انتهت صلاحية {0} بتاريخ {1}. سجّل البضاعة المنتهية ككمية مرفوضة.
 {0} is already fully received on purchase order {1}.,تم استلام {0} بالكامل في أمر الشراء {1}.
 {0} is batch tracked. Enter the expiry date for what was received.,الصنف {0} يُتتبَّع بالدفعات. أدخل تاريخ انتهاء الكمية المستلمة.
@@ -253,6 +271,7 @@ whole {0} only,{0} كاملة فقط
 "{0} scans applied, {1} rejected, {2} undone.",احتُسبت {0} عمليات مسح، ورُفضت {1}، وأُلغيت {2}.
 {0} to go,متبقٍّ {0}
 {0} {1} = {2} {3},{0} {1} = {2} {3}
+{0} {1} of {2} removed from the receipt: not the ordered item ({3}).,حُذفت {0} {1} من {2} من الاستلام: ليست الصنف المطلوب ({3}).
 {0} {1} over the {2}% over-receipt allowance,{0} {1} فوق نسبة السماح بالزيادة {2}%
 "{0}: received {1}, ordered {2}",{0}: المستلم {1}، المطلوب {2}
 {0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).,{0}: يجب أن تكون الكمية عددًا صحيحًا من {1} (1 {1} = {2} {3}).

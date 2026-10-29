@@ -24,6 +24,11 @@ fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "=", "Hasr"]]},
 ]
 
+# The supplier invoice and evidence photos follow the receipt into the Purchase Invoice
+doc_events = {
+	"Purchase Invoice": {"on_update": "hasr.receiving.copy_receipt_files_to_invoice"},
+}
+
 after_install = "hasr.install.after_install"
 after_migrate = "hasr.install.after_migrate"
 

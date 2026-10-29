@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-10-29 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "item_code",
+  "item_name",
+  "barcode",
+  "qty",
+  "status",
+  "note",
+  "column_break_1",
+  "photo",
+  "session_doctype",
+  "session",
+  "po_item",
+  "reported_by",
+  "decided_by",
+  "client_uuid"
+ ],
+ "fields": [
+  {
+   "default": "MIS-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "options": "MIS-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "barcode",
+   "fieldtype": "Data",
+   "label": "Scanned Barcode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty (Stock UOM)",
+   "read_only": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nCorrect item\nWrong item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "photo",
+   "fieldtype": "Attach Image",
+   "label": "Photo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "session_doctype",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Session DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Dynamic Link",
+   "in_standard_filter": 1,
+   "label": "Session",
+   "options": "session_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "po_item",
+   "fieldtype": "Data",
+   "label": "Purchase Order Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "client_uuid",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Client UUID",
+   "read_only": 1,
+   "unique": 1
+  }
+ ],
+ "image_field": "photo",
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-29 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hasr",
+ "name": "Hasr Item Mismatch",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hasr Supervisor",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "item_name",
+ "track_changes": 1
+}

@@ -84,6 +84,14 @@ def remove_invoice(session, file_name):
 	return receiving.get_invoices(session)
 
 
+@frappe.whitelist(methods=["POST"])
+def report_mismatch(session, po_item, qty, photo, note=None, barcode=None, client_uuid=None):
+	"""The product in hand does not match the item's photo or description."""
+	require_counter()
+	doc = receiving.report_mismatch(session, po_item, qty, photo, note, barcode, client_uuid)
+	return receiving.session_payload(receiving.get_session_doc(doc.session))
+
+
 # ---------------------------------------------------------------- supervisor
 
 
@@ -117,6 +125,12 @@ def link_unknown_barcode(name, item_code, uom=None):
 	require_supervisor()
 	doc = receiving.link_unknown_barcode(name, item_code, uom or None)
 	return {"name": doc.name, "status": doc.status, "linked_item": doc.linked_item}
+
+
+@frappe.whitelist(methods=["POST"])
+def decide_mismatch(name, decision):
+	require_supervisor()
+	return receiving.session_payload(receiving.decide_mismatch(name, decision))
 
 
 @frappe.whitelist(methods=["POST"])

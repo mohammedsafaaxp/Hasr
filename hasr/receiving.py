@@ -184,6 +184,7 @@ def session_payload(doc):
 	):
 		barcodes.setdefault(b.parent, []).append({"barcode": b.barcode, "uom": b.uom})
 
+	mismatch_lines = open_mismatch_lines(doc.name)
 	lines = []
 	for l in doc.lines:
 		item = items.get(l.item_code) or frappe._dict()
@@ -204,6 +205,7 @@ def session_payload(doc):
 				"needs_expiry": needs_expiry(l, item),
 				"uom_must_be_whole": (flt(l.conversion_factor) or 1.0) != 1 and erp.uom_must_be_whole(l.uom),
 				"whole_unit_issue": bool(whole_unit_issue(l)),
+				"mismatch_open": l.po_item in mismatch_lines,
 				"barcodes": barcodes.get(l.item_code, []),
 				"uoms": _line_uoms(l.item_code, l.stock_uom),
 				"ordered_qty": flt(l.ordered_qty),
@@ -242,6 +244,7 @@ def session_payload(doc):
 		"lines": lines,
 		"unknown_barcodes": unknown,
 		"invoices": get_invoices(doc.name),
+		"mismatches": get_mismatches(doc.name),
 		"expiry_warning_pct": flt(frappe.get_cached_doc("Hasr Settings").expiry_warning_pct),
 	}
 
@@ -680,9 +683,30 @@ def remove_invoice(session, file_name):
 	frappe.delete_doc("File", name, ignore_permissions=True)
 
 
+def receipt_evidence(session):
+	"""Files that travel with the receipt: the supplier invoice and photos of reported item mismatches."""
+	files = list(get_invoices(session))
+	for m in frappe.get_all(MISMATCH, filters={"session_doctype": SESSION, "session": session}, pluck="name"):
+		files += frappe.get_all(
+			"File",
+			filters={"attached_to_doctype": MISMATCH, "attached_to_name": m, "attached_to_field": "photo"},
+			fields=["name", "file_name", "file_url", "is_private"],
+		)
+	return files
+
+
 def copy_invoices(session, doctype, name):
-	"""Attach the session's invoice files to the Purchase Receipt (same stored file, new attachment)."""
-	for f in get_invoices(session):
+	"""Attach the invoice and evidence photos to the Purchase Receipt (same stored file, new attachment)."""
+	attach_files(receipt_evidence(session), doctype, name)
+
+
+def attach_files(files, doctype, name):
+	existing = set(
+		frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": name}, pluck="file_name")
+	)
+	for f in files:
+		if f.file_name in existing:
+			continue
 		frappe.get_doc(
 			{
 				"doctype": "File",
@@ -693,6 +717,124 @@ def copy_invoices(session, doctype, name):
 				"attached_to_name": name,
 			}
 		).insert(ignore_permissions=True)
+		existing.add(f.file_name)
+
+
+def copy_receipt_files_to_invoice(doc, method=None):
+	"""doc_event on Purchase Invoice: bring the supplier invoice and evidence from the hasr receipts it bills."""
+	receipts = {row.purchase_receipt for row in doc.get("items") or [] if row.get("purchase_receipt")}
+	if not receipts:
+		return
+	sessions = frappe.get_all(SESSION, filters={"purchase_receipt": ["in", list(receipts)]}, pluck="name")
+	files = [f for session in sessions for f in receipt_evidence(session)]
+	if files:
+		attach_files(files, doc.doctype, doc.name)
+
+
+# ---------------------------------------------------------------- item mismatch
+
+MISMATCH = "Hasr Item Mismatch"
+
+
+def get_mismatches(session):
+	return frappe.get_all(
+		MISMATCH,
+		filters={"session_doctype": SESSION, "session": session},
+		fields=["name", "po_item", "item_code", "item_name", "barcode", "qty", "note", "photo", "status"],
+		order_by="creation asc",
+	)
+
+
+def open_mismatch_lines(session) -> set[str]:
+	return set(
+		frappe.get_all(
+			MISMATCH, filters={"session_doctype": SESSION, "session": session, "status": "Open"}, pluck="po_item"
+		)
+	)
+
+
+def report_mismatch(session, po_item, qty, photo, note=None, barcode=None, client_uuid=None):
+	"""The scanned product does not look like the item in ERPNext: photo + note for the supervisor."""
+	doc = get_editable_session(session)
+	line = doc.get_line(po_item)
+	if client_uuid:
+		existing = frappe.db.get_value(MISMATCH, {"client_uuid": client_uuid})
+		if existing:
+			return frappe.get_doc(MISMATCH, existing)
+	if not photo:
+		frappe.throw(_("Take a photo of the product so the supervisor can compare it."))
+	qty = flt(qty)
+	if qty <= 0:
+		frappe.throw(_("Quantity must be greater than zero."))
+	mismatch = frappe.get_doc(
+		{
+			"doctype": MISMATCH,
+			"session_doctype": SESSION,
+			"session": doc.name,
+			"po_item": po_item,
+			"item_code": line.item_code,
+			"item_name": line.item_name,
+			"barcode": (barcode or "").strip()[:140] or None,
+			"qty": qty,
+			"note": (note or "").strip()[:1000] or None,
+			"status": "Open",
+			"reported_by": frappe.session.user,
+			"client_uuid": client_uuid or None,
+		}
+	).insert(ignore_permissions=True)
+	file_doc = _save_image(photo, mismatch, f"mismatch-{frappe.scrub(line.item_code)}")
+	mismatch.db_set("photo", file_doc.file_url)
+	return mismatch
+
+
+def decide_mismatch(name, decision):
+	"""Supervisor: "Correct" keeps the quantity; "Wrong" takes the reported quantity out of the receipt."""
+	if decision not in ("Correct", "Wrong"):
+		frappe.throw(_("Decision must be Correct or Wrong."))
+	mismatch = frappe.get_doc(MISMATCH, name)
+	if mismatch.status != "Open":
+		frappe.throw(_("This report was already decided."))
+	doc = get_session_doc(mismatch.session, for_update=True)
+	if doc.status not in (*EDITABLE_STATUSES, "Pending Approval"):
+		frappe.throw(_("Session {0} is {1} and can no longer be changed.").format(doc.name, _(doc.status)))
+	if decision == "Wrong":
+		line = doc.get_line(mismatch.po_item)
+		doc.recompute_line(line)
+		removed = min(flt(mismatch.qty), flt(line.received_qty))
+		line.manual_adjust_qty = flt(line.manual_adjust_qty) - removed
+		doc.recompute_line(line)
+		doc.add_comment(
+			"Comment",
+			_("{0} {1} of {2} removed from the receipt: not the ordered item ({3}).").format(
+				frappe.format(removed), _(line.stock_uom), line.item_name, mismatch.name
+			),
+		)
+		doc.save(ignore_permissions=True)
+	mismatch.status = "Correct item" if decision == "Correct" else "Wrong item"
+	mismatch.decided_by = frappe.session.user
+	mismatch.save(ignore_permissions=True)
+	return doc
+
+
+def _save_image(data_url, doc, stem):
+	match = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", data_url or "", re.S)
+	if not match:
+		frappe.throw(_("The photo must be a JPEG, PNG or WebP image."))
+	content = base64.b64decode(match.group(2))
+	if len(content) > MAX_PHOTO_BYTES:
+		frappe.throw(_("The photo is too large."))
+	ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[match.group(1)]
+	return frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{stem}.{ext}",
+			"content": content,
+			"attached_to_doctype": doc.doctype,
+			"attached_to_name": doc.name,
+			"attached_to_field": "photo",
+			"is_private": 1,
+		}
+	).insert(ignore_permissions=True)
 
 
 def _save_photo(data_url, unknown):
@@ -811,6 +953,8 @@ def approve(session, decisions=None, submit=False):
 	if missing_expiry:
 		frappe.throw(_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed"))
 	check_whole_units(doc)
+	if frappe.db.exists(MISMATCH, {"session_doctype": SESSION, "session": doc.name, "status": "Open"}):
+		frappe.throw(_("Decide on the reported item mismatches first."), title=_("Needs your decision"))
 
 	settings = frappe.get_cached_doc("Hasr Settings")
 	pr = erp.create_draft_purchase_receipt(

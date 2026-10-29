@@ -234,6 +234,38 @@ function hasr_render_review(frm, is_supervisor) {
 				</div>`);
 		}
 
+		for (const m of data.mismatches || []) {
+			const line = data.lines.find((l) => l.po_item === m.po_item) || {};
+			const pic = (src, label) =>
+				src
+					? `<a href="${esc(src)}" target="_blank" title="${esc(label)}"><img src="${esc(src)}" class="hasr-photo"></a>`
+					: `<div class="hasr-photo hasr-photo-empty" title="${esc(label)}">${frappe.utils.icon("image", "md")}</div>`;
+			const open = m.status === "Open";
+			cards.push(`
+				<div class="hasr-card ${open ? "hasr-warn" : ""}">
+					${pic(line.image, __("Expected item"))}
+					${pic(m.photo, __("What was received"))}
+					<div class="hasr-card-body">
+						<div class="hasr-card-title">${__("{0} does not match · {1} {2}", [
+							esc(m.item_name),
+							fmt(m.qty),
+							esc(__(line.stock_uom || "")),
+						])}</div>
+						<div class="text-muted">${m.note ? __("Note: {0}", [esc(m.note)]) : ""} ${
+				open ? "" : `· ${__(m.status)}`
+			}</div>
+					</div>
+					${
+						is_supervisor && open && ["Open", "Sent Back", "Pending Approval"].includes(data.status)
+							? `<button class="btn btn-default btn-sm" data-mismatch="${m.name}" data-decision="Wrong">
+									${__("Wrong item: remove {0}", [fmt(m.qty)])}</button>
+								<button class="btn btn-primary btn-sm" data-mismatch="${m.name}" data-decision="Correct">
+									${__("Correct item")}</button>`
+							: ""
+					}
+				</div>`);
+		}
+
 		const counts = data.scan_counts || {};
 		const sync = __("{0} scans applied, {1} rejected, {2} undone.", [
 			counts.Applied || 0,
@@ -275,6 +307,19 @@ function hasr_render_review(frm, is_supervisor) {
 				frm,
 				data.unknown_barcodes.find((u) => u.name === name)
 			);
+		});
+		wrapper.find("[data-mismatch]").on("click", (e) => {
+			const btn = $(e.currentTarget);
+			const go = () =>
+				hasr_call(frm, "decide_mismatch", {
+					name: btn.attr("data-mismatch"),
+					decision: btn.attr("data-decision"),
+				});
+			if (btn.attr("data-decision") === "Wrong") {
+				frappe.confirm(__("Remove this quantity from the receipt? It will not be received."), go);
+			} else {
+				go();
+			}
 		});
 		wrapper.find("[data-dismiss]").on("click", (e) => {
 			const name = $(e.currentTarget).attr("data-dismiss");

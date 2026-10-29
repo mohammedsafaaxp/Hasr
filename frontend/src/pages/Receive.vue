@@ -58,7 +58,14 @@
           @camera="cameraOpen = true"
         />
 
-        <LastScanCard v-if="lastLine" :line="lastLine" :scan="lastScan" @zoom="zoom" />
+        <LastScanCard
+          v-if="lastLine"
+          :line="lastLine"
+          :scan="lastScan"
+          :editable="s.editable"
+          @zoom="zoom"
+          @mismatch="openMismatch(lastLine, lastScan.barcode, lastScan.conversion_factor)"
+        />
 
         <div class="flex gap-2 overflow-x-auto pb-1">
           <button
@@ -132,6 +139,7 @@
       :expiry-warning-pct="s ? s.expiry_warning_pct : 0"
       @close="closeLine"
       @saved="onLineSaved"
+      @mismatch="(l) => openMismatch(l, l.barcodes[0] && l.barcodes[0].barcode, 1)"
       @details="(code) => router.push({ name: 'ItemDetails', params: { itemCode: code } })"
     />
     <UnknownBarcodeSheet :barcode="unknownBarcode" :session="s && s.name" @close="unknownBarcode = ''" @sent="onUnknownSent" />
@@ -139,6 +147,14 @@
     <FinishSheet v-if="s" v-model:open="finishOpen" :session="s" @finished="onFinished" />
     <InvoiceSheet v-if="s" v-model:open="invoiceOpen" :session="s" />
     <ImageZoom v-model:open="zoomOpen" :src="zoomSrc" />
+    <MismatchSheet
+      :line="mismatch.line"
+      :session="s && s.name"
+      :barcode="mismatch.barcode"
+      :default-qty="mismatch.qty"
+      @close="mismatch = {}"
+      @sent="onMismatchSent"
+    />
   </div>
 </template>
 
@@ -156,6 +172,7 @@ import CameraSheet from '../components/CameraSheet.vue'
 import FinishSheet from '../components/FinishSheet.vue'
 import InvoiceSheet from '../components/InvoiceSheet.vue'
 import LastScanCard from '../components/LastScanCard.vue'
+import MismatchSheet from '../components/MismatchSheet.vue'
 import ImageZoom from '../components/ImageZoom.vue'
 import { barcodeRows, orderedText } from '../uom'
 import { api, deviceId, errorMessage, uuid4 } from '../api'
@@ -177,6 +194,18 @@ const invoiceOpen = ref(false)
 const zoomOpen = ref(false)
 const zoomSrc = ref('')
 const lastScan = ref(null)
+const mismatch = ref({})
+
+function openMismatch(line, barcode, qty) {
+  if (route.name === 'ReceiveLine') router.replace({ name: 'Receive', params: { session: props.session } })
+  mismatch.value = { line, barcode, qty: qty || 1 }
+}
+
+function onMismatchSent(session) {
+  s.value = session
+  mismatch.value = {}
+  showToast({ title: __('Sent to the supervisor') })
+}
 const rowEls = {}
 const lastLine = computed(() => (lastScan.value && s.value ? s.value.lines.find((l) => l.po_item === lastScan.value.po_item) : null))
 
@@ -191,13 +220,14 @@ let toastTimer = null
 
 const activeLine = computed(() => (s.value && props.poItem ? s.value.lines.find((l) => l.po_item === props.poItem) : null))
 const sheetOpen = computed(
-  () => !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value),
+  () =>
+    !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value || mismatch.value.line),
 )
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
 const isOver = (l) => l.over_allowance_state === 'Over' || l.over_allowance_state === 'Accepted'
 const isDone = (l) => l.received_qty + l.rejected_qty >= l.pending_qty
-const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue
+const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue || l.mismatch_open
 const counts = computed(() => {
   const lines = s.value ? s.value.lines : []
   const done = lines.filter((l) => isDone(l) && !isIssue(l)).length
@@ -235,6 +265,7 @@ function lineHint(l) {
     const over = l.already_received_qty + l.received_qty + l.rejected_qty - l.allowed_qty
     return __('{0} over the limit', [formatNumber(Math.ceil(over))])
   }
+  if (l.mismatch_open) return __('reported: does not match')
   if (l.whole_unit_issue) return __('whole {0} only', [__(l.uom)])
   if (l.needs_expiry) return __('expiry date needed')
   if (l.rejected_qty) return __('{0} rejected', [formatNumber(l.rejected_qty)])
