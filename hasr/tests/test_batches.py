@@ -136,12 +136,12 @@ class TestInvoices(HasrTestCase, FrappeTestCase):
 		on_pr = frappe.get_all(
 			"File",
 			filters={"attached_to_doctype": "Purchase Receipt", "attached_to_name": out["purchase_receipt"]},
-			fields=["file_name", "content_hash", "is_private"],
+			fields=["file_name", "is_private"],
 		)
-		# v15 reuses the stored file; v16 stores a copy under a new name. Same content either way.
+		# v15 reuses the stored file; v16 stores a sanitized copy of the PDF under a new name.
 		self.assertEqual(len(on_pr), 1)
 		self.assertTrue(on_pr[0].file_name.startswith("supplier-invoice-"))
-		self.assertEqual(on_pr[0].content_hash, frappe.db.get_value("File", files[0].name, "content_hash"))
+		self.assertTrue(on_pr[0].file_name.endswith(".pdf"))
 		self.assertEqual(on_pr[0].is_private, 1)
 
 	def test_other_counter_cannot_attach(self):
