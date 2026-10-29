@@ -4,7 +4,13 @@ Everything else imports from here, so version differences (v15 / v16) stay in th
 """
 
 from hasr.erpnext_adapter.batches import get_batch_settings
-from hasr.erpnext_adapter.items import add_item_barcode, get_conversion_factor, get_item_details, resolve_barcode
+from hasr.erpnext_adapter.items import (
+	add_item_barcode,
+	get_conversion_factor,
+	get_item_details,
+	resolve_barcode,
+	uom_must_be_whole,
+)
 from hasr.erpnext_adapter.purchase_order import (
 	get_open_purchase_orders,
 	get_po_lines_with_remaining,
@@ -39,5 +45,6 @@ __all__ = [
 	"is_receivable",
 	"resolve_barcode",
 	"submit_purchase_receipt",
+	"uom_must_be_whole",
 	"uses_serial_batch_bundle",
 ]

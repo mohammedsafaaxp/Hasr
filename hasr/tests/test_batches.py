@@ -150,3 +150,47 @@ class TestInvoices(HasrTestCase, FrappeTestCase):
 		s = api.start_session(po.name)
 		frappe.set_user(fx.COUNTER_2)
 		self.assertRaises(frappe.PermissionError, api.attach_invoice, s["name"], self.PNG)
+
+
+class TestWholeUnits(HasrTestCase, FrappeTestCase):
+	"""A PO line ordered in boxes can only be received in whole boxes (ERPNext keeps the PO unit)."""
+
+	def setUp(self):
+		frappe.db.set_value("UOM", "Box", "must_be_whole_number", 1)
+		self.po = fx.make_po([("HASR-MILK", 4, "Box", 12), ("HASR-YOGURT", 5)])
+		frappe.set_user(fx.COUNTER)
+		self.s = api.start_session(self.po.name)
+		self.milk = line_of(self.s, "HASR-MILK")["po_item"]
+
+	def test_fraction_of_a_box_is_flagged_and_blocks_finish(self):
+		out = api.set_line(self.s["name"], self.milk, 5, 1)  # saving is allowed, so the worker can fix it later
+		line = line_of(out, "HASR-MILK")
+		self.assertTrue(line["uom_must_be_whole"])
+		self.assertTrue(line["whole_unit_issue"])
+		with self.assertRaisesRegex(frappe.ValidationError, "must be a whole number of Box"):
+			api.finish_session(self.s["name"])
+
+	def test_whole_boxes_pass(self):
+		out = api.set_line(self.s["name"], self.milk, 24, 12)
+		self.assertFalse(line_of(out, "HASR-MILK")["whole_unit_issue"])
+		self.assertEqual(api.finish_session(self.s["name"])["status"], "Pending Approval")
+
+	def test_scanning_units_of_a_box_line(self):
+		sync.push_scans([fx.scan(self.s["name"], fx.MILK_UNIT)])
+		self.assertTrue(line_of(api.get_session(self.s["name"]), "HASR-MILK")["whole_unit_issue"])
+		sync.push_scans([fx.scan(self.s["name"], fx.MILK_UNIT, qty=11)])
+		self.assertFalse(line_of(api.get_session(self.s["name"]), "HASR-MILK")["whole_unit_issue"])
+
+	def test_stock_unit_lines_never_flagged(self):
+		yogurt = line_of(self.s, "HASR-YOGURT")["po_item"]
+		out = api.set_line(self.s["name"], yogurt, 3)
+		self.assertFalse(line_of(out, "HASR-YOGURT")["whole_unit_issue"])
+		self.assertFalse(line_of(out, "HASR-YOGURT")["uom_must_be_whole"])
+
+	def test_approve_also_blocks(self):
+		api.set_line(self.s["name"], self.milk, 24)
+		api.finish_session(self.s["name"])
+		# simulate a quantity that changed after finishing (totals are recomputed from scans + adjustment)
+		frappe.db.set_value("Hasr Receiving Line", {"parent": self.s["name"], "po_item": self.milk}, "manual_adjust_qty", 30)
+		frappe.set_user(fx.SUPERVISOR)
+		self.assertRaisesRegex(frappe.ValidationError, "must be a whole number of Box", api.approve, self.s["name"])

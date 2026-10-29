@@ -7,6 +7,11 @@ from frappe.utils import flt, strip_html_tags
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif")
 
 
+def uom_must_be_whole(uom: str | None) -> bool:
+	"""UOM.must_be_whole_number: ERPNext refuses fractions of this unit on transactions."""
+	return bool(uom and frappe.get_cached_value("UOM", uom, "must_be_whole_number"))
+
+
 def get_conversion_factor(item_code: str, uom: str | None) -> float:
 	"""Conversion factor from `uom` to the item's stock UOM (item row first, then ERPNext's resolver)."""
 	stock_uom = frappe.get_cached_value("Item", item_code, "stock_uom")

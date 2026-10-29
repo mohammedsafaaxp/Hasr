@@ -197,7 +197,7 @@ const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u
 
 const isOver = (l) => l.over_allowance_state === 'Over' || l.over_allowance_state === 'Accepted'
 const isDone = (l) => l.received_qty + l.rejected_qty >= l.pending_qty
-const isIssue = (l) => isOver(l) || l.needs_expiry
+const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue
 const counts = computed(() => {
   const lines = s.value ? s.value.lines : []
   const done = lines.filter((l) => isDone(l) && !isIssue(l)).length
@@ -235,6 +235,7 @@ function lineHint(l) {
     const over = l.already_received_qty + l.received_qty + l.rejected_qty - l.allowed_qty
     return __('{0} over the limit', [formatNumber(Math.ceil(over))])
   }
+  if (l.whole_unit_issue) return __('whole {0} only', [__(l.uom)])
   if (l.needs_expiry) return __('expiry date needed')
   if (l.rejected_qty) return __('{0} rejected', [formatNumber(l.rejected_qty)])
   if (!l.received_qty) return __('not scanned')

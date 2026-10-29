@@ -35,6 +35,10 @@
         <p v-if="cf !== 1" class="text-sm text-hasr-muted">
           {{ __('{0} {1} = {2} {3}', [formatNumber(qty), __(uom), formatNumber(receivedStock), __(line.stock_uom)]) }}
         </p>
+        <div v-if="wholeWarning" class="flex gap-2 rounded-hasr bg-hasr-warning-bg p-3 text-sm text-hasr-warning" role="alert">
+          <LucideTriangleAlert class="mt-0.5 size-4 shrink-0" />
+          <span>{{ wholeWarning }}</span>
+        </div>
         <p v-if="overBy > 0" class="flex items-center gap-1.5 text-sm text-hasr-warning">
           <LucideTriangleAlert class="size-4" />
           {{ __('{0} over the limit. The supervisor will decide.', [formatNumber(overBy)]) }}
@@ -130,7 +134,7 @@ import ItemThumb from './ItemThumb.vue'
 import Pill from './Pill.vue'
 import ImageZoom from './ImageZoom.vue'
 import { api, errorMessage } from '../api'
-import { __, formatNumber } from '../i18n'
+import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'
 
 const props = defineProps({ line: Object, session: String, editable: Boolean, expiryWarningPct: Number })
@@ -151,6 +155,22 @@ const batchTotal = computed(() => round(batches.value.reduce((sum, b) => sum + (
 const overBy = computed(() => {
   if (!props.line) return 0
   return round(props.line.already_received_qty + receivedStock.value + rejected.value - props.line.allowed_qty)
+})
+
+// The Purchase Receipt stays in the order's unit, so a box line takes whole boxes only (each expiry date too).
+const wholeWarning = computed(() => {
+  const l = props.line
+  if (!l || !l.uom_must_be_whole) return ''
+  const poCf = l.conversion_factor || 1
+  const accepted = batches.value.length > 1 && l.has_batch_no ? batches.value.map((b) => Number(b.qty) || 0) : [receivedStock.value]
+  if ([...accepted, rejected.value].every((q) => Math.abs(q / poCf - Math.round(q / poCf)) < 1e-6)) return ''
+  const examples = [1, 2, 3].map((n) => formatNumber(n * poCf)).join(langRef.value === 'ar' ? '، ' : ', ')
+  return __('This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot finish the shipment until this is fixed.', [
+    __(l.uom),
+    formatNumber(poCf),
+    __(l.stock_uom),
+    examples,
+  ])
 })
 
 function round(n) {

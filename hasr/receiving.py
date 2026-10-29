@@ -202,6 +202,8 @@ def session_payload(doc):
 				"conversion_factor": flt(l.conversion_factor) or 1.0,
 				"batches": get_batches(l),
 				"needs_expiry": needs_expiry(l, item),
+				"uom_must_be_whole": (flt(l.conversion_factor) or 1.0) != 1 and erp.uom_must_be_whole(l.uom),
+				"whole_unit_issue": bool(whole_unit_issue(l)),
 				"barcodes": barcodes.get(l.item_code, []),
 				"uoms": _line_uoms(l.item_code, l.stock_uom),
 				"ordered_qty": flt(l.ordered_qty),
@@ -274,6 +276,12 @@ def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
 	return doc
 
 
+def check_whole_units(doc):
+	issues = [msg for msg in (whole_unit_issue(l) for l in doc.lines) if msg]
+	if issues:
+		frappe.throw("<br>".join(issues), title=_("Quantity is not a whole unit"))
+
+
 def get_batches(line) -> list[dict]:
 	return frappe.parse_json(line.batches_json) if line.batches_json else []
 
@@ -288,6 +296,29 @@ def needs_expiry(line, item=None) -> bool:
 		return False
 	batches = get_batches(line)
 	return not batches or abs(sum(flt(b["qty"]) for b in batches) - flt(line.received_qty)) > EPSILON
+
+
+def _is_whole(value: float) -> bool:
+	return abs(value - round(value)) < 1e-6
+
+
+def whole_unit_issue(line) -> str | None:
+	"""Message when a quantity is not a whole number of the PO line's unit (e.g. 5 units of a 12-unit box).
+
+	ERPNext keeps the Purchase Receipt row in the PO unit and refuses fractions of whole-number units, so this
+	must be fixed before the shipment goes to the supervisor. Each expiry date becomes its own row, so each
+	batch quantity has to be whole too.
+	"""
+	cf = flt(line.conversion_factor) or 1.0
+	if cf == 1 or not erp.uom_must_be_whole(line.uom):
+		return None
+	batches = get_batches(line)
+	accepted = [flt(b["qty"]) for b in batches] if len(batches) > 1 else [flt(line.received_qty)]
+	if all(_is_whole(q / cf) for q in [*accepted, flt(line.rejected_qty)]):
+		return None
+	return _("{0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).").format(
+		line.item_name or line.item_code, _(line.uom), frappe.format(cf), _(line.stock_uom)
+	)
 
 
 def clean_batches(line, batches, received_qty) -> list[dict]:
@@ -343,6 +374,7 @@ def finish_session(session, supplier_delivery_note=None, remaining_expected=None
 		frappe.throw(
 			_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed")
 		)
+	check_whole_units(doc)
 	if remaining_expected and remaining_expected not in ("Still coming", "Supplier will not send"):
 		frappe.throw(_("Invalid value for remaining quantity."))
 	if supplier_delivery_note is not None:
@@ -778,6 +810,7 @@ def approve(session, decisions=None, submit=False):
 	missing_expiry = [l.item_name or l.item_code for l in doc.lines if needs_expiry(l)]
 	if missing_expiry:
 		frappe.throw(_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed"))
+	check_whole_units(doc)
 
 	settings = frappe.get_cached_doc("Hasr Settings")
 	pr = erp.create_draft_purchase_receipt(
