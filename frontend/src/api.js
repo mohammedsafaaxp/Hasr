@@ -1,10 +1,11 @@
 import { call } from 'frappe-ui'
-import { __ } from './i18n'
+import { __, lang } from './i18n'
 
 const BASE = 'hasr.api.'
 
+// `_lang` makes Frappe answer (errors included) in the app's language, not the user's Desk language
 export function api(method, args = {}) {
-  return call(BASE + method, args)
+  return call(BASE + method, { ...args, _lang: lang.value })
 }
 
 /** A readable message from a frappe-ui request error. */
