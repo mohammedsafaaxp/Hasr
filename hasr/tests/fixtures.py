@@ -119,6 +119,9 @@ def setup_users():
 
 def setup_all():
 	frappe.set_user("Administrator")
+	# v16 only lets items be batch tracked when this Stock Settings switch is on (off on new sites)
+	if frappe.get_meta("Stock Settings").has_field("enable_serial_and_batch_no_for_item"):
+		frappe.db.set_single_value("Stock Settings", "enable_serial_and_batch_no_for_item", 1)
 	setup_items()
 	setup_users()
 	warehouse("Hasr Main")
