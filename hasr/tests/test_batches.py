@@ -94,6 +94,7 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 		self.assertTrue(first.rejected_serial_and_batch_bundle)
 		from erpnext.stock.doctype.batch.batch import get_batch_qty  # assertion only
 
+		frappe.set_user("Administrator")  # v16 checks Batch permission in get_batch_qty
 		self.assertEqual(get_batch_qty(first.batch_no, fx.warehouse("Hasr Main")), 20)
 
 
@@ -133,9 +134,15 @@ class TestInvoices(HasrTestCase, FrappeTestCase):
 		frappe.set_user(fx.SUPERVISOR)
 		out = api.approve(s["name"])
 		on_pr = frappe.get_all(
-			"File", filters={"attached_to_doctype": "Purchase Receipt", "attached_to_name": out["purchase_receipt"]}, pluck="file_url"
+			"File",
+			filters={"attached_to_doctype": "Purchase Receipt", "attached_to_name": out["purchase_receipt"]},
+			fields=["file_name", "content_hash", "is_private"],
 		)
-		self.assertEqual(on_pr, [files[0].file_url])
+		# v15 reuses the stored file; v16 stores a copy under a new name. Same content either way.
+		self.assertEqual(len(on_pr), 1)
+		self.assertTrue(on_pr[0].file_name.startswith("supplier-invoice-"))
+		self.assertEqual(on_pr[0].content_hash, frappe.db.get_value("File", files[0].name, "content_hash"))
+		self.assertEqual(on_pr[0].is_private, 1)
 
 	def test_other_counter_cannot_attach(self):
 		po = fx.make_po([("HASR-YOGURT", 4)])
