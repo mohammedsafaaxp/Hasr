@@ -69,6 +69,21 @@ def report_unknown_barcode(session, barcode, qty=1, note=None, photo=None, clien
 	return {"name": doc.name, "barcode": doc.barcode, "qty": doc.qty, "status": doc.status}
 
 
+@frappe.whitelist(methods=["POST"])
+def attach_invoice(session, data_url):
+	"""Photo or PDF of the supplier's invoice; moves to the Purchase Receipt when the session is approved."""
+	require_counter()
+	receiving.attach_invoice(session, data_url)
+	return receiving.get_invoices(session)
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_invoice(session, file_name):
+	require_counter()
+	receiving.remove_invoice(session, file_name)
+	return receiving.get_invoices(session)
+
+
 # ---------------------------------------------------------------- supervisor
 
 

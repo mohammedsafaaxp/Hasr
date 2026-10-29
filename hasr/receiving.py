@@ -107,6 +107,8 @@ def start_session(purchase_order):
 				"item_code": row.item_code,
 				"item_name": row.item_name,
 				"stock_uom": row.stock_uom,
+				"uom": row.uom,
+				"conversion_factor": row.conversion_factor,
 				"warehouse": row.warehouse,
 				"ordered_qty": row.ordered_qty,
 				"already_received_qty": already,
@@ -170,7 +172,7 @@ def session_payload(doc):
 		for r in frappe.get_all(
 			"Item",
 			filters={"name": ["in", list({l.item_code for l in doc.lines}) or [""]]},
-			fields=["name", "image", "has_batch_no"],
+			fields=["name", "image", "has_batch_no", "has_expiry_date", "shelf_life_in_days"],
 		)
 	}
 	barcodes = {}
@@ -194,6 +196,12 @@ def session_payload(doc):
 				"stock_uom": l.stock_uom,
 				"image": item.image,
 				"has_batch_no": item.has_batch_no,
+				"has_expiry_date": item.has_expiry_date,
+				"shelf_life_in_days": item.shelf_life_in_days,
+				"uom": l.uom or l.stock_uom,
+				"conversion_factor": flt(l.conversion_factor) or 1.0,
+				"batches": get_batches(l),
+				"needs_expiry": needs_expiry(l, item),
 				"barcodes": barcodes.get(l.item_code, []),
 				"uoms": _line_uoms(l.item_code, l.stock_uom),
 				"ordered_qty": flt(l.ordered_qty),
@@ -231,6 +239,8 @@ def session_payload(doc):
 		"editable": doc.is_editable() and doc.received_by == frappe.session.user,
 		"lines": lines,
 		"unknown_barcodes": unknown,
+		"invoices": get_invoices(doc.name),
+		"expiry_warning_pct": flt(frappe.get_cached_doc("Hasr Settings").expiry_warning_pct),
 	}
 
 
@@ -252,14 +262,70 @@ def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
 	received_qty, rejected_qty = flt(received_qty), flt(rejected_qty)
 	if received_qty < 0 or rejected_qty < 0:
 		frappe.throw(_("Quantities cannot be negative."))
+	if batches is not None:
+		batches = clean_batches(line, batches, received_qty)
 	doc.recompute_line(line)
 	line.manual_adjust_qty = received_qty - flt(line.scanned_qty)
 	line.rejected_qty = rejected_qty
 	if batches is not None:
-		line.batches_json = frappe.as_json(batches)  # used from milestone 0.2
+		line.batches_json = frappe.as_json(batches) if batches else None
 	doc.recompute_line(line)
 	doc.save(ignore_permissions=True)
 	return doc
+
+
+def get_batches(line) -> list[dict]:
+	return frappe.parse_json(line.batches_json) if line.batches_json else []
+
+
+def needs_expiry(line, item=None) -> bool:
+	"""A batch-tracked line whose expiry rows do not cover what was received yet."""
+	has_batch = (item or {}).get("has_batch_no") if item else erp.get_batch_settings(line.item_code).has_batch_no
+	if not has_batch:
+		return False
+	got = flt(line.received_qty) + flt(line.rejected_qty)
+	if not got:
+		return False
+	batches = get_batches(line)
+	return not batches or abs(sum(flt(b["qty"]) for b in batches) - flt(line.received_qty)) > EPSILON
+
+
+def clean_batches(line, batches, received_qty) -> list[dict]:
+	"""Validate expiry rows from the phone: [{"expiry_date", "qty"}], one batch per expiry date."""
+	if not batches:
+		return []
+	if not erp.get_batch_settings(line.item_code).has_batch_no:
+		frappe.throw(_("{0} is not batch tracked.").format(line.item_name or line.item_code))
+	today = frappe.utils.getdate()
+	merged = {}
+	for entry in batches:
+		entry = frappe._dict(entry)
+		if not entry.get("expiry_date"):
+			frappe.throw(_("Enter an expiry date for every row."))
+		try:
+			expiry = frappe.utils.getdate(entry.expiry_date)
+		except Exception:
+			frappe.throw(_("{0} is not a valid date.").format(entry.expiry_date))
+		if expiry < today:
+			frappe.throw(
+				_("{0} expired on {1}. Record expired goods as rejected quantity.").format(
+					line.item_name or line.item_code, frappe.format(expiry, "Date")
+				)
+			)
+		qty = flt(entry.get("qty"))
+		if qty < 0:
+			frappe.throw(_("Quantities cannot be negative."))
+		merged[str(expiry)] = merged.get(str(expiry), 0.0) + qty
+	rows = [{"expiry_date": d, "qty": q} for d, q in sorted(merged.items())]
+	if len(rows) > 1:
+		rows = [r for r in rows if r["qty"]]
+	if abs(sum(r["qty"] for r in rows) - received_qty) > EPSILON:
+		frappe.throw(
+			_("The expiry quantities add up to {0}, but the received quantity is {1}.").format(
+				frappe.format(sum(r["qty"] for r in rows)), frappe.format(received_qty)
+			)
+		)
+	return rows
 
 
 def finish_session(session, supplier_delivery_note=None, remaining_expected=None):
@@ -272,6 +338,11 @@ def finish_session(session, supplier_delivery_note=None, remaining_expected=None
 	)
 	if not has_qty and not has_unknown:
 		frappe.throw(_("Scan at least one item before sending the shipment for review."))
+	missing_expiry = [l.item_name or l.item_code for l in doc.lines if needs_expiry(l)]
+	if missing_expiry:
+		frappe.throw(
+			_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed")
+		)
 	if remaining_expected and remaining_expected not in ("Still coming", "Supplier will not send"):
 		frappe.throw(_("Invalid value for remaining quantity."))
 	if supplier_delivery_note is not None:
@@ -522,6 +593,76 @@ def report_unknown_barcode(session, barcode, qty=1, note=None, photo=None, clien
 	return unknown
 
 
+INVOICE_PREFIX = "supplier-invoice-"
+INVOICE_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf"}
+MAX_INVOICE_BYTES = 10 * 1024 * 1024
+MAX_INVOICE_FILES = 10
+
+
+def get_invoices(session):
+	return frappe.get_all(
+		"File",
+		filters={
+			"attached_to_doctype": SESSION,
+			"attached_to_name": session,
+			"file_name": ["like", INVOICE_PREFIX + "%"],
+		},
+		fields=["name", "file_name", "file_url", "is_private"],
+		order_by="creation asc",
+	)
+
+
+def attach_invoice(session, data_url):
+	"""Store a photo or PDF of the supplier's invoice on the session; it moves to the Purchase Receipt on approval."""
+	doc = get_editable_session(session)
+	if len(get_invoices(doc.name)) >= MAX_INVOICE_FILES:
+		frappe.throw(_("A shipment can have at most {0} invoice files.").format(MAX_INVOICE_FILES))
+	match = re.match(r"^data:([\w/+.-]+);base64,(.+)$", data_url or "", re.S)
+	if not match or match.group(1) not in INVOICE_TYPES:
+		frappe.throw(_("The invoice must be a photo (JPEG, PNG, WebP) or a PDF."))
+	content = base64.b64decode(match.group(2))
+	if len(content) > MAX_INVOICE_BYTES:
+		frappe.throw(_("The invoice file is too large."))
+	count = len(get_invoices(doc.name)) + 1
+	file_doc = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{INVOICE_PREFIX}{frappe.scrub(doc.name)}-{count}.{INVOICE_TYPES[match.group(1)]}",
+			"content": content,
+			"attached_to_doctype": SESSION,
+			"attached_to_name": doc.name,
+			"is_private": 1,
+		}
+	).insert(ignore_permissions=True)
+	return file_doc
+
+
+def remove_invoice(session, file_name):
+	doc = get_editable_session(session)
+	name = frappe.db.get_value(
+		"File",
+		{"name": file_name, "attached_to_doctype": SESSION, "attached_to_name": doc.name, "file_name": ["like", INVOICE_PREFIX + "%"]},
+	)
+	if not name:
+		frappe.throw(_("Invoice file not found."), frappe.DoesNotExistError)
+	frappe.delete_doc("File", name, ignore_permissions=True)
+
+
+def copy_invoices(session, doctype, name):
+	"""Attach the session's invoice files to the Purchase Receipt (same stored file, new attachment)."""
+	for f in get_invoices(session):
+		frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f.file_name,
+				"file_url": f.file_url,
+				"is_private": f.is_private,
+				"attached_to_doctype": doctype,
+				"attached_to_name": name,
+			}
+		).insert(ignore_permissions=True)
+
+
 def _save_photo(data_url, unknown):
 	match = re.match(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", data_url or "", re.S)
 	if not match:
@@ -634,18 +775,27 @@ def approve(session, decisions=None, submit=False):
 		)
 	if frappe.db.exists("Hasr Unknown Barcode", {"session_doctype": SESSION, "session": doc.name, "status": "Open"}):
 		frappe.throw(_("Link or dismiss the unknown barcodes first."), title=_("Needs your decision"))
+	missing_expiry = [l.item_name or l.item_code for l in doc.lines if needs_expiry(l)]
+	if missing_expiry:
+		frappe.throw(_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed"))
 
 	settings = frappe.get_cached_doc("Hasr Settings")
 	pr = erp.create_draft_purchase_receipt(
 		doc.purchase_order,
 		[
-			{"po_item": l.po_item, "qty": l.received_qty, "rejected_qty": l.rejected_qty}
+			{
+				"po_item": l.po_item,
+				"qty": l.received_qty,
+				"rejected_qty": l.rejected_qty,
+				"batches": get_batches(l),
+			}
 			for l in doc.lines
 		],
 		supplier_delivery_note=doc.supplier_delivery_note,
 		default_rejected_warehouse=settings.default_rejected_warehouse,
 		remarks=_("Received with hasr, session {0}").format(doc.name),
 	)
+	copy_invoices(doc.name, pr.doctype, pr.name)
 	doc.purchase_receipt = pr.name
 	doc.status = "Approved"
 	doc.save(ignore_permissions=True)

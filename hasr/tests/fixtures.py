@@ -12,6 +12,8 @@ MILK_CASE = "16281007030126"
 YOGURT_UNIT = "6281100021457"
 CHEESE_UNIT = "6281100098120"
 BUTTER_UNIT = "6291003120045"
+CREAM_UNIT = "6281007070444"
+LABNEH_UNIT = "6281007091299"
 
 
 def company():
@@ -83,6 +85,12 @@ def setup_items():
 	item("HASR-YOGURT", "Greek Yogurt 500 g", barcodes=[(YOGURT_UNIT, "Nos")])
 	item("HASR-CHEESE", "White Cheese 400 g", barcodes=[(CHEESE_UNIT, "Nos")], allowance=5)
 	item("HASR-BUTTER", "Butter 200 g", barcodes=[(BUTTER_UNIT, "Nos")])
+	# batch tracked: ERPNext names the batches from the item's series
+	item("HASR-CREAM-B", "Fresh Cream 500 ml", barcodes=[(CREAM_UNIT, "Nos")], has_batch_no=1, has_expiry_date=1,
+		 create_new_batch=1, batch_number_series="HASR-CR-.#####", shelf_life_in_days=30)
+	# batch tracked without automatic batch numbers: hasr numbers them
+	item("HASR-LABNEH-B", "Labneh 1 kg (batch)", barcodes=[(LABNEH_UNIT, "Nos")], has_batch_no=1, has_expiry_date=1,
+		 create_new_batch=0, shelf_life_in_days=60)
 
 
 def user(email, roles):

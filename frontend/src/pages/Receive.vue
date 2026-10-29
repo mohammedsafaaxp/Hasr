@@ -11,6 +11,17 @@
             <bdi>{{ s.supplier_name }}</bdi> · {{ __('shipment {0}', [s.shipment_no]) }}
           </p>
         </div>
+        <button
+          v-if="s && (s.editable || s.invoices.length)"
+          type="button"
+          class="relative inline-flex h-11 shrink-0 items-center gap-1.5 rounded-hasr bg-hasr-surface2 px-3 text-[14px]"
+          :aria-label="__('Supplier invoice')"
+          @click="invoiceOpen = true"
+        >
+          <LucideReceiptText class="size-5" />
+          <span>{{ __('Invoice') }}</span>
+          <span v-if="s.invoices.length" class="tabular rounded-full bg-hasr-ink px-1.5 text-[12px] text-white">{{ s.invoices.length }}</span>
+        </button>
         <Pill v-if="!online" theme="orange"><LucideCloudOff class="size-4" />{{ __('Offline') }}</Pill>
         <Pill v-else-if="s && s.status !== 'Open'" :theme="statusTheme">{{ __(s.status) }}</Pill>
       </div>
@@ -47,6 +58,8 @@
           @camera="cameraOpen = true"
         />
 
+        <LastScanCard v-if="lastLine" :line="lastLine" :scan="lastScan" @zoom="zoom" />
+
         <div class="flex gap-2 overflow-x-auto pb-1">
           <button
             v-for="f in filters"
@@ -63,25 +76,29 @@
     </header>
 
     <ul v-if="s" class="mt-2 flex-1 border-t border-hasr-line">
-      <li v-for="l in shownLines" :key="l.po_item">
-        <button
-          type="button"
-          class="flex w-full items-center gap-3 border-b border-hasr-line px-4 py-3.5 text-start active:bg-hasr-surface2"
-          :class="isOver(l) ? 'bg-[#FFFAF0]' : ''"
-          @click="openLine(l)"
-        >
-          <ItemThumb :src="l.image" :size="48" />
-          <div class="min-w-0 flex-1">
-            <p class="truncate text-[17px]" dir="auto">{{ l.item_name }}</p>
-            <p class="truncate text-[14px] text-hasr-muted">
-              <span class="ltr-text">{{ l.barcodes[0] ? l.barcodes[0].barcode : l.item_code }}</span> · {{ lineHint(l) }}
-            </p>
-          </div>
-          <span class="tabular flex shrink-0 items-center gap-1.5 text-[17px] font-semibold" :class="qtyClass(l)">
-            <LucideTriangleAlert v-if="isOver(l)" class="size-5" />
-            <LucideCheck v-else-if="isDone(l)" class="size-5" />
-            <span class="ltr-text">{{ formatNumber(l.received_qty) }} / {{ formatNumber(l.pending_qty) }}</span>
-          </span>
+      <li
+        v-for="l in shownLines"
+        :key="l.po_item"
+        :ref="(el) => (rowEls[l.po_item] = el)"
+        class="flex items-start gap-3 border-b border-hasr-line px-4 py-3"
+        :class="[isIssue(l) ? 'bg-[#FFFAF0]' : '', lastScan && lastScan.po_item === l.po_item ? 'outline outline-2 -outline-offset-2 outline-hasr-ink' : '']"
+      >
+        <button type="button" class="shrink-0" :aria-label="__('Photo')" @click="zoom(l.image)">
+          <ItemThumb :src="l.image" :size="72" />
+        </button>
+        <button type="button" class="min-w-0 flex-1 space-y-0.5 text-start" @click="openLine(l)">
+          <p class="text-[17px] leading-snug" dir="auto">{{ l.item_name }}</p>
+          <p v-for="b in barcodeRows(l).slice(0, 2)" :key="b.barcode" class="flex items-center gap-1.5 text-[15px]">
+            <span class="ltr-text tabular font-medium">{{ b.barcode }}</span>
+            <span class="rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
+          </p>
+          <p v-if="!l.barcodes.length" class="ltr-text text-[15px] text-hasr-muted">{{ l.item_code }}</p>
+          <p class="text-[13px] text-hasr-muted">{{ __('Ordered {0}', [orderedText(l)]) }} · {{ lineHint(l) }}</p>
+        </button>
+        <button type="button" class="tabular flex shrink-0 items-center gap-1.5 self-center text-[17px] font-semibold" :class="qtyClass(l)" @click="openLine(l)">
+          <LucideTriangleAlert v-if="isIssue(l)" class="size-5" />
+          <LucideCheck v-else-if="isDone(l)" class="size-5" />
+          <span class="ltr-text">{{ formatNumber(l.received_qty) }} / {{ formatNumber(l.pending_qty) }}</span>
         </button>
       </li>
       <li v-for="u in openUnknown" :key="u.name" class="flex items-center gap-3 border-b border-hasr-line bg-[#FFFAF0] px-4 py-3.5">
@@ -112,6 +129,7 @@
       :line="activeLine"
       :session="s && s.name"
       :editable="s && s.editable"
+      :expiry-warning-pct="s ? s.expiry_warning_pct : 0"
       @close="closeLine"
       @saved="onLineSaved"
       @details="(code) => router.push({ name: 'ItemDetails', params: { itemCode: code } })"
@@ -119,11 +137,13 @@
     <UnknownBarcodeSheet :barcode="unknownBarcode" :session="s && s.name" @close="unknownBarcode = ''" @sent="onUnknownSent" />
     <CameraSheet v-model:open="cameraOpen" @scan="onScan" />
     <FinishSheet v-if="s" v-model:open="finishOpen" :session="s" @finished="onFinished" />
+    <InvoiceSheet v-if="s" v-model:open="invoiceOpen" :session="s" />
+    <ImageZoom v-model:open="zoomOpen" :src="zoomSrc" />
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import IconButton from '../components/IconButton.vue'
 import Pill from '../components/Pill.vue'
@@ -134,6 +154,10 @@ import LineSheet from '../components/LineSheet.vue'
 import UnknownBarcodeSheet from '../components/UnknownBarcodeSheet.vue'
 import CameraSheet from '../components/CameraSheet.vue'
 import FinishSheet from '../components/FinishSheet.vue'
+import InvoiceSheet from '../components/InvoiceSheet.vue'
+import LastScanCard from '../components/LastScanCard.vue'
+import ImageZoom from '../components/ImageZoom.vue'
+import { barcodeRows, orderedText } from '../uom'
 import { api, deviceId, errorMessage, uuid4 } from '../api'
 import { __, formatNumber } from '../i18n'
 import { feedbackError, feedbackSuccess } from '../sound'
@@ -149,20 +173,35 @@ const toast = ref(null)
 const unknownBarcode = ref('')
 const cameraOpen = ref(false)
 const finishOpen = ref(false)
+const invoiceOpen = ref(false)
+const zoomOpen = ref(false)
+const zoomSrc = ref('')
+const lastScan = ref(null)
+const rowEls = {}
+const lastLine = computed(() => (lastScan.value && s.value ? s.value.lines.find((l) => l.po_item === lastScan.value.po_item) : null))
+
+function zoom(src) {
+  if (!src) return
+  zoomSrc.value = src
+  zoomOpen.value = true
+}
 const online = ref(navigator.onLine)
 const busy = ref(false)
 let toastTimer = null
 
 const activeLine = computed(() => (s.value && props.poItem ? s.value.lines.find((l) => l.po_item === props.poItem) : null))
-const sheetOpen = computed(() => !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value))
+const sheetOpen = computed(
+  () => !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value),
+)
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
 const isOver = (l) => l.over_allowance_state === 'Over' || l.over_allowance_state === 'Accepted'
 const isDone = (l) => l.received_qty + l.rejected_qty >= l.pending_qty
+const isIssue = (l) => isOver(l) || l.needs_expiry
 const counts = computed(() => {
   const lines = s.value ? s.value.lines : []
-  const done = lines.filter((l) => isDone(l) && !isOver(l)).length
-  const issues = lines.filter(isOver).length + openUnknown.value.length
+  const done = lines.filter((l) => isDone(l) && !isIssue(l)).length
+  const issues = lines.filter(isIssue).length + openUnknown.value.length
   return { all: lines.length, done, open: lines.filter((l) => !isDone(l)).length, issues }
 })
 const percent = computed(() => (counts.value.all ? Math.round((counts.value.done / counts.value.all) * 100) : 0))
@@ -178,10 +217,10 @@ const filters = computed(() => {
 const shownLines = computed(() => {
   const lines = s.value ? s.value.lines : []
   if (filter.value === 'open') return lines.filter((l) => !isDone(l))
-  if (filter.value === 'done') return lines.filter((l) => isDone(l) && !isOver(l))
-  if (filter.value === 'issues') return lines.filter(isOver)
+  if (filter.value === 'done') return lines.filter((l) => isDone(l) && !isIssue(l))
+  if (filter.value === 'issues') return lines.filter(isIssue)
   // problems first, then lines still to do, then complete ones
-  const rank = (l) => (isOver(l) ? 0 : isDone(l) ? 2 : 1)
+  const rank = (l) => (isIssue(l) ? 0 : isDone(l) ? 2 : 1)
   return [...lines].sort((a, b) => rank(a) - rank(b) || a.idx - b.idx)
 })
 const statusTheme = computed(() => ({ 'Pending Approval': 'orange', Approved: 'green', 'Sent Back': 'red' })[s.value.status] || 'gray')
@@ -196,6 +235,7 @@ function lineHint(l) {
     const over = l.already_received_qty + l.received_qty + l.rejected_qty - l.allowed_qty
     return __('{0} over the limit', [formatNumber(Math.ceil(over))])
   }
+  if (l.needs_expiry) return __('expiry date needed')
   if (l.rejected_qty) return __('{0} rejected', [formatNumber(l.rejected_qty)])
   if (!l.received_qty) return __('not scanned')
   const left = l.pending_qty - l.received_qty - l.rejected_qty
@@ -203,7 +243,7 @@ function lineHint(l) {
 }
 
 function qtyClass(l) {
-  if (isOver(l)) return 'text-hasr-warning'
+  if (isIssue(l)) return 'text-hasr-warning'
   if (isDone(l)) return 'text-hasr-success'
   return l.received_qty ? 'text-hasr-ink' : 'text-hasr-muted'
 }
@@ -262,6 +302,9 @@ async function onScan(code) {
         undo: r.client_uuid,
       })
       if (line && isOver(line)) feedbackError()
+      lastScan.value = { po_item: r.po_item, barcode: code, uom: r.uom, conversion_factor: r.conversion_factor }
+      await nextTick()
+      rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     } else if (r.code === 'unknown_barcode') {
       feedbackError()
       unknownBarcode.value = code

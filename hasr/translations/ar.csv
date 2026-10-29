@@ -2,11 +2,14 @@
 1 item,صنف واحد
 1 order,أمر واحد
 1 {0} = {1} {2},1 {0} = {1} {2}
+A batch is created for each date,الباج ينسوّى تلقائياً لكل تاريخ
 A draft Purchase Receipt is created from this session. Stock changes only when the receipt is submitted.,راح ينسوى إيصال استلام مسودة من هاي الجلسة. المخزون ما يتغير إلا لما ينعتمد الإيصال.
+A shipment can have at most {0} invoice files.,الشحنة بيها {0} ملفات فاتورة كحد أقصى.
 Accept {0},اقبل {0}
 Accept {0} only,اقبل {0} بس
 Accepted,مقبول
 Account,الحساب
+Add another expiry date,تاريخ انتهاء ثاني بنفس الصنف
 Added 1 {0} of {1},انضاف {0} {1}
 Added {0},انضاف {0}
 Added {0} {1} of {2},انضاف {0} {1} من {2}
@@ -38,6 +41,7 @@ Cancel session,ألغِ الجلسة
 Cancel this receiving session? Nothing is posted to stock.,تلغي جلسة الاستلام؟ ما راح يتسجل شي بالمخزون.
 Cancelled,ملغاة
 Capped,محدد
+Check the received quantities against it. It is attached to the Purchase Receipt on approval.,طابق الكميات المستلمة وياها. تنربط بإيصال الاستلام لما توافق.
 Chilled,مبرّد
 Class A share cannot be greater than class B share.,نسبة الفئة A ما تصير أكبر من نسبة الفئة B.
 Close,سدّ
@@ -56,25 +60,38 @@ Dismissed,متجاهل
 Done,مكتمل
 "ERPNext considers these lines fully received already, so they cannot be added: {0}",ERPNext يعتبر هاي الأسطر مستلمة بالكامل، فما تنضاف: {0}
 Email or username,الإيميل أو اسم المستخدم
+Enter an expiry date for every row.,اكتب تاريخ الانتهاء لكل سطر.
+Enter the expiry date for: {0},اكتب تاريخ الانتهاء لـ: {0}
 Everything on purchase order {0} has been received or is waiting for approval.,كل شي بأمر الشراء {0} انستلم أو ينتظر الموافقة.
+Expiry and batch,الانتهاء والباج
+Expiry date,تاريخ الانتهاء
+Expiry date needed,يحتاج تاريخ انتهاء
+Expiry dates,تواريخ الانتهاء
+Expiry entered,التاريخ مكتوب
+File,ملف
 Finish and send for review,أنهِ الشحنة وابعثها للمشرف
 Finish shipment and send for review,إنهاء الاستلام وإرساله للمشرف
 Finish shipment {0},إنهاء الشحنة {0}
 For now hasr receives purchase orders.,حالياً حَصر يستلم أوامر الشراء.
 Frozen,مجمّد
+Goes with the Purchase Receipt,تنتقل وية إيصال الاستلام
 In progress,قيد الاستلام
 Increase,زيّد
 Invalid value for remaining quantity.,قيمة غير صحيحة للكمية الباقية.
+Invoice,الفاتورة
+Invoice file not found.,ملف الفاتورة مو موجود.
 Issues,مشكلة
 Item,الصنف
 Item details,تفاصيل الصنف
 Item group,المجموعة
 Item {0} is disabled.,الصنف {0} معطّل.
+Item {0} is not batch tracked.,الصنف {0} ما عليه باج.
 Item {0} not found.,الصنف {0} مو موجود.
 Keep it open for another shipment,خلّيه مفتوح لشحنة ثانية
 Kg,كغم
 Language,اللغة
 Last received,آخر استلام
+Last scanned,آخر مسح
 Leave empty when the barcode is on a single unit.,خليها فارغة إذا الباركود على حبة وحدة.
 Line {0} is not part of session {1}.,السطر {0} مو من الجلسة {1}.
 Link,اربط
@@ -84,10 +101,12 @@ Link to item,اربط بصنف
 Linked,مربوط
 Missing or invalid scan id.,رقم المسح ناقص أو غلط.
 Needs your decision,يحتاج قرارك
+New batch,باج جديد
 No connection. Try again.,ماكو اتصال. جرّب مرة ثانية.
 No conversion factor from {0} to {1} for {2}.,ماكو معامل تحويل من {0} إلى {1} للصنف {2}.
 No photo in ERPNext yet,ماكو صورة بـ ERPNext بعد
 No purchase orders are waiting.,ماكو أوامر شراء بالانتظار.
+No supplier invoice was attached.,ما انرفعت فاتورة المورد.
 Nos,حبة
 Not a whole number of {0},مو عدد صحيح من {0}
 Not in this shipment,ما وصلت بهالشحنة
@@ -99,6 +118,7 @@ Nothing was received in this session.,ما انستلم شي بهالجلسة.
 OK,تمام
 Offline,بدون نت
 One clear photo of the pack is enough,صورة وحدة واضحة للعلبة تكفي
+One new batch is created per expiry date on approval.,ينسوى باج جديد لكل تاريخ انتهاء لما توافق.
 Online · {0},متزامن · آخر مزامنة {0}
 Only a Hasr Supervisor can cancel a session waiting for approval.,بس مشرف حَصر يگدر يلغي جلسة تنتظر الموافقة.
 Only a Hasr Supervisor can do this.,بس مشرف حَصر يگدر يسوي هذا.
@@ -107,11 +127,13 @@ Open,متبقي
 Open Desk,افتح الواجهة الإدارية
 Open Purchase Receipt,افتح إيصال الاستلام
 Open source,مفتوح المصدر
+Ordered {0},المطلوب {0}
 Over,فوق الحد
 Partial {0} of {1},جزئي {0} من {1}
 Password,كلمة السر
 Pending Approval,بانتظار الموافقة
 Photo,الصورة
+Photograph every page so the supervisor can check the receipt against it,صوّر كل صفحة حتى المشرف يطابق الاستلام وياها
 Point the camera at a barcode,وجّه الكاميرا على الباركود
 Purchase Receipt created,انسوى إيصال الاستلام
 Purchase order {0} already has an open receiving session {1} by {2}. Finish it first.,أمر الشراء {0} بيه جلسة استلام مفتوحة {1} بيد {2}. لازم تنتهي أول.
@@ -128,6 +150,7 @@ Receiving and stock counts for ERPNext,الاستلام والجرد لـ ERPNex
 Receiving session {0} not found.,جلسة الاستلام {0} مو موجودة.
 Refresh,تحديث
 Rejected quantity,الكمية المرفوضة
+Remove,احذف
 Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: {1} بيه كمية مرفوضة بس ماكو مخزن مرفوضات. حدد مخزن افتراضي بإعدادات حَصر.
 Save line,احفظ السطر
 Saving…,دنحفظ…
@@ -154,6 +177,7 @@ Session {0} is {1} and can no longer be changed.,الجلسة {0} حالتها {
 Session {0} is {1} and cannot be cancelled.,الجلسة {0} حالتها {1} وما تنلغي.
 "Session {0} is {1}, not waiting for approval.",الجلسة {0} حالتها {1}، مو بانتظار الموافقة.
 Shelf life,مدة الصلاحية
+Short shelf life: {0} days left,صلاحية قصيرة: باقي {0} يوم
 Sign in,تسجيل الدخول
 Sign out,تسجيل الخروج
 Signing in…,ديسجل دخول…
@@ -161,8 +185,12 @@ Something went wrong. Try again.,صار خطأ. جرّب مرة ثانية.
 Stock counts are coming in version 0.3,الجرد يجي بنسخة 0.3
 Submit the Purchase Receipt now,اعتمد إيصال الاستلام هسه
 Supplier delivery note,رقم وصل المورد
+Supplier invoice,فاتورة المورد
 Take a photo of the product,صوّر المنتج
 The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.,الكاميرا تحتاج اتصال آمن (HTTPS). استخدم السكانر أو اكتب الباركود.
+"The expiry quantities add up to {0}, but the received quantity is {1}.",مجموع كميات تواريخ الانتهاء {0}، بس الكمية المستلمة {1}.
+The invoice file is too large.,ملف الفاتورة كلش كبير.
+"The invoice must be a photo (JPEG, PNG, WebP) or a PDF.",الفاتورة لازم تكون صورة (JPEG أو PNG أو WebP) أو PDF.
 The photo is too large.,الصورة كلش كبيرة.
 "The photo must be a JPEG, PNG or WebP image.",الصورة لازم تكون JPEG أو PNG أو WebP.
 The rest stays on the same purchase order,الباقي يبقى على نفس أمر الشراء
@@ -180,6 +208,7 @@ Units,الوحدات
 Unknown barcode,باركود غير معروف
 Unknown barcode {0} is already {1}.,الباركود غير المعروف {0} حالته {1} أصلاً.
 Unknown barcode {0} · {1} units,باركود غير معروف {0} · {1} حبة
+Uploading…,دنرفع…
 Use your ERPNext account,استخدم حساب ERPNext مالتك
 Waiting to be received,بانتظار الاستلام
 Warehouse,المخزن
@@ -193,16 +222,22 @@ You need permission to submit Purchase Receipts.,تحتاج صلاحية اعت�
 You need the Hasr Counter role to use hasr.,تحتاج دور «عدّاد حَصر» حتى تستخدم حَصر.
 Zoom,تكبير
 complete,مكتمل
+expiry date needed,يحتاج تاريخ انتهاء
 hasr,حَصر
 not scanned,ما انمسح بعد
+number given on approval,رقمه يتثبت لما يوافق المشرف
 ordered {0} {1},المطلوب {0} {1}
 scans must be a list.,المسحات لازم تكون قائمة.
 shipment {0},الشحنة {0}
 waiting for the supervisor,ينتظر المشرف
 {0} days,{0} يوم
 {0} days late,متأخر {0} أيام
+{0} expired on {1}. Record expired goods as rejected quantity.,{0} منتهي بتاريخ {1}. سجّل البضاعة المنتهية ككمية مرفوضة.
 {0} is already fully received on purchase order {1}.,{0} مستلم بالكامل على أمر الشراء {1}.
+{0} is batch tracked. Enter the expiry date for what was received.,{0} عليه باج. اكتب تاريخ انتهاء اللي انستلم.
+{0} is not a valid date.,{0} مو تاريخ صحيح.
 {0} is not an open line on purchase order {1}. Dismiss the barcode instead.,{0} مو سطر مفتوح بأمر الشراء {1}. تجاهل الباركود بدالها.
+{0} is not batch tracked.,{0} ما عليه باج.
 {0} is not on purchase order {1}. It was not counted.,{0} مو موجود بأمر الشراء {1}. ما انحسب.
 {0} is within the allowance; nothing to decide.,{0} ضمن المسموح، ماكو شي يحتاج قرار.
 {0} items,{0} صنف

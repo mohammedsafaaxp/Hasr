@@ -191,6 +191,49 @@ function hasr_render_review(frm, is_supervisor) {
 				</div>`);
 		}
 
+		const batch_lines = data.lines.filter((l) => l.has_batch_no && (l.received_qty || l.rejected_qty));
+		const facts = [];
+		if (data.invoices.length) {
+			const links = data.invoices
+				.map((f) => {
+					const is_pdf = /\.pdf$/i.test(f.file_name);
+					return `<a href="${esc(f.file_url)}" target="_blank" class="hasr-invoice">${
+						is_pdf ? frappe.utils.icon("file", "lg") : `<img src="${esc(f.file_url)}">`
+					}</a>`;
+				})
+				.join("");
+			facts.push(`
+				<div class="hasr-card">
+					<div class="hasr-card-body">
+						<div class="hasr-card-title">${__("Supplier invoice")}</div>
+						<div class="text-muted">${__("Check the received quantities against it. It is attached to the Purchase Receipt on approval.")}</div>
+						<div class="hasr-invoices">${links}</div>
+					</div>
+				</div>`);
+		} else if (data.status === "Pending Approval") {
+			facts.push(`<p class="text-muted">${__("No supplier invoice was attached.")}</p>`);
+		}
+		if (batch_lines.length) {
+			const rows = batch_lines
+				.map((l) => {
+					const parts = (l.batches || []).map(
+						(b) => `${frappe.datetime.str_to_user(b.expiry_date)} × ${fmt(b.qty)}`
+					);
+					return `<tr><td>${esc(l.item_name)}</td><td>${
+						parts.length ? parts.join(", ") : `<span class="text-danger">${__("Expiry date needed")}</span>`
+					}</td></tr>`;
+				})
+				.join("");
+			facts.push(`
+				<div class="hasr-card">
+					<div class="hasr-card-body">
+						<div class="hasr-card-title">${__("Expiry dates")}</div>
+						<div class="text-muted">${__("One new batch is created per expiry date on approval.")}</div>
+						<table class="table table-sm hasr-batches"><tbody>${rows}</tbody></table>
+					</div>
+				</div>`);
+		}
+
 		const counts = data.scan_counts || {};
 		const sync = __("{0} scans applied, {1} rejected, {2} undone.", [
 			counts.Applied || 0,
@@ -206,9 +249,15 @@ function hasr_render_review(frm, is_supervisor) {
 				.hasr-card-body { flex: 1; min-width: 0; }
 				.hasr-card-title { font-weight: 500; }
 				.hasr-photo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+				.hasr-invoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+				.hasr-invoice { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px;
+					border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+				.hasr-invoice img { width: 100%; height: 100%; object-fit: cover; }
+				.hasr-batches { margin: 8px 0 0; }
 				.hasr-photo-empty { display: flex; align-items: center; justify-content: center; background: var(--control-bg); }
 			</style>
 			${cards.length ? cards.join("") : `<p class="text-muted">${__("Nothing needs your decision.")}</p>`}
+			${facts.join("")}
 			<p class="text-muted small">${sync}</p>
 		`);
 

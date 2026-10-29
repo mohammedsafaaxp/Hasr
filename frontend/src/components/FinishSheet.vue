@@ -31,6 +31,8 @@
         </label>
       </template>
 
+      <InvoiceFiles :session="session.name" :files="session.invoices" :editable="session.editable" @update:files="session.invoices = $event" />
+
       <label class="block space-y-1">
         <span class="text-sm text-hasr-secondary">{{ __('Supplier delivery note') }}</span>
         <input v-model="deliveryNote" type="text" maxlength="140" class="h-11 w-full rounded-hasr border-0 bg-hasr-surface2 px-3" />
@@ -59,6 +61,7 @@
 import { computed, ref, watch } from 'vue'
 import Sheet from './Sheet.vue'
 import IconButton from './IconButton.vue'
+import InvoiceFiles from './InvoiceFiles.vue'
 import { api, errorMessage } from '../api'
 import { __ } from '../i18n'
 

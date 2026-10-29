@@ -52,10 +52,21 @@ class HasrReceivingSession(Document):
 			)[0][0]
 		)
 		line.received_qty = max(flt(line.scanned_qty) + flt(line.manual_adjust_qty), 0.0)
+		sync_single_batch(line)
 		update_line_state(line)
 
 	def is_editable(self):
 		return self.status in EDITABLE_STATUSES
+
+
+def sync_single_batch(line):
+	"""With one expiry date on the line, later scans belong to it: the worker enters the date once and keeps scanning."""
+	if not line.batches_json:
+		return
+	batches = frappe.parse_json(line.batches_json)
+	if len(batches) == 1 and flt(batches[0]["qty"]) != flt(line.received_qty):
+		batches[0]["qty"] = flt(line.received_qty)
+		line.batches_json = frappe.as_json(batches)
 
 
 def line_total(line) -> float:
