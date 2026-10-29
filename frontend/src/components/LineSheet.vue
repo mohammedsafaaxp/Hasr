@@ -13,7 +13,7 @@
           <p class="text-sm text-hasr-muted"><span class="ltr-text">{{ line.item_code }}</span> · {{ __('Ordered {0}', [orderedText(line)]) }}</p>
           <p v-for="b in barcodeRows(line)" :key="b.barcode" class="flex items-center gap-1.5 text-[14px]">
             <span class="ltr-text tabular font-medium">{{ b.barcode }}</span>
-            <span class="rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
+            <span class="whitespace-nowrap rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
           </p>
           <button type="button" class="text-sm text-hasr-info" @click="$emit('details', line.item_code)">{{ __('Item details') }}</button>
         </div>

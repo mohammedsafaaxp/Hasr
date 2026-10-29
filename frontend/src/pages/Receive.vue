@@ -19,11 +19,10 @@
           @click="invoiceOpen = true"
         >
           <LucideReceiptText class="size-5" />
-          <span>{{ __('Invoice') }}</span>
+          <span v-if="s.editable" class="hidden min-[400px]:inline">{{ __('Invoice') }}</span>
           <span v-if="s.invoices.length" class="tabular rounded-full bg-hasr-ink px-1.5 text-[12px] text-white">{{ s.invoices.length }}</span>
         </button>
         <Pill v-if="!online" theme="orange"><LucideCloudOff class="size-4" />{{ __('Offline') }}</Pill>
-        <Pill v-else-if="s && s.status !== 'Open'" :theme="statusTheme">{{ __(s.status) }}</Pill>
       </div>
 
       <p v-if="loadError" class="rounded-hasr bg-hasr-danger-bg p-3 text-sm text-hasr-danger">{{ loadError }}</p>
@@ -36,7 +35,8 @@
           <b>{{ __('Sent back by the supervisor') }}</b>
           <span v-if="s.review_note">: {{ s.review_note }}</span>
         </div>
-        <div v-else-if="!s.editable" class="rounded-hasr bg-hasr-info-bg p-3 text-sm text-hasr-info">
+        <div v-else-if="!s.editable" class="flex items-center gap-2 rounded-hasr bg-hasr-info-bg p-3 text-sm text-hasr-info">
+          <Pill :theme="statusTheme">{{ __(s.status) }}</Pill>
           {{ s.status === 'Pending Approval' ? __('Sent for review. The supervisor will approve it.') : __('This shipment can no longer be changed.') }}
         </div>
 
@@ -90,7 +90,7 @@
           <p class="text-[17px] leading-snug" dir="auto">{{ l.item_name }}</p>
           <p v-for="b in barcodeRows(l).slice(0, 2)" :key="b.barcode" class="flex items-center gap-1.5 text-[15px]">
             <span class="ltr-text tabular font-medium">{{ b.barcode }}</span>
-            <span class="rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
+            <span class="whitespace-nowrap rounded bg-hasr-surface2 px-1.5 text-[12px] text-hasr-secondary">{{ b.unit }}</span>
           </p>
           <p v-if="!l.barcodes.length" class="ltr-text text-[15px] text-hasr-muted">{{ l.item_code }}</p>
           <p class="text-[13px] text-hasr-muted">{{ __('Ordered {0}', [orderedText(l)]) }} · {{ lineHint(l) }}</p>

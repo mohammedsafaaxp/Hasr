@@ -25,10 +25,11 @@ hasr is a Frappe app installed **on the same site as ERPNext**. Warehouse staff 
 **draft** documents; a supervisor reviews them in Desk and approves. ERPNext stays the source of
 truth for items, barcodes, units, orders and stock, and hasr never changes ERPNext's code.
 
-> **Status: 0.1, online receiving against a purchase order.** Offline mode, batches and expiry come in
-> 0.2, stock counts in 0.3. See [docs/MILESTONES.md](docs/MILESTONES.md).
+> **Status: 0.1, online receiving against a purchase order**, plus batches with expiry dates and the
+> supplier invoice (brought forward from 0.2). Offline mode comes in 0.2, stock counts in 0.3.
+> See [docs/MILESTONES.md](docs/MILESTONES.md).
 
-## Features (0.1)
+## Features
 
 - **Scan to receive.** Camera scanning (works on iOS Safari) or any keyboard-wedge hardware scanner.
   Sound and vibration on every scan, with undo.
@@ -38,6 +39,14 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
   (1 box = 12 units), using the item's barcode UOM.
 - **Unknown barcodes** are sent to the supervisor with a photo and a note. The phone never creates items.
 - **Rejected quantity** for damaged goods, posted to the rejected warehouse.
+- **See what you scan.** Every line shows a large photo (tap to zoom), all its barcodes with the unit
+  each one counts (unit, or box ×12), and the ordered quantity in the purchase order's unit. The last
+  scanned item is shown large under the scan field, so the worker can check it is the same product.
+- **Batches and expiry dates.** For batch-tracked items the worker only enters expiry dates (more than
+  one if the delivery mixes dates). On approval hasr creates one ERPNext Batch per date and splits the
+  Purchase Receipt row per batch. Expired dates are refused, short shelf life is flagged.
+- **Supplier invoice.** Photos or a PDF of the invoice travel with the shipment; the supervisor checks the
+  quantities against it, and it is attached to the Purchase Receipt on approval.
 - **Safe to retry.** Every scan carries an ID from the phone, so sending it twice counts it once.
 - **One open session per order**, enforced in the database.
 - **Supervisor review in Desk:** accept or cap an over-receipt, link or dismiss unknown barcodes, send
@@ -47,10 +56,10 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
 - **English and Arabic** (right-to-left) from day one; the app follows the device language.
 
 <p align="center">
-  <img src="docs/screenshots/en-line-sheet.png" width="200" alt="Line sheet: quantity, unit and rejected quantity">
+  <img src="docs/screenshots/en-line-batches.png" width="200" alt="Line sheet: quantity, expiry dates and batches">
+  <img src="docs/screenshots/en-invoice.png" width="200" alt="Supplier invoice photos">
   <img src="docs/screenshots/en-unknown.png" width="200" alt="Unknown barcode sheet">
   <img src="docs/screenshots/en-item-details.png" width="200" alt="Item details">
-  <img src="docs/screenshots/en-finish.png" width="200" alt="Finish shipment">
 </p>
 
 <p align="center">
