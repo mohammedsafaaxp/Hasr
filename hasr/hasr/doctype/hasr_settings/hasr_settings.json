@@ -6,7 +6,6 @@
  "engine": "InnoDB",
  "field_order": [
   "receiving_section",
-  "default_rejected_warehouse",
   "expiry_warning_pct",
   "column_break_rcv",
   "gs1_enabled",
@@ -35,13 +34,6 @@
    "fieldname": "receiving_section",
    "fieldtype": "Section Break",
    "label": "Receiving"
-  },
-  {
-   "description": "Used when the purchase order item has no rejected warehouse.",
-   "fieldname": "default_rejected_warehouse",
-   "fieldtype": "Link",
-   "label": "Default Rejected Warehouse",
-   "options": "Warehouse"
   },
   {
    "description": "Warn when remaining shelf life is below this share of the item's shelf life. [TBD]",
@@ -173,7 +165,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-01 16:00:00.000000",
+ "modified": "2026-11-01 16:23:49.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Settings",

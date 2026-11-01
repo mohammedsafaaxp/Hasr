@@ -97,8 +97,9 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		s = self.start(po)
 		po_item = s["lines"][0]["po_item"]
 		sync.push_scans([fx.scan(s["name"], fx.MILK_UNIT), fx.scan(s["name"], fx.MILK_UNIT)])
-		out = api.set_line(s["name"], po_item, 10, 2)
-		self.assertEqual((out["lines"][0]["received_qty"], out["lines"][0]["rejected_qty"]), (10, 2))
+		out = api.set_line(s["name"], po_item, 10)
+		self.assertEqual(out["lines"][0]["received_qty"], 10)
+		self.assertNotIn("rejected_qty", out["lines"][0], "no rejected quantity in hasr")
 		out = sync.push_scans([fx.scan(s["name"], fx.MILK_UNIT)])  # a later scan adds on top
 		self.assertEqual(out["lines"][0]["received_qty"], 11)
 		self.assertRaises(frappe.ValidationError, api.set_line, s["name"], po_item, -1)
@@ -133,7 +134,7 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		po = fx.make_po([("HASR-MILK", 4, "Box", 12), ("HASR-YOGURT", 36), ("HASR-CHEESE", 5)])
 		s = self.start(po)
 		sync.push_scans([fx.scan(s["name"], fx.MILK_CASE), fx.scan(s["name"], fx.MILK_CASE)])
-		api.set_line(s["name"], line_of(s, "HASR-YOGURT")["po_item"], 34, 2)
+		api.set_line(s["name"], line_of(s, "HASR-YOGURT")["po_item"], 34)
 		api.finish_session(s["name"], "DN-4411", "Still coming")
 
 		frappe.set_user(fx.SUPERVISOR)
@@ -146,8 +147,7 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		rows = {r.item_code: r for r in pr.items}
 		self.assertEqual(rows["HASR-MILK"].purchase_order, po.name)
 		self.assertEqual((rows["HASR-MILK"].qty, rows["HASR-MILK"].uom, rows["HASR-MILK"].stock_qty), (2, "Box", 24))
-		self.assertEqual((rows["HASR-YOGURT"].qty, rows["HASR-YOGURT"].rejected_qty), (34, 2))
-		self.assertEqual(rows["HASR-YOGURT"].rejected_warehouse, fx.warehouse("Hasr Rejected"))
+		self.assertEqual((rows["HASR-YOGURT"].qty, rows["HASR-YOGURT"].rejected_qty), (34, 0))
 		self.assertEqual(frappe.db.get_value("Purchase Order", po.name, "per_received"), 0)
 
 		self.assertRaises(frappe.ValidationError, api.approve, s["name"])  # not pending any more
@@ -161,22 +161,6 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		out = api.approve(s["name"], submit=1)
 		self.assertEqual(frappe.db.get_value("Purchase Receipt", out["purchase_receipt"], "docstatus"), 1)
 		self.assertEqual(frappe.db.get_value("Purchase Order", po.name, "per_received"), 100)
-
-	def test_rejected_warehouse_fallback_required(self):
-		po = fx.make_po([("HASR-YOGURT", 6)])
-		s = self.start(po)
-		api.set_line(s["name"], s["lines"][0]["po_item"], 5, 1)
-		api.finish_session(s["name"])
-		frappe.set_user("Administrator")
-		frappe.db.set_single_value("Hasr Settings", "default_rejected_warehouse", None)
-		frappe.clear_document_cache("Hasr Settings", "Hasr Settings")
-		try:
-			frappe.set_user(fx.SUPERVISOR)
-			self.assertRaisesRegex(frappe.ValidationError, "no rejected warehouse", api.approve, s["name"])
-		finally:
-			frappe.set_user("Administrator")
-			frappe.db.set_single_value("Hasr Settings", "default_rejected_warehouse", fx.warehouse("Hasr Rejected"))
-			frappe.clear_document_cache("Hasr Settings", "Hasr Settings")
 
 	def test_counter_cannot_approve(self):
 		po = fx.make_po([("HASR-YOGURT", 6)])
@@ -236,29 +220,28 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		api.cancel_session(s["name"])
 		self.assertEqual(self.start(po, fx.COUNTER_2)["shipment_no"], 1)
 
-	def test_cap_choices_for_the_excess(self):
+	def test_over_receipt_choices(self):
 		po = fx.make_po([("HASR-CHEESE", 48), ("HASR-YOGURT", 10)])  # cheese allowance 5% -> 50.4
 		s = self.start(po)
 		cheese = line_of(s, "HASR-CHEESE")["po_item"]
 		yogurt = line_of(s, "HASR-YOGURT")["po_item"]
 		api.set_line(s["name"], cheese, 54)
-		api.set_line(s["name"], yogurt, 12, 1)
+		api.set_line(s["name"], yogurt, 12)
 		api.finish_session(s["name"])
 		frappe.set_user(fx.SUPERVISOR)
 		self.assertRaises(frappe.ValidationError, api.decide_line, s["name"], cheese, "Keep")
+		self.assertRaises(frappe.ValidationError, api.decide_line, s["name"], cheese, "Reject excess")
 
-		out = api.decide_line(s["name"], cheese, "Reject excess")
+		out = api.decide_line(s["name"], cheese, "Cap")  # accept 48, return 6
 		line = line_of(out, "HASR-CHEESE")
-		self.assertEqual((line["received_qty"], line["rejected_qty"], line["over_allowance_state"]), (48, 6, "Excess rejected"))
+		self.assertEqual((line["received_qty"], line["over_allowance_state"]), (48, "Capped"))
 
-		out = api.decide_line(s["name"], yogurt, "Cap")  # 1 already rejected: accept 9, return 3
-		line = line_of(out, "HASR-YOGURT")
-		self.assertEqual((line["received_qty"], line["rejected_qty"], line["over_allowance_state"]), (9, 1, "Capped"))
+		out = api.decide_line(s["name"], yogurt, "Accept")
+		self.assertEqual(line_of(out, "HASR-YOGURT")["over_allowance_state"], "Accepted")
 
 		pr = frappe.get_doc("Purchase Receipt", api.approve(s["name"])["purchase_receipt"])
 		rows = {r.item_code: (r.qty, r.rejected_qty) for r in pr.items}
-		self.assertEqual(rows, {"HASR-CHEESE": (48, 6), "HASR-YOGURT": (9, 1)})
-		self.assertEqual(next(r for r in pr.items if r.item_code == "HASR-CHEESE").rejected_warehouse, fx.warehouse("Hasr Rejected"))
+		self.assertEqual(rows, {"HASR-CHEESE": (48, 0), "HASR-YOGURT": (12, 0)})
 
 	def test_invoice_number_required_and_carried(self):
 		frappe.set_user("Administrator")

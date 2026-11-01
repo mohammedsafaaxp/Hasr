@@ -70,8 +70,8 @@ def sync_single_batch(line):
 
 
 def line_total(line) -> float:
-	"""Everything ERPNext will count against the PO line (it includes rejected quantity)."""
-	return flt(line.already_received_qty) + flt(line.received_qty) + flt(line.rejected_qty)
+	"""Everything ERPNext will count against the PO line."""
+	return flt(line.already_received_qty) + flt(line.received_qty)
 
 
 def is_over(line) -> bool:
@@ -79,7 +79,7 @@ def is_over(line) -> bool:
 
 
 # Supervisor decisions that leave the line above the allowance on purpose
-DECIDED_OVER = ("Accepted", "Excess rejected")
+DECIDED_OVER = ("Accepted",)
 
 
 def update_line_state(line):

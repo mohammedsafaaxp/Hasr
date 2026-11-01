@@ -30,7 +30,7 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 	def test_scans_need_expiry_then_follow_single_date(self):
 		sync.push_scans([fx.scan(self.s["name"], fx.CREAM_UNIT, qty=10)])
 		self.assertTrue(line_of(api.get_session(self.s["name"]), "HASR-CREAM-B")["needs_expiry"])
-		api.set_line(self.s["name"], self.cream, 10, 0, [{"expiry_date": self.d1, "qty": 10}])
+		api.set_line(self.s["name"], self.cream, 10, [{"expiry_date": self.d1, "qty": 10}])
 		sync.push_scans([fx.scan(self.s["name"], fx.CREAM_UNIT, qty=5)])
 		line = line_of(api.get_session(self.s["name"]), "HASR-CREAM-B")
 		self.assertEqual(line["received_qty"], 15)
@@ -39,20 +39,20 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 
 	def test_batch_quantities_must_add_up(self):
 		with self.assertRaisesRegex(frappe.ValidationError, "add up to 40"):
-			api.set_line(self.s["name"], self.cream, 48, 0, [{"expiry_date": self.d1, "qty": 30}, {"expiry_date": self.d2, "qty": 10}])
+			api.set_line(self.s["name"], self.cream, 48, [{"expiry_date": self.d1, "qty": 30}, {"expiry_date": self.d2, "qty": 10}])
 
 	def test_expired_and_invalid_dates_refused(self):
-		with self.assertRaisesRegex(frappe.ValidationError, "Record expired goods as rejected"):
-			api.set_line(self.s["name"], self.cream, 5, 0, [{"expiry_date": add_days(nowdate(), -1), "qty": 5}])
-		self.assertRaises(frappe.ValidationError, api.set_line, self.s["name"], self.cream, 5, 0, [{"expiry_date": "", "qty": 5}])
+		with self.assertRaisesRegex(frappe.ValidationError, "Do not receive expired goods"):
+			api.set_line(self.s["name"], self.cream, 5, [{"expiry_date": add_days(nowdate(), -1), "qty": 5}])
+		self.assertRaises(frappe.ValidationError, api.set_line, self.s["name"], self.cream, 5, [{"expiry_date": "", "qty": 5}])
 
 	def test_same_date_rows_merge(self):
-		out = api.set_line(self.s["name"], self.cream, 8, 0, [{"expiry_date": self.d1, "qty": 5}, {"expiry_date": self.d1, "qty": 3}])
+		out = api.set_line(self.s["name"], self.cream, 8, [{"expiry_date": self.d1, "qty": 5}, {"expiry_date": self.d1, "qty": 3}])
 		self.assertEqual(line_of(out, "HASR-CREAM-B")["batches"], [{"expiry_date": self.d1, "qty": 8}])
 
 	def test_non_batch_item_refuses_batches(self):
 		yogurt = line_of(self.s, "HASR-YOGURT")["po_item"]
-		self.assertRaises(frappe.ValidationError, api.set_line, self.s["name"], yogurt, 1, 0, [{"expiry_date": self.d1, "qty": 1}])
+		self.assertRaises(frappe.ValidationError, api.set_line, self.s["name"], yogurt, 1, [{"expiry_date": self.d1, "qty": 1}])
 
 	def test_finish_requires_expiry(self):
 		sync.push_scans([fx.scan(self.s["name"], fx.CREAM_UNIT)])
@@ -60,16 +60,16 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 			api.finish_session(self.s["name"])
 
 	def test_approve_creates_batches_and_splits_rows(self):
-		api.set_line(self.s["name"], self.cream, 48, 2, [{"expiry_date": self.d1, "qty": 30}, {"expiry_date": self.d2, "qty": 18}])
-		api.set_line(self.s["name"], self.labneh, 10, 0, [{"expiry_date": self.d2, "qty": 10}])
+		api.set_line(self.s["name"], self.cream, 48, [{"expiry_date": self.d1, "qty": 30}, {"expiry_date": self.d2, "qty": 18}])
+		api.set_line(self.s["name"], self.labneh, 10, [{"expiry_date": self.d2, "qty": 10}])
 		api.finish_session(self.s["name"])
 		frappe.set_user(fx.SUPERVISOR)
-		out = api.approve(self.s["name"], decisions={self.cream: "Accept"})  # 48 + 2 rejected is over 48
+		out = api.approve(self.s["name"])
 		pr = frappe.get_doc("Purchase Receipt", out["purchase_receipt"])
 		self.assertEqual(pr.docstatus, 0)
 
 		cream_rows = [r for r in pr.items if r.item_code == "HASR-CREAM-B"]
-		self.assertEqual(sorted((r.qty, r.rejected_qty) for r in cream_rows), [(18, 0), (30, 2)])
+		self.assertEqual(sorted(r.qty for r in cream_rows), [18, 30])
 		for r in cream_rows:
 			self.assertTrue(r.batch_no.startswith("HASR-CR-"), r.batch_no)
 			self.assertEqual(r.use_serial_batch_fields, 1)
@@ -82,7 +82,7 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 		self.assertEqual(frappe.db.get_value("Batch", labneh.batch_no, "reference_name"), pr.name)
 
 	def test_submit_builds_bundles(self):
-		api.set_line(self.s["name"], self.cream, 30, 1, [{"expiry_date": self.d1, "qty": 20}, {"expiry_date": self.d2, "qty": 10}])
+		api.set_line(self.s["name"], self.cream, 30, [{"expiry_date": self.d1, "qty": 20}, {"expiry_date": self.d2, "qty": 10}])
 		api.finish_session(self.s["name"])
 		frappe.set_user(fx.SUPERVISOR)
 		out = api.approve(self.s["name"], submit=1)
@@ -90,8 +90,7 @@ class TestBatches(HasrTestCase, FrappeTestCase):
 		self.assertEqual(pr.docstatus, 1)
 		for r in pr.items:
 			self.assertTrue(r.serial_and_batch_bundle, "ERPNext built the bundle from batch_no")
-		first = next(r for r in pr.items if r.rejected_qty)
-		self.assertTrue(first.rejected_serial_and_batch_bundle)
+		first = next(r for r in pr.items if r.qty == 20)
 		from erpnext.stock.doctype.batch.batch import get_batch_qty  # assertion only
 
 		frappe.set_user("Administrator")  # v16 checks Batch permission in get_batch_qty
@@ -163,7 +162,7 @@ class TestWholeUnits(HasrTestCase, FrappeTestCase):
 		self.milk = line_of(self.s, "HASR-MILK")["po_item"]
 
 	def test_fraction_of_a_box_is_flagged_and_blocks_finish(self):
-		out = api.set_line(self.s["name"], self.milk, 5, 1)  # saving is allowed, so the worker can fix it later
+		out = api.set_line(self.s["name"], self.milk, 5)  # saving is allowed, so the worker can fix it later
 		line = line_of(out, "HASR-MILK")
 		self.assertTrue(line["uom_must_be_whole"])
 		self.assertTrue(line["whole_unit_issue"])
@@ -171,7 +170,7 @@ class TestWholeUnits(HasrTestCase, FrappeTestCase):
 			api.finish_session(self.s["name"])
 
 	def test_whole_boxes_pass(self):
-		out = api.set_line(self.s["name"], self.milk, 24, 12)
+		out = api.set_line(self.s["name"], self.milk, 24)
 		self.assertFalse(line_of(out, "HASR-MILK")["whole_unit_issue"])
 		self.assertEqual(api.finish_session(self.s["name"])["status"], "Pending Approval")
 

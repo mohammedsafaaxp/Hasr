@@ -312,7 +312,7 @@ whole {0} only,{0} كاملة فقط
 {0} days,{0} يومًا
 {0} days late,متأخر {0} أيام
 {0} does not match · {1} {2},{0} غير مطابق · {1} {2}
-{0} expired on {1}. Record expired goods as rejected quantity.,انتهت صلاحية {0} بتاريخ {1}. سجّل البضاعة المنتهية ككمية مرفوضة.
+{0} expired on {1}. Do not receive expired goods.,انتهت صلاحية {0} بتاريخ {1}. لا تستلم البضاعة المنتهية.
 {0} files,{0} ملفات
 {0} has no unit {1}. Choose one of its units.,الصنف {0} ليست له وحدة {1}. اختر إحدى وحداته.
 {0} is already fully received on purchase order {1}.,تم استلام {0} بالكامل في أمر الشراء {1}.

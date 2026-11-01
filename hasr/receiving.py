@@ -64,7 +64,7 @@ def in_flight_qty(purchase_order, exclude_session=None) -> dict[str, float]:
 	"""
 	rows = frappe.db.sql(
 		"""
-		select l.po_item, sum(l.received_qty + l.rejected_qty) as qty
+		select l.po_item, sum(l.received_qty) as qty
 		from `tabHasr Receiving Line` l
 		join `tabHasr Receiving Session` s on s.name = l.parent
 		left join `tabPurchase Receipt` pr on pr.name = s.purchase_receipt
@@ -232,7 +232,6 @@ def session_payload(doc):
 				"pending_qty": flt(l.pending_qty),
 				"allowed_qty": flt(l.allowed_qty),
 				"received_qty": flt(l.received_qty),
-				"rejected_qty": flt(l.rejected_qty),
 				"over_allowance_state": l.over_allowance_state,
 			}
 		)
@@ -283,17 +282,16 @@ def _line_uoms(item_code, stock_uom):
 	return uoms
 
 
-def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
+def set_line(session, po_item, received_qty, batches=None):
 	doc = get_editable_session(session)
 	line = doc.get_line(po_item)
-	received_qty, rejected_qty = flt(received_qty), flt(rejected_qty)
-	if received_qty < 0 or rejected_qty < 0:
+	received_qty = flt(received_qty)
+	if received_qty < 0:
 		frappe.throw(_("Quantities cannot be negative."))
 	if batches is not None:
 		batches = clean_batches(line, batches, received_qty)
 	doc.recompute_line(line)
 	line.manual_adjust_qty = received_qty - flt(line.scanned_qty)
-	line.rejected_qty = rejected_qty
 	if batches is not None:
 		line.batches_json = frappe.as_json(batches) if batches else None
 	doc.recompute_line(line)
@@ -302,7 +300,7 @@ def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
 
 
 def is_line_over(line) -> bool:
-	return line.over_allowance_state in ("Over", "Accepted", "Excess rejected")
+	return line.over_allowance_state in ("Over", "Accepted")
 
 
 def check_whole_units(doc):
@@ -320,8 +318,7 @@ def needs_expiry(line, item=None) -> bool:
 	has_batch = (item or {}).get("has_batch_no") if item else erp.get_batch_settings(line.item_code).has_batch_no
 	if not has_batch:
 		return False
-	got = flt(line.received_qty) + flt(line.rejected_qty)
-	if not got:
+	if not flt(line.received_qty):
 		return False
 	batches = get_batches(line)
 	return not batches or abs(sum(flt(b["qty"]) for b in batches) - flt(line.received_qty)) > EPSILON
@@ -343,7 +340,7 @@ def whole_unit_issue(line) -> str | None:
 		return None
 	batches = get_batches(line)
 	accepted = [flt(b["qty"]) for b in batches] if len(batches) > 1 else [flt(line.received_qty)]
-	if all(_is_whole(q / cf) for q in [*accepted, flt(line.rejected_qty)]):
+	if all(_is_whole(q / cf) for q in accepted):
 		return None
 	return _("{0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).").format(
 		line.item_name or line.item_code, _(line.uom), frappe.format(cf), _(line.stock_uom)
@@ -368,7 +365,7 @@ def clean_batches(line, batches, received_qty) -> list[dict]:
 			frappe.throw(_("{0} is not a valid date.").format(entry.expiry_date))
 		if expiry < today:
 			frappe.throw(
-				_("{0} expired on {1}. Record expired goods as rejected quantity.").format(
+				_("{0} expired on {1}. Do not receive expired goods.").format(
 					line.item_name or line.item_code, frappe.format(expiry, "Date")
 				)
 			)
@@ -396,7 +393,7 @@ def finish_session(session, supplier_delivery_note=None, remaining_expected=None
 		frappe.throw(_("Enter the supplier's invoice number."), title=_("Invoice number needed"))
 	if doc.received_by != frappe.session.user and not is_supervisor():
 		frappe.throw(_("Only {0} can finish this session.").format(doc.received_by), frappe.PermissionError)
-	has_qty = any(flt(l.received_qty) or flt(l.rejected_qty) for l in doc.lines)
+	has_qty = any(flt(l.received_qty) for l in doc.lines)
 	has_unknown = frappe.db.exists(
 		"Hasr Unknown Barcode", {"session_doctype": SESSION, "session": doc.name, "status": "Open"}
 	)
@@ -715,7 +712,7 @@ def _match_line(doc, item_code, po_item=None):
 	if not candidates:
 		return None
 	for line in candidates:
-		if flt(line.received_qty) + flt(line.rejected_qty) < flt(line.pending_qty) - EPSILON:
+		if flt(line.received_qty) < flt(line.pending_qty) - EPSILON:
 			return line
 	return candidates[-1]
 
@@ -1117,31 +1114,24 @@ def decide_line(session, po_item, decision):
 	return doc
 
 
-OVER_DECISIONS = ("Accept", "Cap", "Reject excess")
+OVER_DECISIONS = ("Accept", "Cap")
 
 
 def _apply_decision(doc, line, decision):
 	"""Over-receipt decision:
 	Accept: keep everything. Cap: the excess goes back to the supplier (not received).
-	Reject excess: the excess is received as rejected quantity (to the rejected warehouse).
 	"""
 	if decision not in OVER_DECISIONS:
-		frappe.throw(_("Decision must be Accept, Cap or Reject excess."))
+		frappe.throw(_("Decision must be Accept or Cap."))
 	doc.recompute_line(line)
-	if line.over_allowance_state not in ("Over", "Accepted", "Capped", "Excess rejected"):
+	if line.over_allowance_state not in ("Over", "Accepted", "Capped"):
 		frappe.throw(_("{0} is within the allowance; nothing to decide.").format(line.item_name or line.item_code))
 	if decision == "Accept":
 		line.over_allowance_state = "Accepted"
 		return
-	# what is still ordered, after what was already rejected
-	target = max(flt(line.pending_qty) - flt(line.rejected_qty), 0.0)
-	excess = max(flt(line.received_qty) - target, 0.0)
+	target = max(flt(line.pending_qty), 0.0)
 	line.manual_adjust_qty = target - flt(line.scanned_qty)
-	if decision == "Reject excess":
-		line.rejected_qty = flt(line.rejected_qty) + excess
-		line.over_allowance_state = "Excess rejected"
-	else:
-		line.over_allowance_state = "Capped"
+	line.over_allowance_state = "Capped"
 	doc.recompute_line(line)
 
 
@@ -1182,20 +1172,17 @@ def approve(session, decisions=None, submit=False):
 	if frappe.db.exists(MISMATCH, {"session_doctype": SESSION, "session": doc.name, "status": "Open"}):
 		frappe.throw(_("Decide on the reported item mismatches first."), title=_("Needs your decision"))
 
-	settings = frappe.get_cached_doc("Hasr Settings")
 	pr = erp.create_draft_purchase_receipt(
 		doc.purchase_order,
 		[
 			{
 				"po_item": l.po_item,
 				"qty": l.received_qty,
-				"rejected_qty": l.rejected_qty,
 				"batches": get_batches(l),
 			}
 			for l in doc.lines
 		],
 		supplier_delivery_note=doc.supplier_delivery_note,
-		default_rejected_warehouse=settings.default_rejected_warehouse,
 		remarks=" ".join(
 			filter(
 				None,
@@ -1223,7 +1210,7 @@ def send_back(session, note=None):
 	doc.status = "Sent Back"
 	doc.review_note = (note or "").strip() or None
 	for line in doc.lines:
-		if line.over_allowance_state in ("Accepted", "Excess rejected"):
+		if line.over_allowance_state == "Accepted":
 			line.over_allowance_state = "Over"
 	try:
 		doc.save(ignore_permissions=True)
@@ -1237,8 +1224,6 @@ def match_problems(doc) -> list[str]:
 	problems = []
 	for l in doc.lines:
 		name = l.item_name or l.item_code
-		if flt(l.rejected_qty):
-			problems.append(_("{0}: {1} rejected").format(name, frappe.format(flt(l.rejected_qty))))
 		if is_line_over(l):
 			problems.append(_("{0}: more than ordered").format(name))
 		elif abs(flt(l.received_qty) - flt(l.pending_qty)) > EPSILON:

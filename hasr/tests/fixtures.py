@@ -131,7 +131,6 @@ def setup_all():
 	warehouse("Hasr Rejected")
 	supplier()
 	frappe.db.set_single_value("Stock Settings", "over_delivery_receipt_allowance", 0)
-	frappe.db.set_single_value("Hasr Settings", "default_rejected_warehouse", warehouse("Hasr Rejected"))
 	frappe.db.set_single_value("Hasr Settings", "require_supplier_invoice_no", 0)
 	frappe.clear_document_cache("Hasr Settings", "Hasr Settings")
 

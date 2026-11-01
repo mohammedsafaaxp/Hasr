@@ -252,8 +252,8 @@ const sheetOpen = computed(
 )
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
-const isOver = (l) => ['Over', 'Accepted', 'Excess rejected'].includes(l.over_allowance_state)
-const isDone = (l) => l.received_qty + l.rejected_qty >= l.pending_qty
+const isOver = (l) => ['Over', 'Accepted'].includes(l.over_allowance_state)
+const isDone = (l) => l.received_qty >= l.pending_qty
 const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue || l.mismatch_open
 const counts = computed(() => {
   const lines = s.value ? s.value.lines : []
@@ -289,15 +289,14 @@ function filterClass(f) {
 
 function lineHint(l) {
   if (isOver(l)) {
-    const over = l.already_received_qty + l.received_qty + l.rejected_qty - l.allowed_qty
+    const over = l.already_received_qty + l.received_qty - l.allowed_qty
     return __('{0} over the limit', [formatNumber(Math.ceil(over))])
   }
   if (l.mismatch_open) return __('reported: does not match')
   if (l.whole_unit_issue) return __('whole {0} only', [__(l.uom)])
   if (l.needs_expiry) return __('expiry date needed')
-  if (l.rejected_qty) return __('{0} rejected', [formatNumber(l.rejected_qty)])
   if (!l.received_qty) return __('not scanned')
-  const left = l.pending_qty - l.received_qty - l.rejected_qty
+  const left = l.pending_qty - l.received_qty
   return left > 0 ? __('{0} to go', [formatNumber(left)]) : __('complete')
 }
 

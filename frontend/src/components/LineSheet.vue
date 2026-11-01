@@ -291,7 +291,7 @@ const qty = computed(() => Number(qtyText.value) || 0)
 const receivedStock = computed(() => round(qty.value * cf.value))
 const overBy = computed(() => {
   if (!props.line) return 0
-  return round(props.line.already_received_qty + receivedStock.value + props.line.rejected_qty - props.line.allowed_qty)
+  return round(props.line.already_received_qty + receivedStock.value - props.line.allowed_qty)
 })
 
 // The Purchase Receipt stays in the order's unit, so a box line takes whole boxes only.
@@ -488,7 +488,6 @@ async function save() {
       session: props.session,
       po_item: props.line.po_item,
       received_qty: receivedStock.value,
-      rejected_qty: props.line.rejected_qty,
     }
     const batches = batchesToSend()
     if (batches) args.batches = batches

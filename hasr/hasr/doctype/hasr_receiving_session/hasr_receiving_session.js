@@ -147,8 +147,8 @@ function hasr_render_review(frm, on_data) {
 		const cards = [];
 
 		for (const line of data.lines) {
-			if (!["Over", "Accepted", "Capped", "Excess rejected"].includes(line.over_allowance_state)) continue;
-			const total = line.already_received_qty + line.received_qty + line.rejected_qty;
+			if (!["Over", "Accepted", "Capped"].includes(line.over_allowance_state)) continue;
+			const total = line.already_received_qty + line.received_qty;
 			const over = total - line.allowed_qty;
 			const state = line.over_allowance_state;
 			cards.push(`
@@ -172,15 +172,12 @@ function hasr_render_review(frm, on_data) {
 					${
 						pending
 							? (() => {
-									const keep = Math.max(line.pending_qty - line.rejected_qty, 0);
+									const keep = Math.max(line.pending_qty, 0);
 									const excess = Math.max(line.received_qty - keep, 0);
 									return `<div class="hasr-decide">
 										<button class="btn btn-default btn-sm" data-decide="Cap" data-po-item="${line.po_item}"
 											title="${__("The excess is not received and goes back to the supplier.")}">
 											${__("Accept {0}, return {1}", [fmt(keep), fmt(excess)])}</button>
-										<button class="btn btn-default btn-sm" data-decide="Reject excess" data-po-item="${line.po_item}"
-											title="${__("The excess is received as rejected quantity and goes to the rejected warehouse.")}">
-											${__("Accept {0}, reject {1}", [fmt(keep), fmt(excess)])}</button>
 										<button class="btn btn-primary btn-sm" data-decide="Accept" data-po-item="${line.po_item}">
 											${__("Accept all {0}", [fmt(line.received_qty)])}</button>
 									</div>`;
@@ -247,7 +244,7 @@ function hasr_render_review(frm, on_data) {
 		]);
 
 		// summary + the lines as the supervisor reads them (the raw child table stays collapsed below)
-		const done = data.lines.filter((l) => l.received_qty + l.rejected_qty >= l.pending_qty).length;
+		const done = data.lines.filter((l) => l.received_qty >= l.pending_qty).length;
 		const summary = `
 			<div class="hasr-summary">
 				<span class="indicator-pill ${data.match_problems.length ? "orange" : "green"}">${
@@ -259,13 +256,13 @@ function hasr_render_review(frm, on_data) {
 				<span>${__("Supplier invoice")}: <b>${esc(data.supplier_invoice_no || "—")}</b></span>
 			</div>`;
 		const status_chip = (l) => {
-			const short = l.pending_qty - l.received_qty - l.rejected_qty;
-			if (["Over", "Accepted", "Excess rejected"].includes(l.over_allowance_state))
+			const short = l.pending_qty - l.received_qty;
+			if (["Over", "Accepted"].includes(l.over_allowance_state))
 				return `<span class="indicator-pill orange">${__("Over limit")}</span>`;
 			if (l.needs_expiry) return `<span class="indicator-pill orange">${__("Expiry date needed")}</span>`;
 			if (l.whole_unit_issue) return `<span class="indicator-pill orange">${__("Not a whole unit")}</span>`;
 			if (l.mismatch_open) return `<span class="indicator-pill orange">${__("Does not match?")}</span>`;
-			if (!l.received_qty && !l.rejected_qty) return `<span class="indicator-pill gray">${__("Not received")}</span>`;
+			if (!l.received_qty) return `<span class="indicator-pill gray">${__("Not received")}</span>`;
 			if (short > 0.000001) return `<span class="indicator-pill gray">${__("{0} short", [fmt(short)])}</span>`;
 			return `<span class="indicator-pill green">${__("Complete")}</span>`;
 		};
@@ -273,7 +270,7 @@ function hasr_render_review(frm, on_data) {
 			<table class="table table-sm hasr-lines">
 				<thead><tr>
 					<th>#</th><th>${__("Item")}</th><th class="hasr-num">${__("Ordered")}</th>
-					<th class="hasr-num">${__("Received")}</th><th class="hasr-num">${__("Rejected")}</th>
+					<th class="hasr-num">${__("Received")}</th>
 					<th>${__("Expiry dates")}</th><th>${__("Status")}</th>
 				</tr></thead>
 				<tbody>${data.lines
@@ -287,7 +284,6 @@ function hasr_render_review(frm, on_data) {
 						}</div></td>
 							<td class="hasr-num">${fmt(l.pending_qty)}</td>
 							<td class="hasr-num ${l.received_qty > l.pending_qty ? "text-warning" : ""}"><b>${fmt(l.received_qty)}</b></td>
-							<td class="hasr-num">${fmt(l.rejected_qty)}</td>
 							<td class="small">${(l.batches || [])
 								.map((b) => `${frappe.datetime.str_to_user(b.expiry_date)} × ${fmt(b.qty)}`)
 								.join("<br>") || (l.has_batch_no ? "—" : "")}</td>
