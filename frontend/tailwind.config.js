@@ -1,6 +1,6 @@
 import frappeUIPreset, { content as frappeUIContent } from 'frappe-ui/tailwind'
 
-// Tokens from docs/design/README.md
+// hasr design tokens: ink, surfaces, lines and the yellow accent
 export default {
   presets: [frappeUIPreset],
   content: ['./index.html', './src/**/*.{vue,js,ts}', ...frappeUIContent],

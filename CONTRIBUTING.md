@@ -1,11 +1,7 @@
 # Contributing to hasr
 
-Read these before writing code:
-
-1. [docs/PRD.md](docs/PRD.md): what we are building and why.
-2. [docs/TECH_SPEC.md](docs/TECH_SPEC.md): architecture, DocTypes, APIs, ERPNext integration. This is the contract.
-3. [docs/MILESTONES.md](docs/MILESTONES.md): the current milestone and its acceptance criteria. Build only that.
-4. [docs/design/README.md](docs/design/README.md) and `docs/design/screens/*.png`: the UI to match.
+Start with [README.md](README.md) and the feature guide, [docs/FEATURES.md](docs/FEATURES.md): they describe what
+hasr does today. Open an issue before a large change, so we agree on the behaviour first.
 
 ## Ground rules
 
@@ -23,6 +19,9 @@ Read these before writing code:
   (`_()` in Python, `__()` in the frontend and Desk scripts) and add it to `hasr/translations/ar.csv`.
   Use logical CSS (`ps-`, `pe-`, `ms-`, `me-`, `start`, `end`), never left/right.
 - **Tests with every change** (`FrappeTestCase`), covering each acceptance criterion.
+- **Keep the docs in step.** A change that adds, removes or changes what users see also updates
+  [README.md](README.md), [docs/FEATURES.md](docs/FEATURES.md) and [docs/FEATURES.ar.md](docs/FEATURES.ar.md)
+  (and the screenshots in `docs/screenshots/` when a screen changed), in the same pull request.
 - **Small commits, one concern each**, with conventional messages (`feat:`, `fix:`, `test:`, `docs:`).
 - **License GPLv3.** Do not paste code from sources with incompatible licenses.
 - **No proprietary data.** Fixtures and test data use invented names.
@@ -37,6 +36,6 @@ cd apps/hasr/frontend && yarn build           # builds into hasr/public/frontend
 
 ## When unsure
 
-If the spec is silent or contradicts ERPNext behaviour, write the question into
-[docs/QUESTIONS.md](docs/QUESTIONS.md) with what you found. Business rules (tolerances, approval limits,
-freeze duration) are settings in **Hasr Settings**, not guesses in code.
+If ERPNext behaves differently from what you expect, say so in the pull request with what you found. Business
+rules (tolerances, approval roles, limits) are settings in **Hasr Settings**, not guesses in code, and every
+setting explains itself on the settings page.

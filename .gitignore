@@ -10,3 +10,6 @@ hasr/public/frontend/
 hasr/www/hasr.html
 frontend/auto-imports.d.ts
 frontend/components.d.ts
+
+# internal notes: specs, plans, design mockups, open questions (kept on this machine, not published)
+internal/
