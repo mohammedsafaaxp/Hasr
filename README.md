@@ -38,7 +38,6 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
 - **Cases convert to units.** A case barcode adds its conversion factor in the stock unit
   (1 box = 12 units), using the item's barcode UOM.
 - **Unknown barcodes** are sent to the supervisor with a photo and a note. The phone never creates items.
-- **Rejected quantity** for damaged goods, posted to the rejected warehouse.
 - **See what you scan.** Every line shows a large photo (tap to zoom), all its barcodes with the unit
   each one counts (unit, or box ×12), and the ordered quantity in the purchase order's unit. The last
   scanned item is shown large under the scan field, so the worker can check it is the same product.
@@ -51,7 +50,9 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
   connection. The camera counts a carton once. Three sounds: counted, check this line, refused.
 - **Scan + quantity** mode, and a separate *Type item code* sheet that asks for the unit.
 - **Exceptions for the supervisor:** an item that is not on the order, and a product that does not match
-  its photo (reported with a picture). Over-receipts: accept all, return the excess, or reject the excess.
+  its photo (reported with a picture). Over-receipts: accept all, or return the excess.
+- **Wrong items are refused clearly.** A scan of an item that is not on the order says so at once; if it came
+  with the shipment the worker reports it, and the supervisor returns it or adds it to the purchase order.
 - **Separation of duties:** approver roles are a setting, nobody approves what they received, and every
   line is checked against the user's warehouses.
 - **Today's Shipments** page in Desk: one click approves a shipment that matches its order exactly.
@@ -107,14 +108,12 @@ that do not allow custom apps cannot run hasr.
    add ERPNext **User Permissions** on *Warehouse*.
 3. **Supervisors:** give the **Hasr Supervisor** role plus the right to create Purchase Receipts
    (for example *Stock User* or *Purchase User*).
-4. **Hasr Settings → Default Rejected Warehouse:** used for rejected quantity, because the Purchase
-   Order line in ERPNext has no rejected warehouse.
 
 ## How it works
 
 1. The worker opens **`/hasr`** on the phone and signs in with their ERPNext account.
 2. They pick a purchase order (only submitted, open orders for their warehouses are listed) and scan.
-3. They tap a line to type a quantity, change the unit or record rejected (damaged) goods.
+3. A scan opens the item: they check it against its photo and type how many arrived (and the expiry date).
 4. **Finish shipment and send for review** moves the session to *Pending Approval*.
 5. The supervisor opens it in **Desk → Hasr Receiving Session**, decides any over-receipt, handles
    unknown barcodes and clicks **Approve and create Purchase Receipt**. Stock moves only when that
