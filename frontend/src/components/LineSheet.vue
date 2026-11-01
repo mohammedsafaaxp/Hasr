@@ -58,16 +58,10 @@
         <div class="divide-y divide-hasr-line rounded-tile border border-hasr-line">
           <div v-for="(b, i) in batches" :key="i" class="space-y-2 p-3">
             <div class="flex items-end gap-2">
-              <label class="min-w-0 flex-1 space-y-1">
+              <div class="min-w-0 flex-1 space-y-1">
                 <span class="text-[13px] text-hasr-muted">{{ __('Expiry date') }}</span>
-                <input
-                  v-model="b.expiry_date"
-                  type="date"
-                  :min="today"
-                  class="tabular h-11 w-full rounded-hasr border-0 bg-hasr-surface2 px-3"
-                  @change="onBatchChange"
-                />
-              </label>
+                <DateParts v-model="b.expiry_date" :label="__('Expiry date')" @update:model-value="onBatchChange" />
+              </div>
               <label class="w-20 shrink-0 space-y-1">
                 <span class="text-[13px] text-hasr-muted">{{ __('Qty') }}</span>
                 <input
@@ -80,11 +74,16 @@
                   @input="onBatchChange"
                 />
               </label>
-              <IconButton v-if="batches.length > 1" :label="__('Remove')" @click="removeBatch(i)">
-                <LucideTrash2 class="size-5" />
-              </IconButton>
             </div>
             <p class="flex flex-wrap items-center gap-2 text-[13px] text-hasr-muted">
+              <button
+                v-if="batches.length > 1"
+                type="button"
+                class="order-last ms-auto inline-flex h-9 items-center gap-1 rounded-hasr px-2 text-hasr-danger"
+                @click="removeBatch(i)"
+              >
+                <LucideTrash2 class="size-4" />{{ __('Remove') }}
+              </button>
               <Pill>{{ __('New batch') }}</Pill>
               <span>{{ __('number given on approval') }}</span>
               <span v-if="shelfWarning(b)" class="flex items-center gap-1 text-hasr-warning">
@@ -138,6 +137,7 @@ import IconButton from './IconButton.vue'
 import ItemThumb from './ItemThumb.vue'
 import Pill from './Pill.vue'
 import ImageZoom from './ImageZoom.vue'
+import DateParts from './DateParts.vue'
 import { api, errorMessage } from '../api'
 import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'

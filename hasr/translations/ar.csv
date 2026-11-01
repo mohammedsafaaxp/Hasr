@@ -57,6 +57,7 @@ Could not open the camera. Check the browser permission.,تعذّر فتح ال�
 Count,الجرد
 Counting arrives in a later version.,الجرد متاح في إصدار لاحق.
 "Damaged or expired, goes to the rejected warehouse",تالفة أو منتهية الصلاحية، تُنقل إلى مستودع المرفوضات
+Day,يوم
 Decide on the over-receipt first: {0},اتخذ قرارًا بشأن الزيادة في الاستلام أولًا: {0}
 Decide on the reported item mismatches first.,اتخذ قرارًا بشأن بلاغات عدم مطابقة الأصناف أولًا.
 Decide on the unknown barcodes and the items that are not on the order first.,اتخذ قرارًا بشأن الباركودات غير المعروفة والأصناف غير الموجودة في الأمر أولًا.
@@ -122,6 +123,7 @@ Link or dismiss the unknown barcodes first.,اربط الباركودات غير
 Link to item,ربط بصنف
 Linked,مرتبط
 Missing or invalid scan id.,معرّف المسح مفقود أو غير صالح.
+Month,شهر
 Needs your decision,بحاجة إلى قرارك
 New batch,دفعة جديدة
 No connection. Try again.,لا يوجد اتصال. حاول مرة أخرى.
@@ -238,6 +240,7 @@ The supervisor decides whether to close the order,يقرر المشرف إغلا
 The supervisor reviews it before anything changes in stock,يراجعها المشرف قبل أي تغيير في المخزون
 The supplier will not send the rest,لن يرسل المورد المتبقي
 This barcode is not linked to any item. Take a photo and send it to the supervisor to link it. You can keep receiving the rest.,هذا الباركود غير مرتبط بأي صنف. التقط صورة للمنتج وأرسلها إلى المشرف لربطه، ويمكنك متابعة استلام بقية الأصناف.
+This date does not exist.,هذا التاريخ غير موجود.
 This item is known but not on the order. Return it to the supplier instead.,هذا الصنف معروف لكنه ليس ضمن الأمر. أرجِعه إلى المورد بدلًا من ذلك.
 This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot finish the shipment until this is fixed.,هذا الأمر بوحدة {0} (1 {0} = {1} {2}). أدخل {0} كاملة فقط: {3}… لا يمكن إنهاء الشحنة قبل تصحيح ذلك.
 This receiving session belongs to {0}.,جلسة الاستلام هذه تخص {0}.
@@ -265,6 +268,7 @@ What you received,ما استلمته
 Wrong email or password.,البريد الإلكتروني أو كلمة المرور غير صحيحة.
 Wrong item,صنف خاطئ
 Wrong item: remove {0},صنف خاطئ: حذف {0}
+Year,سنة
 You do not have access to this warehouse.,ليست لديك صلاحية على هذا المستودع.
 You need permission to create Purchase Receipts.,تحتاج إلى صلاحية إنشاء إيصالات الاستلام.
 You need permission to submit Purchase Receipts.,تحتاج إلى صلاحية اعتماد إيصالات الاستلام.
