@@ -136,7 +136,7 @@ function hasr_render_review(frm, is_supervisor) {
 		const cards = [];
 
 		for (const line of data.lines) {
-			if (!["Over", "Accepted", "Capped"].includes(line.over_allowance_state)) continue;
+			if (!["Over", "Accepted", "Capped", "Excess rejected"].includes(line.over_allowance_state)) continue;
 			const total = line.already_received_qty + line.received_qty + line.rejected_qty;
 			const over = total - line.allowed_qty;
 			const state = line.over_allowance_state;
@@ -160,10 +160,20 @@ function hasr_render_review(frm, is_supervisor) {
 					</div>
 					${
 						pending
-							? `<button class="btn btn-default btn-sm" data-decide="Cap" data-po-item="${line.po_item}">
-									${__("Accept {0} only", [fmt(Math.max(line.pending_qty - line.rejected_qty, 0))])}</button>
-								<button class="btn btn-primary btn-sm" data-decide="Accept" data-po-item="${line.po_item}">
-									${__("Accept {0}", [fmt(line.received_qty)])}</button>`
+							? (() => {
+									const keep = Math.max(line.pending_qty - line.rejected_qty, 0);
+									const excess = Math.max(line.received_qty - keep, 0);
+									return `<div class="hasr-decide">
+										<button class="btn btn-default btn-sm" data-decide="Cap" data-po-item="${line.po_item}"
+											title="${__("The excess is not received and goes back to the supplier.")}">
+											${__("Accept {0}, return {1}", [fmt(keep), fmt(excess)])}</button>
+										<button class="btn btn-default btn-sm" data-decide="Reject excess" data-po-item="${line.po_item}"
+											title="${__("The excess is received as rejected quantity and goes to the rejected warehouse.")}">
+											${__("Accept {0}, reject {1}", [fmt(keep), fmt(excess)])}</button>
+										<button class="btn btn-primary btn-sm" data-decide="Accept" data-po-item="${line.po_item}">
+											${__("Accept all {0}", [fmt(line.received_qty)])}</button>
+									</div>`;
+							  })()`
 							: ""
 					}
 				</div>`);
@@ -287,6 +297,7 @@ function hasr_render_review(frm, is_supervisor) {
 				.hasr-card-body { flex: 1; min-width: 0; }
 				.hasr-card-title { font-weight: 500; }
 				.hasr-photo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+				.hasr-decide { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 				.hasr-invoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 				.hasr-invoice { display: flex; align-items: center; justify-content: center; width: 120px; height: 160px;
 					border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }

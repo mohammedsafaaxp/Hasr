@@ -251,7 +251,7 @@ const sheetOpen = computed(
 )
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
-const isOver = (l) => l.over_allowance_state === 'Over' || l.over_allowance_state === 'Accepted'
+const isOver = (l) => ['Over', 'Accepted', 'Excess rejected'].includes(l.over_allowance_state)
 const isDone = (l) => l.received_qty + l.rejected_qty >= l.pending_qty
 const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue || l.mismatch_open
 const counts = computed(() => {

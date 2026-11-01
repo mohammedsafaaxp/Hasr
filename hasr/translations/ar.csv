@@ -5,8 +5,11 @@
 A batch is created for each date,تُنشأ دفعة لكل تاريخ
 A draft Purchase Receipt is created from this session. Stock changes only when the receipt is submitted.,سيُنشأ إيصال استلام بصيغة مسودة من هذه الجلسة، ولا يتغير المخزون إلا عند اعتماد الإيصال.
 A shipment can have at most {0} invoice files.,لا يمكن أن تتضمن الشحنة أكثر من {0} ملفات للفاتورة.
+Accept all {0},قبول الكل {0}
 Accept {0},قبول {0}
 Accept {0} only,قبول {0} فقط
+"Accept {0}, reject {1}",قبول {0} ورفض {1}
+"Accept {0}, return {1}",قبول {0} وإرجاع {1}
 Accepted,مقبول
 Account,الحساب
 Add,إضافة
@@ -58,6 +61,7 @@ Decide on the over-receipt first: {0},اتخذ قرارًا بشأن الزيا�
 Decide on the reported item mismatches first.,اتخذ قرارًا بشأن بلاغات عدم مطابقة الأصناف أولًا.
 Decide on the unknown barcodes and the items that are not on the order first.,اتخذ قرارًا بشأن الباركودات غير المعروفة والأصناف غير الموجودة في الأمر أولًا.
 Decision must be Accept or Cap.,يجب أن يكون القرار قبولًا أو تحديدًا.
+"Decision must be Accept, Cap or Reject excess.",يجب أن يكون القرار: قبول الكل أو إرجاع الزيادة أو رفض الزيادة.
 Decision must be Correct or Wrong.,يجب أن يكون القرار: صحيح أو خاطئ.
 Decision: {0},القرار: {0}
 Decrease,إنقاص
@@ -73,6 +77,7 @@ Email or username,البريد الإلكتروني أو اسم المستخدم
 Enter an expiry date for every row.,أدخل تاريخ انتهاء لكل سطر.
 Enter the expiry date for: {0},أدخل تاريخ الانتهاء لـ: {0}
 Everything on purchase order {0} has been received or is waiting for approval.,تم استلام كل ما في أمر الشراء {0} أو أنه بانتظار الاعتماد.
+Excess rejected,رُفضت الزيادة
 Expected item,الصنف المطلوب
 Expiry and batch,تاريخ الانتهاء والدفعة
 Expiry date,تاريخ الانتهاء
@@ -215,6 +220,8 @@ Supplier invoice,فاتورة المورد
 Take a photo of the product,التقط صورة للمنتج
 Take a photo of the product so the supervisor can compare it.,التقط صورة للمنتج ليتمكن المشرف من مقارنتها.
 The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.,تتطلب الكاميرا اتصالًا آمنًا (HTTPS). استخدم قارئ الباركود أو اكتب الباركود.
+The excess is not received and goes back to the supplier.,لا تُستلم الزيادة وتُعاد إلى المورد.
+The excess is received as rejected quantity and goes to the rejected warehouse.,تُستلم الزيادة ككمية مرفوضة وتُنقل إلى مستودع المرفوضات.
 "The expiry quantities add up to {0}, but the received quantity is {1}.",مجموع كميات تواريخ الانتهاء {0}، بينما الكمية المستلمة {1}.
 The invoice file is too large.,ملف الفاتورة كبير جدًا.
 "The invoice must be a photo (JPEG, PNG, WebP) or a PDF.",يجب أن تكون الفاتورة صورة (JPEG أو PNG أو WebP) أو ملف PDF.

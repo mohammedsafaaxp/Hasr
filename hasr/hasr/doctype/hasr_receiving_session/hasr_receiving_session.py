@@ -78,9 +78,13 @@ def is_over(line) -> bool:
 	return line_total(line) > flt(line.allowed_qty) + EPSILON
 
 
+# Supervisor decisions that leave the line above the allowance on purpose
+DECIDED_OVER = ("Accepted", "Excess rejected")
+
+
 def update_line_state(line):
-	"""OK / Over from the quantities; a supervisor's Accepted or Capped decision is kept while it still holds."""
+	"""OK / Over from the quantities; a supervisor's decision is kept while it still holds."""
 	if is_over(line):
-		line.over_allowance_state = "Accepted" if line.over_allowance_state == "Accepted" else "Over"
+		line.over_allowance_state = line.over_allowance_state if line.over_allowance_state in DECIDED_OVER else "Over"
 	else:
 		line.over_allowance_state = "Capped" if line.over_allowance_state == "Capped" else "OK"

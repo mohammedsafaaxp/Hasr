@@ -1004,20 +1004,32 @@ def decide_line(session, po_item, decision):
 	return doc
 
 
+OVER_DECISIONS = ("Accept", "Cap", "Reject excess")
+
+
 def _apply_decision(doc, line, decision):
-	if decision not in ("Accept", "Cap"):
-		frappe.throw(_("Decision must be Accept or Cap."))
+	"""Over-receipt decision:
+	Accept: keep everything. Cap: the excess goes back to the supplier (not received).
+	Reject excess: the excess is received as rejected quantity (to the rejected warehouse).
+	"""
+	if decision not in OVER_DECISIONS:
+		frappe.throw(_("Decision must be Accept, Cap or Reject excess."))
 	doc.recompute_line(line)
-	if line.over_allowance_state not in ("Over", "Accepted", "Capped"):
+	if line.over_allowance_state not in ("Over", "Accepted", "Capped", "Excess rejected"):
 		frappe.throw(_("{0} is within the allowance; nothing to decide.").format(line.item_name or line.item_code))
 	if decision == "Accept":
 		line.over_allowance_state = "Accepted"
+		return
+	# what is still ordered, after what was already rejected
+	target = max(flt(line.pending_qty) - flt(line.rejected_qty), 0.0)
+	excess = max(flt(line.received_qty) - target, 0.0)
+	line.manual_adjust_qty = target - flt(line.scanned_qty)
+	if decision == "Reject excess":
+		line.rejected_qty = flt(line.rejected_qty) + excess
+		line.over_allowance_state = "Excess rejected"
 	else:
-		# keep received + rejected within what is still ordered
-		target = max(flt(line.pending_qty) - flt(line.rejected_qty), 0.0)
-		line.manual_adjust_qty = target - flt(line.scanned_qty)
 		line.over_allowance_state = "Capped"
-		doc.recompute_line(line)
+	doc.recompute_line(line)
 
 
 def _require_pending(doc):
@@ -1088,7 +1100,7 @@ def send_back(session, note=None):
 	doc.status = "Sent Back"
 	doc.review_note = (note or "").strip() or None
 	for line in doc.lines:
-		if line.over_allowance_state == "Accepted":
+		if line.over_allowance_state in ("Accepted", "Excess rejected"):
 			line.over_allowance_state = "Over"
 	try:
 		doc.save(ignore_permissions=True)
