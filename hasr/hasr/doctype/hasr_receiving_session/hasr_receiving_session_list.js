@@ -3,6 +3,9 @@
 
 frappe.listview_settings["Hasr Receiving Session"] = {
 	add_fields: ["status"],
+	onload(listview) {
+		listview.page.add_inner_button(__("Today's Shipments"), () => frappe.set_route("hasr-today"));
+	},
 	get_indicator(doc) {
 		const colors = {
 			Open: "blue",

@@ -291,6 +291,10 @@ def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
 	return doc
 
 
+def is_line_over(line) -> bool:
+	return line.over_allowance_state in ("Over", "Accepted", "Excess rejected")
+
+
 def check_whole_units(doc):
 	issues = [msg for msg in (whole_unit_issue(l) for l in doc.lines) if msg]
 	if issues:
@@ -1173,6 +1177,87 @@ def send_back(session, note=None):
 	except frappe.UniqueValidationError:
 		frappe.throw(_("Another shipment of this purchase order is open. Finish or cancel it first."))
 	return doc
+
+
+def match_problems(doc) -> list[str]:
+	"""Why a shipment does not match its order exactly; empty when it can be approved with one click."""
+	problems = []
+	for l in doc.lines:
+		name = l.item_name or l.item_code
+		if flt(l.rejected_qty):
+			problems.append(_("{0}: {1} rejected").format(name, frappe.format(flt(l.rejected_qty))))
+		if is_line_over(l):
+			problems.append(_("{0}: more than ordered").format(name))
+		elif abs(flt(l.received_qty) - flt(l.pending_qty)) > EPSILON:
+			problems.append(
+				_("{0}: received {1} of {2}").format(
+					name, frappe.format(flt(l.received_qty)), frappe.format(flt(l.pending_qty))
+				)
+			)
+		if needs_expiry(l):
+			problems.append(_("{0}: expiry date needed").format(name))
+		if whole_unit_issue(l):
+			problems.append(_("{0}: not a whole unit").format(name))
+	open_unknown = frappe.db.count("Hasr Unknown Barcode", {"session_doctype": SESSION, "session": doc.name, "status": "Open"})
+	if open_unknown:
+		problems.append(_("{0} unknown or unexpected items").format(open_unknown))
+	open_mismatch = frappe.db.count(MISMATCH, {"session_doctype": SESSION, "session": doc.name, "status": "Open"})
+	if open_mismatch:
+		problems.append(_("{0} items reported as not matching").format(open_mismatch))
+	return problems
+
+
+def todays_shipments():
+	"""Shipments received today, and every shipment still waiting for approval (oldest first)."""
+	today = frappe.utils.getdate()
+	names = frappe.get_all(
+		SESSION,
+		or_filters=[["status", "=", "Pending Approval"], ["started_at", ">=", today], ["finished_at", ">=", today]],
+		filters={"status": ["!=", "Cancelled"]},
+		pluck="name",
+		order_by="finished_at asc, started_at asc",
+	)
+	out = []
+	for name in names:
+		doc = frappe.get_doc(SESSION, name)
+		allowed = get_allowed_warehouses()
+		if allowed is not None and not {l.warehouse for l in doc.lines} <= allowed:
+			continue
+		problems = match_problems(doc) if doc.status == "Pending Approval" else []
+		out.append(
+			{
+				"name": doc.name,
+				"purchase_order": doc.purchase_order,
+				"supplier": doc.supplier,
+				"status": doc.status,
+				"received_by": doc.received_by,
+				"received_by_name": frappe.utils.get_fullname(doc.received_by),
+				"finished_at": doc.finished_at,
+				"shipment_no": doc.shipment_no,
+				"lines": len(doc.lines),
+				"supplier_invoice_no": doc.supplier_invoice_no,
+				"invoice_files": len(get_invoices(doc.name)),
+				"purchase_receipt": doc.purchase_receipt,
+				"matches": doc.status == "Pending Approval" and not problems,
+				"problems": problems,
+				"approval_block_reason": approval_block_reason(doc) if doc.status == "Pending Approval" else None,
+			}
+		)
+	return out
+
+
+def quick_approve(session):
+	"""One click for a shipment that matches its order exactly; anything else goes through the review."""
+	doc = get_session_doc(session)
+	_require_pending(doc)
+	problems = match_problems(doc)
+	if problems:
+		frappe.throw(
+			_("This shipment does not match the order. Open it to review: {0}").format("; ".join(problems)),
+			title=_("Needs review"),
+		)
+	submit = cint(frappe.get_cached_doc("Hasr Settings").quick_approve_submits)
+	return approve(session, submit=submit)
 
 
 def get_review(session):

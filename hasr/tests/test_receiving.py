@@ -288,3 +288,25 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 			frappe.set_user("Administrator")
 			frappe.db.set_single_value("Hasr Settings", "require_supplier_invoice_no", 0)
 			frappe.clear_document_cache("Hasr Settings", "Hasr Settings")
+
+	def test_todays_shipments_and_one_click_approval(self):
+		matching = fx.make_po([("HASR-YOGURT", 4)])
+		short = fx.make_po([("HASR-YOGURT", 4), ("HASR-BUTTER", 2)])
+		for po, qtys in ((matching, {"HASR-YOGURT": 4}), (short, {"HASR-YOGURT": 3, "HASR-BUTTER": 2})):
+			s = self.start(po)
+			for line in s["lines"]:
+				api.set_line(s["name"], line["po_item"], qtys[line["item_code"]])
+			api.finish_session(s["name"])
+		frappe.set_user(fx.SUPERVISOR)
+		rows = {r["purchase_order"]: r for r in api.todays_shipments()}
+		self.assertTrue(rows[matching.name]["matches"])
+		self.assertFalse(rows[short.name]["matches"])
+		self.assertIn("received 3 of 4", " ".join(rows[short.name]["problems"]))
+
+		self.assertRaisesRegex(frappe.ValidationError, "does not match", api.quick_approve, rows[short.name]["name"])
+		out = api.quick_approve(rows[matching.name]["name"])
+		self.assertEqual(out["status"], "Approved")
+		self.assertEqual(frappe.db.get_value("Purchase Receipt", out["purchase_receipt"], "docstatus"), 0)
+
+		frappe.set_user(fx.COUNTER)
+		self.assertRaises(frappe.PermissionError, api.todays_shipments)

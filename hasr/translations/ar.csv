@@ -26,6 +26,7 @@ Another shipment of this purchase order is open. Finish or cancel it first.,تو
 Approve,اعتماد
 Approve and create Purchase Receipt,اعتماد وإنشاء إيصال الاستلام
 Approved,معتمد
+Approved: {0},تم الاعتماد: {0}
 Arrived in full,وصلت كاملة
 Arrived in part,وصلت جزئيًا
 Back,رجوع
@@ -122,8 +123,10 @@ Link barcode {0} to an item,ربط الباركود {0} بصنف
 Link or dismiss the unknown barcodes first.,اربط الباركودات غير المعروفة أو تجاهلها أولًا.
 Link to item,ربط بصنف
 Linked,مرتبط
+Matches the order,مطابقة للأمر
 Missing or invalid scan id.,معرّف المسح مفقود أو غير صالح.
 Month,شهر
+Needs review,تحتاج مراجعة
 Needs your decision,بحاجة إلى قرارك
 New batch,دفعة جديدة
 No connection. Try again.,لا يوجد اتصال. حاول مرة أخرى.
@@ -131,6 +134,7 @@ No conversion factor from {0} to {1} for {2}.,لا يوجد معامل تحوي�
 No line on this order matches.,لا يوجد سطر مطابق في هذا الأمر.
 No photo in ERPNext yet,لا توجد صورة في ERPNext بعد
 No purchase orders are waiting.,لا توجد أوامر شراء بانتظار الاستلام.
+"No shipments today, and nothing is waiting for approval.",لا توجد شحنات اليوم، ولا شيء بانتظار الاعتماد.
 No supplier invoice was attached.,لم تُرفق فاتورة المورد.
 Nos,حبة
 Not a whole number of {0},ليست عددًا صحيحًا من {0}
@@ -165,6 +169,7 @@ Photo,الصورة
 Photograph every page so the supervisor can check the receipt against it,صوّر كل صفحة ليطابق المشرف الاستلام معها
 Photograph what you received. The supervisor compares it with the item and decides.,صوّر ما استلمته، وسيقارنه المشرف بالصنف ويقرر.
 Point the camera at a barcode,وجّه الكاميرا نحو الباركود
+Purchase Receipt,إيصال الاستلام
 Purchase Receipt created,تم إنشاء إيصال الاستلام
 Purchase order {0} already has an open receiving session {1} by {2}. Finish it first.,لأمر الشراء {0} جلسة استلام مفتوحة {1} لدى {2}. يجب إنهاؤها أولًا.
 Purchase order {0} already has an open receiving session. Finish it first.,لأمر الشراء {0} جلسة استلام مفتوحة. يجب إنهاؤها أولًا.
@@ -176,6 +181,7 @@ Quantity in {0}. Keep scanning the rest normally.,الكمية بوحدة {0}. �
 Quantity is not a whole unit,الكمية ليست وحدة كاملة
 Quantity must be greater than zero.,يجب أن تكون الكمية أكبر من صفر.
 Receive,الاستلام
+Received by,المستلِم
 Received quantity,الكمية المستلمة
 "Received with hasr, session {0}",استُلم عبر حَصر، الجلسة {0}
 "Received with hasr, session {0}.",استُلم عبر حَصر، الجلسة {0}.
@@ -186,6 +192,7 @@ Rejected quantity,الكمية المرفوضة
 Remove,حذف
 Remove this quantity from the receipt? It will not be received.,هل تريد حذف هذه الكمية من الاستلام؟ لن تُستلم.
 Return to supplier,إرجاع إلى المورد
+Review,مراجعة
 Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: للصنف {1} كمية مرفوضة دون مستودع مرفوضات. حدّد مستودعًا افتراضيًا في إعدادات حَصر.
 Save line,حفظ السطر
 Saving…,جارٍ الحفظ…
@@ -219,8 +226,10 @@ Sign in,تسجيل الدخول
 Sign out,تسجيل الخروج
 Signing in…,جارٍ تسجيل الدخول…
 Something went wrong. Try again.,حدث خطأ. حاول مرة أخرى.
+Status,الحالة
 Stock counts are coming in version 0.3,الجرد متاح في الإصدار 0.3
 Submit the Purchase Receipt now,اعتماد إيصال الاستلام الآن
+Supplier,المورد
 Supplier delivery note,رقم إشعار تسليم المورد
 Supplier invoice,فاتورة المورد
 Supplier invoice No,رقم فاتورة المورد
@@ -247,7 +256,9 @@ This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot 
 This receiving session belongs to {0}.,جلسة الاستلام هذه تخص {0}.
 This report was already decided.,تم البت في هذا البلاغ مسبقًا.
 This shipment can no longer be changed.,لم يعد بالإمكان تعديل هذه الشحنة.
+This shipment does not match the order. Open it to review: {0},هذه الشحنة غير مطابقة للأمر. افتحها للمراجعة: {0}
 Today,اليوم
+Today's Shipments,شحنات اليوم
 Tomorrow,غدًا
 Type item code,اكتب كود الصنف
 Undo,تراجع
@@ -293,6 +304,7 @@ whole {0} only,{0} كاملة فقط
 {0} days late,متأخر {0} أيام
 {0} does not match · {1} {2},{0} غير مطابق · {1} {2}
 {0} expired on {1}. Record expired goods as rejected quantity.,انتهت صلاحية {0} بتاريخ {1}. سجّل البضاعة المنتهية ككمية مرفوضة.
+{0} files,{0} ملفات
 {0} has no unit {1}. Choose one of its units.,الصنف {0} ليست له وحدة {1}. اختر إحدى وحداته.
 {0} is already fully received on purchase order {1}.,تم استلام {0} بالكامل في أمر الشراء {1}.
 "{0} is an item code, not a barcode. Use ""Type item code"" and choose the unit.",{0} كود صنف وليس باركودًا. استخدم «اكتب كود الصنف» واختر الوحدة.
@@ -304,6 +316,8 @@ whole {0} only,{0} كاملة فقط
 {0} is not on the order · {1} units,{0} ليس ضمن الأمر · {1} وحدة
 {0} is within the allowance; nothing to decide.,{0} ضمن الحد المسموح، ولا يلزم اتخاذ قرار.
 {0} items,{0} أصناف
+{0} items reported as not matching,{0} أصناف مُبلَّغ عنها كغير مطابقة
+{0} lines,{0} أسطر
 {0} of {1},{0} من {1}
 {0} of {1} items complete,اكتمل {0} من {1} أصناف
 {0} orders,{0} أوامر
@@ -312,12 +326,19 @@ whole {0} only,{0} كاملة فقط
 {0} rejected,{0} مرفوضة
 "{0} scans applied, {1} rejected, {2} undone.",احتُسبت {0} عمليات مسح، ورُفضت {1}، وأُلغيت {2}.
 {0} scans. Move the item out of view before scanning the next one.,{0} عمليات مسح. أبعِد الصنف عن الكاميرا قبل مسح الصنف التالي.
+"{0} shipments, {1} ready to approve with one click.",{0} شحنات، منها {1} جاهزة للاعتماد بضغطة واحدة.
 {0} to go,متبقٍّ {0}
+{0} unknown or unexpected items,{0} أصناف غير معروفة أو غير متوقعة
 {0} waiting,{0} بالانتظار
 {0} {1} = {2} {3},{0} {1} = {2} {3}
 {0} {1} of {2} removed from the receipt: not the ordered item ({3}).,حُذفت {0} {1} من {2} من الاستلام: ليست الصنف المطلوب ({3}).
 {0} {1} over the {2}% over-receipt allowance,{0} {1} فوق نسبة السماح بالزيادة {2}%
+{0}: expiry date needed,{0}: يلزم تاريخ الانتهاء
+{0}: more than ordered,{0}: أكثر من المطلوب
+{0}: not a whole unit,{0}: ليست وحدة كاملة
+{0}: received {1} of {2},{0}: استُلم {1} من {2}
 "{0}: received {1}, ordered {2}",{0}: المستلم {1}، المطلوب {2}
 {0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).,{0}: يجب أن تكون الكمية عددًا صحيحًا من {1} (1 {1} = {2} {3}).
 "{0}: {1} Recorded for the supervisor, not counted.",{0}: {1} سُجّل للمشرف ولم يُحتسب.
 "{0}: {1} received and {2} rejected {3} is not a whole number of {4} (1 {4} = {5} {3}). Adjust the quantity, or change the unit on the purchase order.",{0}: المستلم {1} والمرفوض {2} {3} ليسا عددًا صحيحًا من {4} (1 {4} = {5} {3}). عدّل الكمية أو غيّر الوحدة في أمر الشراء.
+{0}: {1} rejected,{0}: {1} مرفوضة

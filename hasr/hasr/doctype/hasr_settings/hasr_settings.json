@@ -13,6 +13,7 @@
   "require_supplier_invoice_no",
   "approval_section",
   "approver_roles",
+  "quick_approve_submits",
   "counting_section",
   "allow_freeze",
   "freeze_max_hours",
@@ -76,6 +77,13 @@
    "fieldtype": "Table MultiSelect",
    "label": "Roles That Can Approve",
    "options": "Hasr Approver Role"
+  },
+  {
+   "default": "0",
+   "description": "On Today's Shipments, approving a shipment that matches the order also submits its Purchase Receipt. Off: it stays a draft.",
+   "fieldname": "quick_approve_submits",
+   "fieldtype": "Check",
+   "label": "One-Click Approval Submits the Receipt"
   },
   {
    "fieldname": "counting_section",
@@ -165,7 +173,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-01 15:00:00.000000",
+ "modified": "2026-11-01 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Settings",

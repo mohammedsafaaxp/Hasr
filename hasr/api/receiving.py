@@ -97,6 +97,18 @@ def report_mismatch(session, po_item, qty, photo, note=None, barcode=None, clien
 
 
 @frappe.whitelist()
+def todays_shipments():
+	require_supervisor()
+	return receiving.todays_shipments()
+
+
+@frappe.whitelist(methods=["POST"])
+def quick_approve(session):
+	require_approver()
+	return receiving.session_payload(receiving.quick_approve(session))
+
+
+@frappe.whitelist()
 def get_review(session):
 	# counters see their own sessions (get_session_doc checks); approve buttons follow approval_block_reason
 	require_counter()

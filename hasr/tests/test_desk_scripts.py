@@ -15,10 +15,10 @@ class TestDeskScripts(FrappeTestCase):
 		node = shutil.which("node")
 		if not node:
 			self.skipTest("node is not installed")
-		doctype_dir = frappe.get_app_path("hasr", "hasr", "doctype")
 		scripts = [
 			os.path.join(base, name)
-			for base, _dirs, files in os.walk(doctype_dir)
+			for folder in ("doctype", "page")
+			for base, _dirs, files in os.walk(frappe.get_app_path("hasr", "hasr", folder))
 			for name in files
 			if name.endswith(".js")
 		]
