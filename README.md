@@ -45,8 +45,16 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
 - **Batches and expiry dates.** For batch-tracked items the worker only enters expiry dates (more than
   one if the delivery mixes dates). On approval hasr creates one ERPNext Batch per date and splits the
   Purchase Receipt row per batch. Expired dates are refused, short shelf life is flagged.
-- **Supplier invoice.** Photos or a PDF of the invoice travel with the shipment; the supervisor checks the
-  quantities against it, and it is attached to the Purchase Receipt on approval.
+- **Supplier invoice.** The invoice number is required (a setting), and photos or a PDF of the invoice
+  travel with the shipment. Both follow the receipt into the Purchase Receipt and the Purchase Invoice.
+- **No lost scans.** Scans wait on the phone until the server confirms them, in order, also without a
+  connection. The camera counts a carton once. Three sounds: counted, check this line, refused.
+- **Scan + quantity** mode, and a separate *Type item code* sheet that asks for the unit.
+- **Exceptions for the supervisor:** an item that is not on the order, and a product that does not match
+  its photo (reported with a picture). Over-receipts: accept all, return the excess, or reject the excess.
+- **Separation of duties:** approver roles are a setting, nobody approves what they received, and every
+  line is checked against the user's warehouses.
+- **Today's Shipments** page in Desk: one click approves a shipment that matches its order exactly.
 - **Safe to retry.** Every scan carries an ID from the phone, so sending it twice counts it once.
 - **One open session per order**, enforced in the database.
 - **Supervisor review in Desk:** accept or cap an over-receipt, link or dismiss unknown barcodes, send
