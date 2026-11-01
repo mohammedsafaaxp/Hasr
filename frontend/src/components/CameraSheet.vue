@@ -29,7 +29,8 @@ import Sheet from './Sheet.vue'
 import IconButton from './IconButton.vue'
 import { __ } from '../i18n'
 
-const props = defineProps({ open: Boolean })
+// `single`: close after the first barcode (checking one item, not counting cartons)
+const props = defineProps({ open: Boolean, single: Boolean })
 const emit = defineEmits(['update:open', 'scan'])
 const video = ref(null)
 const error = ref('')
@@ -69,6 +70,7 @@ async function start() {
         count.value += 1
         last.value = code
         emit('scan', code)
+        if (props.single) emit('update:open', false)
       },
     )
   } catch (e) {

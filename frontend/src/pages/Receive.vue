@@ -161,7 +161,7 @@
       :expiry-warning-pct="s ? s.expiry_warning_pct : 0"
       @close="closeLine"
       @saved="onLineSaved"
-      @mismatch="(l) => openMismatch(l, l.barcodes[0] && l.barcodes[0].barcode, 1)"
+      @mismatch="(l, code) => openMismatch(l, code || (l.barcodes[0] && l.barcodes[0].barcode), 1)"
       @details="(code) => router.push({ name: 'ItemDetails', params: { itemCode: code } })"
     />
     <UnknownBarcodeSheet :barcode="unknownBarcode" :session="s && s.name" @close="unknownBarcode = ''" @sent="onUnknownSent" />

@@ -353,3 +353,8 @@ whole {0} only,{0} كاملة فقط
 "{0}: {1} Recorded for the supervisor, not counted.",{0}: {1} سُجّل للمشرف ولم يُحتسب.
 "{0}: {1} received and {2} rejected {3} is not a whole number of {4} (1 {4} = {5} {3}). Adjust the quantity, or change the unit on the purchase order.",{0}: المستلم {1} والمرفوض {2} {3} ليسا عددًا صحيحًا من {4} (1 {4} = {5} {3}). عدّل الكمية أو غيّر الوحدة في أمر الشراء.
 {0}: {1} rejected,{0}: {1} مرفوضة
+Scan the barcode to check the item,امسح الباركود للتحقق من الصنف
+Scanner,القارئ
+Matches this item,مطابق لهذا الصنف
+This barcode is not for this item,هذا الباركود لا يخص هذا الصنف
+Report to the supervisor,إبلاغ المشرف

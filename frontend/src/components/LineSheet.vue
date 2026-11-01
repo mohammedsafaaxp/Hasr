@@ -25,6 +25,47 @@
         <IconButton :label="__('Close')" @click="$emit('close')"><LucideX class="size-5" /></IconButton>
       </div>
 
+      <div v-if="editable" class="space-y-2">
+        <form v-if="!check" class="flex items-center gap-2" @submit.prevent="checkBarcode(typed)">
+          <button
+            type="button"
+            class="flex h-14 min-w-0 flex-1 items-center justify-center gap-2 rounded-hasr bg-hasr-ink text-[16px] font-medium text-white"
+            @click="cameraOpen = true"
+          >
+            <LucideScanBarcode class="size-6 shrink-0" />{{ __('Scan the barcode to check the item') }}
+          </button>
+          <!-- a hardware scanner types here; inputmode none keeps the phone keyboard closed -->
+          <input
+            ref="scanField"
+            v-model="typed"
+            type="text"
+            inputmode="none"
+            autocomplete="off"
+            enterkeyhint="go"
+            class="h-14 w-24 shrink-0 rounded-hasr border-0 bg-hasr-surface2 text-center text-[13px] placeholder:text-hasr-muted"
+            :placeholder="__('Scanner')"
+            :aria-label="__('Scanner')"
+          />
+        </form>
+        <div
+          v-else
+          class="flex items-start gap-2 rounded-hasr p-3 text-[15px]"
+          :class="check.ok ? 'bg-hasr-success-bg text-hasr-success' : 'bg-hasr-danger-bg text-hasr-danger'"
+          role="status"
+        >
+          <LucideCircleCheck v-if="check.ok" class="mt-0.5 size-5 shrink-0" />
+          <LucideCircleX v-else class="mt-0.5 size-5 shrink-0" />
+          <div class="min-w-0 flex-1 space-y-1">
+            <p class="font-medium">{{ check.ok ? __('Matches this item') : __('This barcode is not for this item') }}</p>
+            <p class="text-[13px]"><span class="ltr-text tabular">{{ check.barcode }}</span><template v-if="check.unit"> · {{ check.unit }}</template></p>
+            <button v-if="!check.ok" type="button" class="h-9 font-medium underline" @click="$emit('mismatch', line, check.barcode)">
+              {{ __('Report to the supervisor') }}
+            </button>
+          </div>
+          <button type="button" class="h-9 shrink-0 text-[13px] underline" @click="resetCheck">{{ __('Scan again') }}</button>
+        </div>
+      </div>
+
       <div class="space-y-2">
         <p class="text-sm text-hasr-secondary">{{ __('Received quantity') }}</p>
         <div class="flex items-center gap-2">
@@ -126,6 +167,7 @@
       </div>
     </div>
     <ImageZoom v-model:open="zoomOpen" :src="line && line.image" />
+    <CameraSheet v-model:open="cameraOpen" single @scan="checkBarcode" />
   </Sheet>
 </template>
 
@@ -138,9 +180,11 @@ import ItemThumb from './ItemThumb.vue'
 import Pill from './Pill.vue'
 import ImageZoom from './ImageZoom.vue'
 import DateParts from './DateParts.vue'
+import CameraSheet from './CameraSheet.vue'
 import { api, errorMessage } from '../api'
 import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'
+import { feedbackError, feedbackSuccess } from '../sound'
 
 const props = defineProps({ line: Object, session: String, editable: Boolean, expiryWarningPct: Number })
 const emit = defineEmits(['close', 'saved', 'details', 'mismatch'])
@@ -152,6 +196,10 @@ const batches = ref([])
 const saving = ref(false)
 const error = ref('')
 const zoomOpen = ref(false)
+const cameraOpen = ref(false)
+const check = ref(null)
+const typed = ref('')
+const scanField = ref(null)
 const today = new Date().toISOString().slice(0, 10)
 
 const cf = computed(() => props.line?.uoms.find((u) => u.uom === uom.value)?.conversion_factor || 1)
@@ -191,9 +239,28 @@ watch(
     rejected.value = line.rejected_qty
     batches.value = line.batches.length ? line.batches.map((b) => ({ ...b })) : [{ expiry_date: '', qty: line.received_qty }]
     error.value = ''
+    resetCheck()
   },
   { immediate: true },
 )
+
+// First thing on opening a line: scan the carton or the item to confirm it is the right product.
+function checkBarcode(code) {
+  code = (code || '').trim()
+  typed.value = ''
+  if (!code || !props.line) return
+  const row = barcodeRows(props.line).find((b) => b.barcode === code)
+  const ok = !!row || code === props.line.item_code
+  check.value = { ok, barcode: code, unit: row ? row.unit : '' }
+  ok ? feedbackSuccess() : feedbackError()
+}
+
+function resetCheck() {
+  check.value = null
+  typed.value = ''
+  // after the sheet has taken focus itself, so a hardware scanner types into the field
+  setTimeout(() => scanField.value?.focus({ preventScroll: true }), 100)
+}
 
 // changing the unit keeps the same physical quantity
 watch(uom, (next, prev) => {
