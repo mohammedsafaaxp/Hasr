@@ -119,6 +119,9 @@
         <!-- 2. quantity -->
         <div v-else-if="step === 'qty'" class="space-y-3">
           <p class="text-center text-[15px] text-hasr-secondary">{{ __('How many did you receive?') }}</p>
+          <p v-if="line.received_qty" class="-mt-2 text-center text-[13px] text-hasr-muted">
+            {{ __('Counted so far: {0} {1}. Type the total.', [formatNumber(line.received_qty), __(line.stock_uom)]) }}
+          </p>
           <p class="tabular text-center text-[44px] font-semibold leading-tight" dir="ltr">{{ qtyText || '0' }}</p>
           <div v-if="line.uoms.length > 1" class="flex justify-center">
             <div class="inline-flex gap-0.5 rounded-hasr bg-hasr-surface2 p-1" role="radiogroup" :aria-label="__('Unit')">
@@ -256,7 +259,8 @@ import { barcodeRows, orderedText } from '../uom'
 import { feedbackError, feedbackSuccess } from '../sound'
 import { daysUntil, digitsToIso, displayDate, isoToDigits, slotParts } from '../expiry'
 
-const props = defineProps({ line: Object, session: String, editable: Boolean, expiryWarningPct: Number })
+// entry: how the line was opened from a scan ({ checked, uom }): the scan already checked the item and tells the unit
+const props = defineProps({ line: Object, entry: Object, session: String, editable: Boolean, expiryWarningPct: Number })
 const emit = defineEmits(['close', 'saved', 'details', 'mismatch'])
 
 const step = ref('check')
@@ -360,6 +364,8 @@ watch(
     const poCf = line.conversion_factor || 1
     const inPoUnit = line.uom && line.uom !== line.stock_uom && Math.abs(line.received_qty / poCf - Math.round(line.received_qty / poCf)) < 1e-6
     uom.value = inPoUnit && line.uoms.some((u) => u.uom === line.uom) ? line.uom : line.stock_uom
+    const scannedUom = props.entry?.uom
+    if (scannedUom && line.uoms.some((u) => u.uom === scannedUom)) uom.value = scannedUom
     qtyText.value = line.received_qty ? String(round(line.received_qty / cf.value)) : ''
     freshQty.value = true
     const saved = line.batches || []
@@ -372,7 +378,8 @@ watch(
     error.value = ''
     imageFailed.value = false
     check.value = null
-    step.value = recall(checkedKey()) ? 'qty' : 'check'
+    if (props.entry?.checked) remember(checkedKey(), '1')
+    step.value = props.entry?.checked || recall(checkedKey()) ? 'qty' : 'check'
     if (step.value === 'check') focusScanField()
   },
   { immediate: true },

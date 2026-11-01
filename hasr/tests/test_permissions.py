@@ -67,7 +67,7 @@ class TestPermissions(HasrTestCase, FrappeTestCase):
 			s = api.start_session(po.name)
 			self.assertEqual([l["item_code"] for l in s["lines"]], ["HASR-YOGURT"])
 			r = sync.push_scans([fx.scan(s["name"], fx.CHEESE_UNIT)])["results"][0]
-			self.assertEqual((r["status"], r["code"]), ("exception", "other_warehouse"))
+			self.assertEqual((r["status"], r["reason"]), ("rejected", "other_warehouse"))
 			self.assertNotIn(po_item_second, [l["po_item"] for l in api.get_session(s["name"])["lines"]])
 		finally:
 			frappe.set_user("Administrator")

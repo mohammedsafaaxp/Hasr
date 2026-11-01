@@ -156,6 +156,7 @@
 
     <LineSheet
       :line="activeLine"
+      :entry="lineEntry && activeLine && lineEntry.po_item === activeLine.po_item ? lineEntry : null"
       :session="s && s.name"
       :editable="s && s.editable"
       :expiry-warning-pct="s ? s.expiry_warning_pct : 0"
@@ -166,7 +167,7 @@
     />
     <UnknownBarcodeSheet :barcode="unknownBarcode" :session="s && s.name" @close="unknownBarcode = ''" @sent="onUnknownSent" />
     <CameraSheet v-model:open="cameraOpen" @scan="onScanInput" />
-    <QtySheet :barcode="qtyBarcode" :lines="s ? s.lines : []" @close="qtyBarcode = ''" @confirm="onQtyConfirm" />
+    <NotOnOrderSheet :item="notOnOrder" @close="notOnOrder = null" @report="reportNotOnOrder" />
     <ItemEntrySheet v-model:open="itemEntryOpen" :lines="s ? s.lines : []" :item-code="itemEntryCode" @confirm="onItemEntry" />
     <FinishSheet v-if="s" v-model:open="finishOpen" :session="s" @finished="onFinished" />
     <InvoiceSheet v-if="s" v-model:open="invoiceOpen" :session="s" />
@@ -197,7 +198,7 @@ import FinishSheet from '../components/FinishSheet.vue'
 import InvoiceSheet from '../components/InvoiceSheet.vue'
 import LastScanCard from '../components/LastScanCard.vue'
 import MismatchSheet from '../components/MismatchSheet.vue'
-import QtySheet from '../components/QtySheet.vue'
+import NotOnOrderSheet from '../components/NotOnOrderSheet.vue'
 import ItemEntrySheet from '../components/ItemEntrySheet.vue'
 import ImageZoom from '../components/ImageZoom.vue'
 import { barcodeRows, orderedText } from '../uom'
@@ -247,7 +248,7 @@ let toastTimer = null
 const activeLine = computed(() => (s.value && props.poItem ? s.value.lines.find((l) => l.po_item === props.poItem) : null))
 const sheetOpen = computed(
   () =>
-    !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value || mismatch.value.line || qtyBarcode.value || itemEntryOpen.value),
+    !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value || mismatch.value.line || notOnOrder.value || itemEntryOpen.value),
 )
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
@@ -338,27 +339,31 @@ function scanBase() {
   return { client_uuid: uuid4(), session: s.value.name, session_type: 'Receiving', device_id: deviceId(), scanned_at: new Date().toISOString() }
 }
 
-const qtyBarcode = ref('')
+const notOnOrder = ref(null)
+const lineEntry = ref(null)
 const itemEntryOpen = ref(false)
 const itemEntryCode = ref('')
 const scanMode = ref(readScanMode())
 const scanModes = computed(() => [
+  { value: 'qty', label: __('Scan, then quantity') },
   { value: 'each', label: __('Each scan = 1') },
-  { value: 'qty', label: __('Scan + quantity') },
 ])
+
+// "scan, then quantity" is the default: the scan opens the item and the worker types how many
+const SCAN_MODE_KEY = 'hasr_scan_mode_v2'
 
 function readScanMode() {
   try {
-    return localStorage.getItem('hasr_scan_mode') || 'each'
+    return localStorage.getItem(SCAN_MODE_KEY) || 'qty'
   } catch (e) {
-    return 'each'
+    return 'qty'
   }
 }
 
 function setScanMode(mode) {
   scanMode.value = mode
   try {
-    localStorage.setItem('hasr_scan_mode', mode)
+    localStorage.setItem(SCAN_MODE_KEY, mode)
   } catch (e) {
     /* not remembered */
   }
@@ -367,15 +372,65 @@ function setScanMode(mode) {
 function onScanInput(code) {
   if (scanMode.value === 'qty') {
     cameraOpen.value = false
-    qtyBarcode.value = code
+    openScanned(code)
   } else {
     onScan(code)
   }
 }
 
-function onQtyConfirm({ barcode, qty }) {
-  qtyBarcode.value = ''
-  onScan(barcode, qty)
+/** The line a code belongs to, from what the phone already has: a barcode (with its unit) or the item code. */
+function findLocal(code) {
+  const upper = code.toUpperCase()
+  const matches = []
+  for (const l of s.value.lines) {
+    const b = l.barcodes.find((x) => x.barcode === code)
+    if (b) matches.push({ line: l, uom: b.uom || l.stock_uom })
+    else if (l.item_code.toUpperCase() === upper) matches.push({ line: l, uom: null })
+  }
+  // the same item on two lines: the first one still open
+  return matches.find((m) => !isDone(m.line)) || matches[0] || null
+}
+
+// Scan, then quantity: open the item so the worker sees it and types how many; a wrong item is refused clearly.
+async function openScanned(code) {
+  code = (code || '').trim()
+  if (!code || !s.value || !s.value.editable) return
+  let hit = findLocal(code)
+  if (!hit) {
+    let r
+    try {
+      r = await api('receiving.identify', { session: s.value.name, code })
+    } catch (e) {
+      feedbackError()
+      showToast({ title: errorMessage(e), error: true })
+      return
+    }
+    if (r.status === 'line') hit = { line: s.value.lines.find((l) => l.po_item === r.po_item), uom: r.uom }
+    else if (r.status === 'not_on_order') {
+      feedbackError()
+      notOnOrder.value = { ...r, qty: 1 }
+      return
+    } else if (r.status === 'unknown') {
+      feedbackError()
+      unknownBarcode.value = code
+      return
+    } else {
+      feedbackError()
+      showToast({ title: r.message, error: true })
+      return
+    }
+  }
+  if (!hit || !hit.line) return
+  feedbackSuccess()
+  openLine(hit.line, { checked: true, uom: hit.uom })
+}
+
+function reportNotOnOrder(qty) {
+  const n = notOnOrder.value
+  notOnOrder.value = null
+  if (!n || !queue.value) return
+  const which = n.barcode ? { barcode: n.barcode } : { barcode: null, item_code: n.item_code, uom: n.uom }
+  queue.value.add({ ...scanBase(), ...which, qty, report_not_on_order: 1 })
 }
 
 function openItemEntry(code = '') {
@@ -426,9 +481,11 @@ async function onQueueResult({ result: r, lines, error }, scan) {
     await nextTick()
     rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   } else if (r.status === 'exception') {
-    feedbackWarning()
-    showToast({ title: r.message, warn: true })
+    showToast({ title: __('Sent to the supervisor'), subtitle: r.message })
     load() // show the exception in the list
+  } else if (r.code === 'not_on_order') {
+    feedbackError()
+    notOnOrder.value = { ...r, qty: scan.qty || 1 }
   } else if (r.code === 'use_item_entry') {
     feedbackWarning()
     openItemEntry(r.item_code)
@@ -441,7 +498,8 @@ async function onQueueResult({ result: r, lines, error }, scan) {
   }
 }
 
-function openLine(l) {
+function openLine(l, entry = null) {
+  lineEntry.value = entry ? { po_item: l.po_item, ...entry } : null
   router.push({ name: 'ReceiveLine', params: { session: props.session, poItem: l.po_item } })
 }
 

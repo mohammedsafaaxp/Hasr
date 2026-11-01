@@ -59,18 +59,39 @@ class TestSync(HasrTestCase, FrappeTestCase):
 			frappe.get_doc({"doctype": "Item", "item_code": "HASR-PHONE-MADE", "item_group": "All Item Groups", "stock_uom": "Nos"}).insert,
 		)
 
-	def test_item_not_on_po_becomes_exception(self):
-		out = sync.push_scans([fx.scan(self.session, fx.BUTTER_UNIT), fx.scan(self.session, fx.BUTTER_UNIT, qty=2)])
+	def test_item_not_on_po_is_refused_until_reported(self):
+		out = sync.push_scans([fx.scan(self.session, fx.BUTTER_UNIT)])
+		r = out["results"][0]
+		self.assertEqual((r["status"], r["code"], r["reason"]), ("rejected", "not_on_order", "not_on_po"))
+		self.assertIn("not on this purchase order", r["message"])
+		self.assertEqual(r["item_code"], "HASR-BUTTER")
+		self.assertFalse(
+			[u for u in api.get_session(self.session)["unknown_barcodes"] if u["kind"] == "Not on order"],
+			"nothing recorded before the worker reports it",
+		)
+
+	def test_item_not_on_po_reported_becomes_exception(self):
+		report = {"report_not_on_order": 1}
+		out = sync.push_scans([fx.scan(self.session, fx.BUTTER_UNIT, **report), fx.scan(self.session, fx.BUTTER_UNIT, qty=2, **report)])
 		r = out["results"][0]
 		self.assertEqual((r["status"], r["code"]), ("exception", "not_on_po"))
 		self.assertIn("Not on purchase order", r["message"])
 		self.assertEqual(sum(l["received_qty"] for l in out["lines"]), 0, "not counted on any line")
 		exceptions = [u for u in api.get_session(self.session)["unknown_barcodes"] if u["kind"] == "Not on order"]
-		self.assertEqual(len(exceptions), 1, "repeated scans add to one exception")
+		self.assertEqual(len(exceptions), 1, "repeated reports add to one exception")
 		self.assertEqual((exceptions[0]["item_code"], exceptions[0]["qty"]), ("HASR-BUTTER", 3))
 
+	def test_identify(self):
+		case = api.identify(self.session, fx.MILK_CASE)
+		self.assertEqual((case["status"], case["uom"]), ("line", "Box"))
+		self.assertEqual(api.identify(self.session, "HASR-MILK")["uom"], None, "an item code does not say the unit")
+		butter = api.identify(self.session, fx.BUTTER_UNIT)
+		self.assertEqual((butter["status"], butter["reason"]), ("not_on_order", "not_on_po"))
+		self.assertEqual(api.identify(self.session, "0000000000000")["status"], "unknown")
+		self.assertEqual(frappe.db.count("Hasr Scan", {"session": self.session}), 0, "identify counts nothing")
+
 	def test_not_on_order_blocks_approval_until_returned(self):
-		sync.push_scans([fx.scan(self.session, fx.YOGURT_UNIT), fx.scan(self.session, fx.BUTTER_UNIT)])
+		sync.push_scans([fx.scan(self.session, fx.YOGURT_UNIT), fx.scan(self.session, fx.BUTTER_UNIT, report_not_on_order=1)])
 		api.finish_session(self.session)
 		frappe.set_user(fx.SUPERVISOR)
 		self.assertRaisesRegex(frappe.ValidationError, "not on the order", api.approve, self.session)

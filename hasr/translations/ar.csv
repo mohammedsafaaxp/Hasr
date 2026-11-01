@@ -372,3 +372,14 @@ Expired. Do not receive it.,منتهي الصلاحية، لا تستلمه.
 Delete digit,حذف رقم
 Enlarge photo,تكبير الصورة
 No photo,لا توجد صورة
+Not on this purchase order,ليس ضمن أمر الشراء هذا
+Wrong item: not on this purchase order,صنف خاطئ: غير موجود في أمر الشراء هذا
+"Put it aside. If it came with the shipment, report it so the supervisor decides.","ضعه جانبًا. إن كان قد وصل مع الشحنة فأبلغ المشرف ليقرر."
+How many arrived?,كم وصل منه؟
+Less,أقل
+More,أكثر
+Send to the supervisor,إرسال إلى المشرف
+"OK, put it aside","حسنًا، سأضعه جانبًا"
+"Scan, then quantity","مسح ثم الكمية"
+Counted so far: {0} {1}. Type the total.,المسجّل حتى الآن: {0} {1}. اكتب الإجمالي.
+{0} is not on this purchase order. {1},{0} غير موجود في أمر الشراء هذا. {1}

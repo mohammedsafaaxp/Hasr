@@ -33,6 +33,12 @@ def get_session(name):
 
 
 @frappe.whitelist()
+def identify(session, code):
+	require_counter()
+	return receiving.identify(session, code)
+
+
+@frappe.whitelist()
 def my_sessions():
 	require_counter()
 	return frappe.get_all(

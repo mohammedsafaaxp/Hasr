@@ -563,24 +563,27 @@ def _resolve_typed_item(scan):
 def apply_item_qty(doc, scan, uuid, resolved, qty):
 	line = _match_line(doc, resolved.item_code, scan.po_item)
 	if not line:
-		on_po = frappe.db.exists(
-			"Purchase Order Item", {"parent": doc.purchase_order, "item_code": resolved.item_code}
-		)
+		code, note = not_on_order_reason(doc, resolved.item_code)
 		name = resolved.item_name or resolved.item_code
-		other_wh = _line_in_other_warehouse(doc, resolved.item_code)
-		if other_wh:
-			note = _("On purchase order {0} for warehouse {1}, which you do not receive into.").format(
-				doc.purchase_order, other_wh
-			)
-			code = "other_warehouse"
-		elif on_po:
-			note = _("Already fully received on purchase order {0}.").format(doc.purchase_order)
-			code = "fully_received"
-		else:
-			note = _("Not on purchase order {0}.").format(doc.purchase_order)
-			code = "not_on_po"
-		# not counted on any line: kept as an exception the supervisor must decide on
 		qty_stock = qty * (flt(resolved.conversion_factor) or 1.0)
+		if not cint(scan.report_not_on_order):
+			# refused, not counted: the worker sees it is not on this order and may report it
+			msg = _("{0} is not on this purchase order. {1}").format(name, note)
+			_log_scan(doc, scan, uuid, "Rejected", msg, resolved, qty=qty, qty_stock=qty_stock)
+			return {
+				"client_uuid": uuid,
+				"status": "rejected",
+				"code": "not_on_order",
+				"reason": code,
+				"message": msg,
+				"barcode": resolved.barcode,
+				"item_code": resolved.item_code,
+				"item_name": name,
+				"image": frappe.db.get_value("Item", resolved.item_code, "image"),
+				"uom": resolved.uom,
+				"conversion_factor": flt(resolved.conversion_factor) or 1.0,
+			}
+		# reported by the worker: kept as an exception the supervisor must decide on
 		exception = _record_not_on_order(doc, resolved, qty_stock, note)
 		msg = _("{0}: {1} Recorded for the supervisor, not counted.").format(name, note)
 		_log_scan(doc, scan, uuid, "Rejected", msg, resolved, qty=qty, qty_stock=qty_stock)
@@ -619,6 +622,46 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		"received_qty": flt(line.received_qty),
 		"over_allowance_state": line.over_allowance_state,
 		"message": _("Added {0} {1} of {2}").format(f"{qty:g}", _(resolved.uom), resolved.item_name),
+	}
+
+
+def not_on_order_reason(doc, item_code):
+	"""Why an item has no line in this session: (code, sentence for the worker and the supervisor)."""
+	other_wh = _line_in_other_warehouse(doc, item_code)
+	if other_wh:
+		return "other_warehouse", _("On purchase order {0} for warehouse {1}, which you do not receive into.").format(
+			doc.purchase_order, other_wh
+		)
+	if frappe.db.exists("Purchase Order Item", {"parent": doc.purchase_order, "item_code": item_code}):
+		return "fully_received", _("Already fully received on purchase order {0}.").format(doc.purchase_order)
+	return "not_on_po", _("Not on purchase order {0}.").format(doc.purchase_order)
+
+
+def identify(session, code):
+	"""Which line of the session a scanned code belongs to, without counting anything."""
+	doc = get_session_doc(session)
+	code = (code or "").strip()
+	resolved = erp.resolve_barcode(code)
+	if not resolved:
+		return {"status": "unknown", "barcode": code, "message": _("Barcode {0} is not linked to any item.").format(code)}
+	if resolved.disabled:
+		return {"status": "disabled", "message": _("Item {0} is disabled.").format(resolved.item_code)}
+	line = _match_line(doc, resolved.item_code)
+	if line:
+		# a typed item code says nothing about the unit; a barcode does
+		return {"status": "line", "po_item": line.po_item, "uom": resolved.uom if resolved.barcode else None}
+	reason, note = not_on_order_reason(doc, resolved.item_code)
+	name = resolved.item_name or resolved.item_code
+	return {
+		"status": "not_on_order",
+		"reason": reason,
+		"message": _("{0} is not on this purchase order. {1}").format(name, note),
+		"barcode": resolved.barcode,
+		"item_code": resolved.item_code,
+		"item_name": name,
+		"image": frappe.db.get_value("Item", resolved.item_code, "image"),
+		"uom": resolved.uom,
+		"conversion_factor": flt(resolved.conversion_factor) or 1.0,
 	}
 
 
