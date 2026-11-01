@@ -11,6 +11,8 @@
   "column_break_rcv",
   "gs1_enabled",
   "require_supplier_invoice_no",
+  "approval_section",
+  "approver_roles",
   "counting_section",
   "allow_freeze",
   "freeze_max_hours",
@@ -62,6 +64,18 @@
    "fieldname": "require_supplier_invoice_no",
    "fieldtype": "Check",
    "label": "Require Supplier Invoice No"
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "description": "Who can approve receipts, decide over-receipts and exceptions, and send shipments back. Empty: Hasr Supervisor. System Manager can always approve. Nobody approves a shipment they received themselves.",
+   "fieldname": "approver_roles",
+   "fieldtype": "Table MultiSelect",
+   "label": "Roles That Can Approve",
+   "options": "Hasr Approver Role"
   },
   {
    "fieldname": "counting_section",
@@ -151,7 +165,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-01 14:00:00.000000",
+ "modified": "2026-11-01 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Settings",

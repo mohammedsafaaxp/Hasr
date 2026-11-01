@@ -6,6 +6,7 @@ from frappe.utils import add_days, nowdate
 COUNTER = "hasr.counter@example.com"
 COUNTER_2 = "hasr.counter2@example.com"
 SUPERVISOR = "hasr.supervisor@example.com"
+SUPERVISOR_2 = "hasr.supervisor2@example.com"
 
 MILK_UNIT = "6281007030129"
 MILK_CASE = "16281007030126"
@@ -115,6 +116,7 @@ def setup_users():
 	user(COUNTER, ["Hasr Counter"])
 	user(COUNTER_2, ["Hasr Counter"])
 	user(SUPERVISOR, ["Hasr Supervisor", "Stock User", "Stock Manager", "Purchase User"])
+	user(SUPERVISOR_2, ["Hasr Supervisor", "Stock User", "Stock Manager", "Purchase User"])
 
 
 def setup_all():
@@ -135,7 +137,7 @@ def setup_all():
 
 
 def make_po(rows, wh=None, submit=True, supplier_name=None):
-	"""rows: [(item_code, qty)] or [(item_code, qty, uom, conversion_factor)]."""
+	"""rows: [(item_code, qty)], [(item_code, qty, uom, conversion_factor)] or (..., warehouse) per line."""
 	frappe.set_user("Administrator")
 	comp = company()
 	wh = wh or warehouse("Hasr Main")
@@ -144,6 +146,7 @@ def make_po(rows, wh=None, submit=True, supplier_name=None):
 		item_code, qty = row[0], row[1]
 		uom_name = row[2] if len(row) > 2 else "Nos"
 		cf = row[3] if len(row) > 3 else 1
+		line_wh = row[4] if len(row) > 4 else wh
 		items.append(
 			{
 				"item_code": item_code,
@@ -151,7 +154,7 @@ def make_po(rows, wh=None, submit=True, supplier_name=None):
 				"uom": uom_name,
 				"conversion_factor": cf,
 				"rate": 10,
-				"warehouse": wh,
+				"warehouse": line_wh,
 				"schedule_date": add_days(nowdate(), 1),
 			}
 		)
@@ -182,3 +185,10 @@ def scan(session, barcode, uuid=None, qty=None, **extra):
 		"device_id": "test-device",
 		**extra,
 	}
+
+
+def restrict(user_email, wh):
+	frappe.set_user("Administrator")
+	return frappe.get_doc(
+		{"doctype": "User Permission", "user": user_email, "allow": "Warehouse", "for_value": wh}
+	).insert(ignore_permissions=True)

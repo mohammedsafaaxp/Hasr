@@ -5,7 +5,7 @@ import frappe
 from hasr import erpnext_adapter as erp
 from hasr import receiving
 from hasr.api import parse_json_arg
-from hasr.permissions import get_allowed_warehouses, require_counter, require_supervisor
+from hasr.permissions import get_allowed_warehouses, require_approver, require_counter, require_supervisor
 
 
 @frappe.whitelist()
@@ -98,44 +98,45 @@ def report_mismatch(session, po_item, qty, photo, note=None, barcode=None, clien
 
 @frappe.whitelist()
 def get_review(session):
-	require_supervisor()
+	# counters see their own sessions (get_session_doc checks); approve buttons follow approval_block_reason
+	require_counter()
 	return receiving.get_review(session)
 
 
 @frappe.whitelist(methods=["POST"])
 def decide_line(session, po_item, decision):
-	require_supervisor()
+	require_approver()
 	return receiving.session_payload(receiving.decide_line(session, po_item, decision))
 
 
 @frappe.whitelist(methods=["POST"])
 def approve(session, decisions=None, submit=0):
-	require_supervisor()
+	require_approver()
 	doc = receiving.approve(session, parse_json_arg(decisions, {}), frappe.utils.cint(submit))
 	return receiving.session_payload(doc)
 
 
 @frappe.whitelist(methods=["POST"])
 def send_back(session, note=None):
-	require_supervisor()
+	require_approver()
 	return receiving.session_payload(receiving.send_back(session, note))
 
 
 @frappe.whitelist(methods=["POST"])
 def link_unknown_barcode(name, item_code, uom=None):
-	require_supervisor()
+	require_approver()
 	doc = receiving.link_unknown_barcode(name, item_code, uom or None)
 	return {"name": doc.name, "status": doc.status, "linked_item": doc.linked_item}
 
 
 @frappe.whitelist(methods=["POST"])
 def decide_mismatch(name, decision):
-	require_supervisor()
+	require_approver()
 	return receiving.session_payload(receiving.decide_mismatch(name, decision))
 
 
 @frappe.whitelist(methods=["POST"])
 def dismiss_unknown_barcode(name):
-	require_supervisor()
+	require_approver()
 	doc = receiving.dismiss_unknown_barcode(name)
 	return {"name": doc.name, "status": doc.status}

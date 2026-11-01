@@ -9,7 +9,13 @@ from frappe.utils import cint, flt, now_datetime
 
 from hasr import erpnext_adapter as erp
 from hasr.hasr.doctype.hasr_receiving_session.hasr_receiving_session import EDITABLE_STATUSES, EPSILON
-from hasr.permissions import check_warehouse_access, get_allowed_warehouses, is_supervisor
+from hasr.permissions import (
+	approval_block_reason,
+	check_approver,
+	check_warehouse_access,
+	get_allowed_warehouses,
+	is_supervisor,
+)
 
 SESSION = "Hasr Receiving Session"
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -95,8 +101,11 @@ def start_session(purchase_order):
 		)
 
 	in_flight = in_flight_qty(purchase_order)
+	allowed = get_allowed_warehouses()
 	lines = []
 	for row in erp.get_po_lines_with_remaining(purchase_order):
+		if allowed is not None and row.warehouse not in allowed:
+			continue  # a line for another warehouse is received by someone who works there
 		already = flt(row.received_qty) + in_flight.get(row.po_item, 0.0)
 		pending = max(flt(row.ordered_qty) - already, 0.0)
 		if pending <= EPSILON:
@@ -246,6 +255,7 @@ def session_payload(doc):
 		"lines": lines,
 		"unknown_barcodes": unknown,
 		"invoices": get_invoices(doc.name),
+		"approval_block_reason": approval_block_reason(doc),
 		"mismatches": get_mismatches(doc.name),
 		"expiry_warning_pct": flt(frappe.get_cached_doc("Hasr Settings").expiry_warning_pct),
 	}
@@ -543,7 +553,13 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 			"Purchase Order Item", {"parent": doc.purchase_order, "item_code": resolved.item_code}
 		)
 		name = resolved.item_name or resolved.item_code
-		if on_po:
+		other_wh = _line_in_other_warehouse(doc, resolved.item_code)
+		if other_wh:
+			note = _("On purchase order {0} for warehouse {1}, which you do not receive into.").format(
+				doc.purchase_order, other_wh
+			)
+			code = "other_warehouse"
+		elif on_po:
 			note = _("Already fully received on purchase order {0}.").format(doc.purchase_order)
 			code = "fully_received"
 		else:
@@ -590,6 +606,18 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		"over_allowance_state": line.over_allowance_state,
 		"message": _("Added {0} {1} of {2}").format(f"{qty:g}", _(resolved.uom), resolved.item_name),
 	}
+
+
+def _line_in_other_warehouse(doc, item_code):
+	allowed = get_allowed_warehouses()
+	if allowed is None:
+		return None
+	for wh in frappe.get_all(
+		"Purchase Order Item", filters={"parent": doc.purchase_order, "item_code": item_code}, pluck="warehouse"
+	):
+		if wh not in allowed:
+			return wh
+	return None
 
 
 def _record_not_on_order(doc, resolved, qty_stock, note):
@@ -914,6 +942,7 @@ def decide_mismatch(name, decision):
 	if mismatch.status != "Open":
 		frappe.throw(_("This report was already decided."))
 	doc = get_session_doc(mismatch.session, for_update=True)
+	check_approver(doc)
 	if doc.status not in (*EDITABLE_STATUSES, "Pending Approval"):
 		frappe.throw(_("Session {0} is {1} and can no longer be changed.").format(doc.name, _(doc.status)))
 	if decision == "Wrong":
@@ -984,6 +1013,7 @@ def link_unknown_barcode(name, item_code, uom=None):
 	if unknown.kind == "Not on order":
 		frappe.throw(_("This item is known but not on the order. Return it to the supplier instead."))
 	doc = get_session_doc(unknown.session, for_update=True)
+	check_approver(doc)
 	if doc.status not in (*EDITABLE_STATUSES, "Pending Approval"):
 		frappe.throw(_("Session {0} is {1} and can no longer be changed.").format(doc.name, _(doc.status)))
 	if not any(l.item_code == item_code for l in doc.lines):
@@ -1012,6 +1042,7 @@ def dismiss_unknown_barcode(name):
 	unknown = frappe.get_doc("Hasr Unknown Barcode", name)
 	if unknown.status != "Open":
 		frappe.throw(_("Unknown barcode {0} is already {1}.").format(unknown.barcode, _(unknown.status)))
+	check_approver(get_session_doc(unknown.session))
 	unknown.status = "Dismissed"
 	unknown.save(ignore_permissions=True)
 	return unknown
@@ -1023,6 +1054,7 @@ def dismiss_unknown_barcode(name):
 def decide_line(session, po_item, decision):
 	doc = get_session_doc(session, for_update=True)
 	_require_pending(doc)
+	check_approver(doc)
 	_apply_decision(doc, doc.get_line(po_item), decision)
 	doc.save(ignore_permissions=True)
 	return doc
@@ -1064,6 +1096,7 @@ def _require_pending(doc):
 def approve(session, decisions=None, submit=False):
 	doc = get_session_doc(session, for_update=True)
 	_require_pending(doc)
+	check_approver(doc)
 
 	if not frappe.has_permission("Purchase Receipt", "create"):
 		frappe.throw(_("You need permission to create Purchase Receipts."), frappe.PermissionError)
@@ -1129,6 +1162,7 @@ def approve(session, decisions=None, submit=False):
 def send_back(session, note=None):
 	doc = get_session_doc(session, for_update=True)
 	_require_pending(doc)
+	check_approver(doc)
 	doc.status = "Sent Back"
 	doc.review_note = (note or "").strip() or None
 	for line in doc.lines:

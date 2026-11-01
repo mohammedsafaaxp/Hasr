@@ -145,6 +145,7 @@ Nothing to undo.,لا يوجد ما يمكن التراجع عنه.
 Nothing was received in this session.,لم يُستلم أي شيء في هذه الجلسة.
 OK,سليم
 Offline,غير متصل
+"On purchase order {0} for warehouse {1}, which you do not receive into.",ضمن أمر الشراء {0} للمستودع {1}، وهو ليس من المستودعات التي تستلم فيها.
 One clear photo of the pack is enough,تكفي صورة واحدة واضحة للعبوة
 One new batch is created per expiry date on approval.,تُنشأ دفعة جديدة لكل تاريخ انتهاء عند الاعتماد.
 Online · {0},متصل · آخر مزامنة {0}
@@ -269,10 +270,13 @@ Wrong email or password.,البريد الإلكتروني أو كلمة الم�
 Wrong item,صنف خاطئ
 Wrong item: remove {0},صنف خاطئ: حذف {0}
 Year,سنة
+You do not have access to these warehouses: {0},ليست لديك صلاحية على هذه المستودعات: {0}
 You do not have access to this warehouse.,ليست لديك صلاحية على هذا المستودع.
 You need permission to create Purchase Receipts.,تحتاج إلى صلاحية إنشاء إيصالات الاستلام.
 You need permission to submit Purchase Receipts.,تحتاج إلى صلاحية اعتماد إيصالات الاستلام.
 You need the Hasr Counter role to use hasr.,تحتاج إلى دور «عدّاد حَصر» لاستخدام حَصر.
+You received this shipment. Another approver has to approve it.,أنت من استلم هذه الشحنة، ويجب أن يعتمدها شخص آخر.
+Your role cannot approve receipts. See Hasr Settings.,دورك لا يسمح باعتماد الاستلام. راجع إعدادات حَصر.
 Zoom,تكبير
 complete,مكتمل
 expiry date needed,يلزم تاريخ الانتهاء

@@ -16,10 +16,6 @@ frappe.ui.form.on("Hasr Receiving Session", {
 		const is_supervisor = frappe.user.has_role(["Hasr Supervisor", "System Manager"]);
 		frm.page.set_indicator(__(frm.doc.status), STATUS_COLORS[frm.doc.status] || "gray");
 
-		if (is_supervisor && frm.doc.status === "Pending Approval") {
-			frm.add_custom_button(__("Send back"), () => hasr_send_back(frm));
-			frm.page.set_primary_action(__("Approve and create Purchase Receipt"), () => hasr_approve(frm));
-		}
 		if (frm.doc.purchase_receipt) {
 			frm.add_custom_button(__("Open Purchase Receipt"), () =>
 				frappe.set_route("Form", "Purchase Receipt", frm.doc.purchase_receipt)
@@ -32,7 +28,21 @@ frappe.ui.form.on("Hasr Receiving Session", {
 				)
 			);
 		}
-		hasr_render_review(frm, is_supervisor);
+		// approve buttons follow the server's rules: approver roles (Hasr Settings), not the receiver, warehouses
+		hasr_render_review(frm, (data) => {
+			const can_act = !data.approval_block_reason;
+			if (frm.doc.status === "Pending Approval") {
+				if (can_act) {
+					frm.add_custom_button(__("Send back"), () => hasr_send_back(frm));
+					frm.page.set_primary_action(__("Approve and create Purchase Receipt"), () => hasr_approve(frm));
+				} else {
+					frm.dashboard.set_headline(
+						`<span class="text-muted">${frappe.utils.escape_html(data.approval_block_reason)}</span>`
+					);
+				}
+			}
+			return can_act;
+		});
 	},
 });
 
@@ -123,13 +133,14 @@ function hasr_link_unknown(frm, unknown) {
 	d.show();
 }
 
-function hasr_render_review(frm, is_supervisor) {
+function hasr_render_review(frm, on_data) {
 	const wrapper = frm.get_field("review_html").$wrapper;
 	wrapper.empty();
 	if (frm.is_new()) return;
 
 	frappe.call({ method: HASR_API + "get_review", args: { session: frm.doc.name } }).then((r) => {
 		const data = r.message;
+		const is_supervisor = on_data(data);
 		const pending = data.status === "Pending Approval" && is_supervisor;
 		const esc = frappe.utils.escape_html;
 		const fmt = (v) => format_number(v, null, 3).replace(/\.?0+$/, "");
@@ -173,7 +184,7 @@ function hasr_render_review(frm, is_supervisor) {
 										<button class="btn btn-primary btn-sm" data-decide="Accept" data-po-item="${line.po_item}">
 											${__("Accept all {0}", [fmt(line.received_qty)])}</button>
 									</div>`;
-							  })()`
+							  })()
 							: ""
 					}
 				</div>`);
