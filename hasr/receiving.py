@@ -5,7 +5,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, now_datetime
+from frappe.utils import cint, flt, now_datetime, strip_html_tags
 
 from hasr import erpnext_adapter as erp
 from hasr.hasr.doctype.hasr_receiving_session.hasr_receiving_session import EDITABLE_STATUSES, EPSILON
@@ -175,13 +175,21 @@ def get_editable_session(name):
 	return doc
 
 
+def short_description(html, item_name):
+	"""Plain text the worker can read on the phone; nothing when it only repeats the name."""
+	text = " ".join(strip_html_tags(html or "").split())
+	if not text or text.lower() == (item_name or "").strip().lower():
+		return ""
+	return text if len(text) <= 300 else text[:297] + "…"
+
+
 def session_payload(doc):
 	items = {
 		r.name: r
 		for r in frappe.get_all(
 			"Item",
 			filters={"name": ["in", list({l.item_code for l in doc.lines}) or [""]]},
-			fields=["name", "image", "has_batch_no", "has_expiry_date", "shelf_life_in_days"],
+			fields=["name", "image", "description", "brand", "has_batch_no", "has_expiry_date", "shelf_life_in_days"],
 		)
 	}
 	barcodes = {}
@@ -205,6 +213,8 @@ def session_payload(doc):
 				"item_name": l.item_name,
 				"stock_uom": l.stock_uom,
 				"image": item.image,
+				"description": short_description(item.description, l.item_name),
+				"brand": item.brand,
 				"has_batch_no": item.has_batch_no,
 				"has_expiry_date": item.has_expiry_date,
 				"shelf_life_in_days": item.shelf_life_in_days,

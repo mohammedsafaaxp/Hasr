@@ -1,14 +1,47 @@
 <template>
   <Sheet :open="!!line" :label="line ? line.item_name : ''" @update:open="!$event && $emit('close')">
     <div v-if="line" class="space-y-4 pb-2">
-      <div class="flex items-center gap-3">
-        <button type="button" class="shrink-0" :aria-label="__('Photo')" @click="zoomOpen = !!line.image">
-          <ItemThumb :src="line.image" :size="64" />
+      <!-- the item, large while checking it: similar products look alike -->
+      <div v-if="big" class="space-y-3">
+        <div class="relative">
+          <button
+            type="button"
+            class="flex h-52 w-full items-center justify-center overflow-hidden rounded-tile bg-hasr-surface2 text-hasr-muted"
+            :aria-label="__('Enlarge photo')"
+            :disabled="!line.image || imageFailed"
+            @click="zoomOpen = true"
+          >
+            <img v-if="line.image && !imageFailed" :src="line.image" alt="" class="h-full w-full object-contain" @error="imageFailed = true" />
+            <span v-else class="flex flex-col items-center gap-1 text-sm"><LucidePackage class="size-10" />{{ __('No photo') }}</span>
+          </button>
+          <span v-if="line.image && !imageFailed" class="pointer-events-none absolute bottom-2 end-2 flex size-9 items-center justify-center rounded-full bg-hasr-ink text-white">
+            <LucideMaximize2 class="size-4" />
+          </span>
+          <IconButton class="absolute end-2 top-2 bg-white/90" :label="__('Close')" @click="$emit('close')"><LucideX class="size-5" /></IconButton>
+        </div>
+        <div class="space-y-1">
+          <h2 class="text-xl font-semibold leading-tight" dir="auto">{{ line.item_name }}</h2>
+          <p class="text-[13px] text-hasr-muted">
+            <template v-if="line.brand">{{ line.brand }} · </template><span class="ltr-text">{{ line.item_code }}</span>
+          </p>
+          <p v-if="line.description" class="text-[15px] text-hasr-secondary" dir="auto">{{ line.description }}</p>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+            <span class="rounded-hasr bg-hasr-surface2 px-2.5 py-1 text-[15px] font-semibold">{{ __('Ordered {0}', [orderedText(line)]) }}</span>
+            <button type="button" class="text-[13px] text-hasr-info" @click="$emit('details', line.item_code)">{{ __('Item details') }}</button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="flex items-start gap-3">
+        <button type="button" class="relative shrink-0" :aria-label="__('Enlarge photo')" @click="zoomOpen = !!line.image">
+          <ItemThumb :src="line.image" :size="80" />
+          <span v-if="line.image" class="absolute -bottom-1 -end-1 flex size-6 items-center justify-center rounded-full bg-hasr-ink text-white">
+            <LucideMaximize2 class="size-3" />
+          </span>
         </button>
         <div class="min-w-0 flex-1">
           <h2 class="text-[17px] font-semibold leading-tight" dir="auto">{{ line.item_name }}</h2>
-          <p class="text-sm text-hasr-muted">{{ __('Ordered {0}', [orderedText(line)]) }}</p>
-          <button type="button" class="text-[13px] text-hasr-info" @click="$emit('details', line.item_code)">{{ __('Item details') }}</button>
+          <p v-if="line.description" class="line-clamp-2 text-[13px] text-hasr-muted" dir="auto">{{ line.description }}</p>
+          <p class="text-sm font-medium">{{ __('Ordered {0}', [orderedText(line)]) }}</p>
         </div>
         <IconButton :label="__('Close')" @click="$emit('close')"><LucideX class="size-5" /></IconButton>
       </div>
@@ -243,7 +276,10 @@ const typed = ref('')
 const typing = ref(false)
 const scanField = ref(null)
 const lastExpiry = ref('')
+const imageFailed = ref(false)
 
+// large item card while checking it (and once sent for review), compact next to the keypad
+const big = computed(() => !props.editable || step.value === 'check')
 const steps = computed(() => (props.line?.has_batch_no ? ['check', 'qty', 'expiry'] : ['check', 'qty']))
 const stepIndex = computed(() => steps.value.indexOf(step.value))
 const cf = computed(() => props.line?.uoms.find((u) => u.uom === uom.value)?.conversion_factor || 1)
@@ -334,6 +370,7 @@ watch(
     lastExpiry.value = recall(`hasr_last_expiry_${line.item_code}`)
     if (lastExpiry.value && daysUntil(lastExpiry.value) < 0) lastExpiry.value = ''
     error.value = ''
+    imageFailed.value = false
     check.value = null
     step.value = recall(checkedKey()) ? 'qty' : 'check'
     if (step.value === 'check') focusScanField()
