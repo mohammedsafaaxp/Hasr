@@ -12,11 +12,13 @@ from hasr.erpnext_adapter.items import (
 	uom_must_be_whole,
 )
 from hasr.erpnext_adapter.purchase_order import (
+	add_item_to_purchase_order,
 	get_open_purchase_orders,
 	get_po_lines_with_remaining,
 	get_purchase_order,
 	get_purchase_order_warehouses,
 	is_receivable,
+	suggested_purchase_rate,
 )
 from hasr.erpnext_adapter.purchase_receipt import (
 	create_draft_purchase_receipt,
@@ -27,6 +29,8 @@ from hasr.erpnext_adapter.stock import get_over_receipt_allowance, get_over_rece
 from hasr.erpnext_adapter.version import erpnext_major, erpnext_version, uses_serial_batch_bundle
 
 __all__ = [
+	"add_item_to_purchase_order",
+	"suggested_purchase_rate",
 	"add_item_barcode",
 	"create_draft_purchase_receipt",
 	"erpnext_major",

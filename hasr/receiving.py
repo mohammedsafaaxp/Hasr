@@ -241,6 +241,17 @@ def session_payload(doc):
 		fields=["name", "kind", "barcode", "item_code", "qty", "note", "status", "photo", "linked_item"],
 		order_by="creation asc",
 	)
+	for u in unknown:
+		if u.kind == "Not on order" and u.status == "Open" and u.item_code:
+			# what the supervisor needs to add it to the purchase order
+			item = frappe.db.get_value("Item", u.item_code, ["item_name", "stock_uom", "has_batch_no", "image"], as_dict=True) or {}
+			u.update(
+				item_name=item.get("item_name"),
+				stock_uom=item.get("stock_uom"),
+				has_batch_no=item.get("has_batch_no"),
+				image=item.get("image"),
+				suggested_rate=erp.suggested_purchase_rate(doc.purchase_order, u.item_code),
+			)
 	po = erp.get_purchase_order(doc.purchase_order) or {}
 	return {
 		"name": doc.name,
@@ -1090,6 +1101,61 @@ def link_unknown_barcode(name, item_code, uom=None):
 	unknown.linked_uom = resolved.uom
 	unknown.save(ignore_permissions=True)
 	return unknown
+
+
+def add_to_order(name, qty, rate=None, expiry_date=None):
+	"""An item that came with the shipment but is not on the order: the supervisor adds it to the purchase
+	order (a new row, in the stock unit) and it is received on a new line of this session."""
+	unknown = frappe.get_doc("Hasr Unknown Barcode", name)
+	if unknown.kind != "Not on order" or not unknown.item_code:
+		frappe.throw(_("Only an item that is not on the order can be added to it."))
+	if unknown.status != "Open":
+		frappe.throw(_("{0} is already {1}.").format(unknown.item_code, _(unknown.status)))
+	doc = get_session_doc(unknown.session, for_update=True)
+	_require_pending(doc)
+	check_approver(doc)
+	qty = flt(qty)
+	if qty <= 0:
+		frappe.throw(_("Quantity must be greater than zero."))
+	rate = erp.suggested_purchase_rate(doc.purchase_order, unknown.item_code) if rate in (None, "") else flt(rate)
+	if rate < 0:
+		frappe.throw(_("The rate cannot be negative."))
+	batches = None
+	if erp.get_batch_settings(unknown.item_code).has_batch_no:
+		if not expiry_date:
+			frappe.throw(_("{0} is tracked by batch. Enter its expiry date.").format(unknown.item_code))
+		batches = [{"expiry_date": str(frappe.utils.getdate(expiry_date)), "qty": qty}]
+
+	warehouse = doc.warehouse or doc.lines[0].warehouse
+	po_item = erp.add_item_to_purchase_order(doc.purchase_order, unknown.item_code, qty, rate, warehouse)
+	row = next(r for r in erp.get_po_lines_with_remaining(doc.purchase_order) if r.po_item == po_item)
+	doc.append(
+		"lines",
+		{
+			"po_item": row.po_item,
+			"item_code": row.item_code,
+			"item_name": row.item_name,
+			"stock_uom": row.stock_uom,
+			"uom": row.uom,
+			"conversion_factor": row.conversion_factor,
+			"warehouse": row.warehouse,
+			"ordered_qty": row.ordered_qty,
+			"already_received_qty": row.received_qty,
+			"pending_qty": row.remaining_qty,
+			"allowed_qty": row.allowed_qty,
+			"manual_adjust_qty": qty,
+		},
+	)
+	line = doc.lines[-1]
+	if batches:
+		line.batches_json = frappe.as_json(clean_batches(line, batches, qty))
+	doc.recompute_line(line)
+	doc.save(ignore_permissions=True)
+
+	unknown.status = "Added to order"
+	unknown.po_item = po_item
+	unknown.save(ignore_permissions=True)
+	return doc
 
 
 def dismiss_unknown_barcode(name):

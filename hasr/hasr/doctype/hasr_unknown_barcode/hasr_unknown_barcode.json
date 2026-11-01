@@ -20,7 +20,8 @@
   "column_break_1",
   "photo",
   "linked_item",
-  "linked_uom"
+  "linked_uom",
+  "po_item"
  ],
  "fields": [
   {
@@ -65,7 +66,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Open\nLinked\nDismissed",
+   "options": "Open\nLinked\nAdded to order\nDismissed",
    "read_only": 1
   },
   {
@@ -133,12 +134,19 @@
    "label": "Linked UOM",
    "options": "UOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "po_item",
+   "fieldtype": "Data",
+   "label": "Purchase Order Item",
+   "read_only": 1,
+   "description": "The row the supervisor added to the purchase order for this item."
   }
  ],
  "image_field": "photo",
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-01 12:00:00.000000",
+ "modified": "2026-11-01 16:27:06.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Unknown Barcode",

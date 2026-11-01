@@ -81,6 +81,50 @@ class TestSync(HasrTestCase, FrappeTestCase):
 		self.assertEqual(len(exceptions), 1, "repeated reports add to one exception")
 		self.assertEqual((exceptions[0]["item_code"], exceptions[0]["qty"]), ("HASR-BUTTER", 3))
 
+	def test_supervisor_adds_the_item_to_the_order(self):
+		report = {"report_not_on_order": 1}
+		sync.push_scans(
+			[
+				fx.scan(self.session, fx.YOGURT_UNIT),
+				fx.scan(self.session, fx.BUTTER_UNIT, qty=3, **report),
+				fx.scan(self.session, fx.CREAM_UNIT, qty=2, **report),
+			]
+		)
+		api.finish_session(self.session)
+		rows_before = {r.name: (r.item_code, r.qty, r.rate) for r in frappe.get_doc("Purchase Order", self.po.name).items}
+		exceptions = {u["item_code"]: u for u in api.get_session(self.session)["unknown_barcodes"]}
+		self.assertRaises(frappe.PermissionError, api.add_to_order, exceptions["HASR-BUTTER"]["name"], 3)
+
+		frappe.set_user(fx.SUPERVISOR)
+		butter = next(u for u in api.get_review(self.session)["unknown_barcodes"] if u["item_code"] == "HASR-BUTTER")
+		self.assertIn("suggested_rate", butter)
+		out = api.add_to_order(butter["name"], 3, 2.5)
+		line = next(l for l in out["lines"] if l["item_code"] == "HASR-BUTTER")
+		self.assertEqual(line["received_qty"], 3)
+
+		po = frappe.get_doc("Purchase Order", self.po.name)
+		self.assertEqual(po.docstatus, 1)
+		new_row = next(r for r in po.items if r.name == line["po_item"])
+		self.assertEqual((new_row.item_code, new_row.qty, new_row.rate), ("HASR-BUTTER", 3, 2.5))
+		for name, before in rows_before.items():
+			row = next(r for r in po.items if r.name == name)
+			self.assertEqual((row.item_code, row.qty, row.rate), before, "existing rows are kept as they were")
+		self.assertEqual(frappe.db.get_value("Hasr Unknown Barcode", butter["name"], "status"), "Added to order")
+		self.assertRaises(frappe.ValidationError, api.add_to_order, butter["name"], 3)
+
+		# a batch item needs its expiry date
+		cream = exceptions["HASR-CREAM-B"]["name"]
+		self.assertRaisesRegex(frappe.ValidationError, "Enter its expiry date", api.add_to_order, cream, 2)
+		expiry = frappe.utils.add_days(frappe.utils.nowdate(), 90)
+		out = api.add_to_order(cream, 2, None, expiry)
+		cream_line = next(l for l in out["lines"] if l["item_code"] == "HASR-CREAM-B")
+		self.assertEqual([(b["expiry_date"], b["qty"]) for b in cream_line["batches"]], [(expiry, 2)])
+
+		pr = frappe.get_doc("Purchase Receipt", api.approve(self.session)["purchase_receipt"])
+		row = next(r for r in pr.items if r.item_code == "HASR-BUTTER")
+		self.assertEqual((row.purchase_order, row.purchase_order_item, row.qty), (self.po.name, line["po_item"], 3))
+		self.assertTrue(next(r for r in pr.items if r.item_code == "HASR-CREAM-B").batch_no)
+
 	def test_identify(self):
 		case = api.identify(self.session, fx.MILK_CASE)
 		self.assertEqual((case["status"], case["uom"]), ("line", "Box"))

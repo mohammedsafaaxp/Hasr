@@ -133,6 +133,44 @@ function hasr_link_unknown(frm, unknown) {
 	d.show();
 }
 
+// An item that came but is not on the order: add a row to the purchase order and receive it here.
+function hasr_add_to_order(frm, unknown) {
+	const fields = [
+		{
+			fieldname: "qty",
+			fieldtype: "Float",
+			label: __("Quantity ({0})", [__(unknown.stock_uom || "")]),
+			default: unknown.qty,
+			reqd: 1,
+		},
+		{
+			fieldname: "rate",
+			fieldtype: "Currency",
+			label: __("Rate per {0}", [__(unknown.stock_uom || "")]),
+			default: unknown.suggested_rate,
+			description: __("From the supplier's price list or the last purchase rate. Check it against the invoice."),
+		},
+	];
+	if (unknown.has_batch_no) {
+		fields.push({ fieldname: "expiry_date", fieldtype: "Date", label: __("Expiry date"), reqd: 1 });
+	}
+	const d = new frappe.ui.Dialog({
+		title: __("Add {0} to purchase order {1}", [unknown.item_name || unknown.item_code, frm.doc.purchase_order]),
+		fields,
+		primary_action_label: __("Add to the order and receive"),
+		primary_action(values) {
+			d.hide();
+			hasr_call(
+				frm,
+				"add_to_order",
+				{ name: unknown.name, qty: values.qty, rate: values.rate, expiry_date: values.expiry_date },
+				__("Added to the purchase order")
+			);
+		},
+	});
+	d.show();
+}
+
 function hasr_render_review(frm, on_data) {
 	const wrapper = frm.get_field("review_html").$wrapper;
 	wrapper.empty();
@@ -201,13 +239,14 @@ function hasr_render_review(frm, on_data) {
 								: __("Unknown barcode {0} · {1} units", [esc(u.barcode), fmt(u.qty)])
 						}</div>
 						<div class="text-muted">${u.note ? __("Note: {0}", [esc(u.note)]) : ""} ${
-				u.status !== "Open" ? `· ${__(u.status)} ${esc(u.linked_item || "")}` : ""
+				u.status !== "Open" ? `· ${__(u.status)} ${esc(u.linked_item || "")}` : u.kind === "Not on order" ? `· ${__("Return it, or add it to the purchase order if you want it.")}` : ""
 			}</div>
 					</div>
 					${
 						is_supervisor && u.status === "Open"
 							? u.kind === "Not on order"
-								? `<button class="btn btn-primary btn-sm" data-dismiss="${u.name}">${__("Return to supplier")}</button>`
+								? `<button class="btn btn-default btn-sm" data-dismiss="${u.name}">${__("Return to supplier")}</button>
+								<button class="btn btn-primary btn-sm" data-add-to-order="${u.name}">${__("Add to the purchase order")}</button>`
 								: `<button class="btn btn-default btn-sm" data-dismiss="${u.name}">${__("Dismiss")}</button>
 								<button class="btn btn-primary btn-sm" data-link="${u.name}">${__("Link to item")}</button>`
 							: ""
@@ -332,6 +371,13 @@ function hasr_render_review(frm, on_data) {
 		wrapper.find("[data-link]").on("click", (e) => {
 			const name = $(e.currentTarget).attr("data-link");
 			hasr_link_unknown(
+				frm,
+				data.unknown_barcodes.find((u) => u.name === name)
+			);
+		});
+		wrapper.find("[data-add-to-order]").on("click", (e) => {
+			const name = $(e.currentTarget).attr("data-add-to-order");
+			hasr_add_to_order(
 				frm,
 				data.unknown_barcodes.find((u) => u.name === name)
 			);

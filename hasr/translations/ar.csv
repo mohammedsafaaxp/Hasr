@@ -63,7 +63,7 @@ Day,يوم
 Decide on the over-receipt first: {0},اتخذ قرارًا بشأن الزيادة في الاستلام أولًا: {0}
 Decide on the reported item mismatches first.,اتخذ قرارًا بشأن بلاغات عدم مطابقة الأصناف أولًا.
 Decide on the unknown barcodes and the items that are not on the order first.,اتخذ قرارًا بشأن الباركودات غير المعروفة والأصناف غير الموجودة في الأمر أولًا.
-Decision must be Accept or Cap.,يجب أن يكون القرار قبولًا أو تحديدًا.
+Decision must be Accept or Cap.,يجب أن يكون القرار: قبول الكل أو إرجاع الزيادة.
 "Decision must be Accept, Cap or Reject excess.",يجب أن يكون القرار: قبول الكل أو إرجاع الزيادة أو رفض الزيادة.
 Decision must be Correct or Wrong.,يجب أن يكون القرار: صحيح أو خاطئ.
 Decision: {0},القرار: {0}
@@ -362,7 +362,7 @@ Or enter the barcode or item code,أو أدخل الباركود أو كود ا�
 Check,تحقّق
 How many did you receive?,كم استلمت؟
 Next,التالي
-"Type the digits on the pack, for example","اكتب الأرقام كما هي على العلبة، مثلًا"
+"Type the digits on the pack, for example",اكتب الأرقام كما هي على العلبة، مثلًا
 last date,آخر تاريخ
 Month and year only,شهر وسنة فقط
 The date above takes the rest: {0} {1},التاريخ أعلاه يأخذ الباقي: {0} {1}
@@ -374,12 +374,28 @@ Enlarge photo,تكبير الصورة
 No photo,لا توجد صورة
 Not on this purchase order,ليس ضمن أمر الشراء هذا
 Wrong item: not on this purchase order,صنف خاطئ: غير موجود في أمر الشراء هذا
-"Put it aside. If it came with the shipment, report it so the supervisor decides.","ضعه جانبًا. إن كان قد وصل مع الشحنة فأبلغ المشرف ليقرر."
+"Put it aside. If it came with the shipment, report it so the supervisor decides.",ضعه جانبًا. إن كان قد وصل مع الشحنة فأبلغ المشرف ليقرر.
 How many arrived?,كم وصل منه؟
 Less,أقل
 More,أكثر
 Send to the supervisor,إرسال إلى المشرف
-"OK, put it aside","حسنًا، سأضعه جانبًا"
-"Scan, then quantity","مسح ثم الكمية"
+"OK, put it aside",حسنًا، سأضعه جانبًا
+"Scan, then quantity",مسح ثم الكمية
 Counted so far: {0} {1}. Type the total.,المسجّل حتى الآن: {0} {1}. اكتب الإجمالي.
 {0} is not on this purchase order. {1},{0} غير موجود في أمر الشراء هذا. {1}
+Added to order,أُضيف إلى الأمر
+Purchase Order Item,بند أمر الشراء
+The row the supervisor added to the purchase order for this item.,البند الذي أضافه المشرف إلى أمر الشراء لهذا الصنف.
+Only an item that is not on the order can be added to it.,لا يُضاف إلى الأمر إلا صنف غير موجود فيه.
+{0} is already {1}.,{0} حالته الآن: {1}.
+The rate cannot be negative.,لا يمكن أن يكون السعر سالبًا.
+{0} is tracked by batch. Enter its expiry date.,{0} يُتتبَّع بالدفعات. أدخل تاريخ انتهائه.
+Could not add {0} to purchase order {1}.,تعذّرت إضافة {0} إلى أمر الشراء {1}.
+Quantity ({0}),الكمية ({0})
+Rate per {0},السعر لكل {0}
+From the supplier's price list or the last purchase rate. Check it against the invoice.,من قائمة أسعار المورد أو آخر سعر شراء. طابِقه مع الفاتورة.
+Add {0} to purchase order {1},إضافة {0} إلى أمر الشراء {1}
+Add to the order and receive,إضافة إلى الأمر واستلامه
+Added to the purchase order,أُضيف إلى أمر الشراء
+Add to the purchase order,إضافة إلى أمر الشراء
+"Return it, or add it to the purchase order if you want it.",أرجِعه، أو أضِفه إلى أمر الشراء إن كنت تريده.

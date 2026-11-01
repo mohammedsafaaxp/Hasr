@@ -174,3 +174,66 @@ def get_po_lines_with_remaining(purchase_order: str) -> list[dict]:
 def _po_item_has_rejected_warehouse() -> bool:
 	# VERIFIED: Purchase Order Item has no rejected_warehouse on v15; keep the code ready if a version adds it.
 	return frappe.get_meta("Purchase Order Item").has_field("rejected_warehouse")
+
+
+def suggested_purchase_rate(purchase_order: str, item_code: str) -> float:
+	"""Rate per stock unit for a new row: the supplier's price in the order's buying price list, else the
+	price list's general price, else the item's last purchase rate, else 0 (the supervisor can type one)."""
+	po = frappe.db.get_value("Purchase Order", purchase_order, ["buying_price_list", "supplier"], as_dict=True) or {}
+	stock_uom = frappe.db.get_value("Item", item_code, "stock_uom")
+	if po.get("buying_price_list"):
+		prices = frappe.get_all(
+			"Item Price",
+			filters={"item_code": item_code, "price_list": po["buying_price_list"], "uom": ["in", [stock_uom, "", None]]},
+			fields=["price_list_rate", "supplier"],
+		)
+		for price in sorted(prices, key=lambda p: p.supplier != po.get("supplier")):
+			if not price.supplier or price.supplier == po.get("supplier"):
+				return flt(price.price_list_rate)
+	return flt(frappe.db.get_value("Item", item_code, "last_purchase_rate"))
+
+
+def add_item_to_purchase_order(purchase_order: str, item_code: str, qty: float, rate: float, warehouse: str) -> str:
+	"""Add a row (in the stock unit) to a submitted purchase order with ERPNext's own "Update Items".
+
+	It runs as the current user, so ERPNext checks their right to change the order. Update Items
+	deletes rows that are not passed, so every existing row goes back unchanged. Returns the new row name.
+	VERIFIED on v15 and v16: erpnext.controllers.accounts_controller.update_child_qty_rate.
+	"""
+	from erpnext.controllers.accounts_controller import update_child_qty_rate
+
+	po = frappe.get_doc("Purchase Order", purchase_order)
+	before = {row.name for row in po.items}
+	trans_items = [
+		{
+			"docname": row.name,
+			"idx": row.idx,
+			"item_code": row.item_code,
+			"qty": row.qty,
+			"rate": row.rate,
+			"uom": row.uom,
+			"conversion_factor": row.conversion_factor,
+			"schedule_date": str(row.schedule_date),
+			"warehouse": row.warehouse,
+		}
+		for row in po.items
+	]
+	trans_items.append(
+		{
+			"idx": len(trans_items) + 1,
+			"item_code": item_code,
+			"qty": flt(qty),
+			"rate": flt(rate),
+			"uom": frappe.db.get_value("Item", item_code, "stock_uom"),
+			"conversion_factor": 1,
+			"schedule_date": str(po.schedule_date or frappe.utils.nowdate()),
+			"warehouse": warehouse,
+		}
+	)
+	update_child_qty_rate("Purchase Order", frappe.as_json(trans_items), purchase_order)
+	added = [
+		name for name in frappe.get_all("Purchase Order Item", filters={"parent": purchase_order}, pluck="name") if name not in before
+	]
+	if not added:
+		frappe.throw(frappe._("Could not add {0} to purchase order {1}.").format(item_code, purchase_order))
+	return added[0]

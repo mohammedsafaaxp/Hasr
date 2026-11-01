@@ -154,6 +154,13 @@ def decide_mismatch(name, decision):
 
 
 @frappe.whitelist(methods=["POST"])
+def add_to_order(name, qty, rate=None, expiry_date=None):
+	"""Add an item that is not on the order to the purchase order, and receive it on this shipment."""
+	require_approver()
+	return receiving.get_review(receiving.add_to_order(name, qty, rate, expiry_date).name)
+
+
+@frappe.whitelist(methods=["POST"])
 def dismiss_unknown_barcode(name):
 	require_approver()
 	doc = receiving.dismiss_unknown_barcode(name)
