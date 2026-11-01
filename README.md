@@ -31,7 +31,7 @@ ERPNext's code.
 
 ## Features
 
-The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)** · بالعربية: **[docs/FEATURES.ar.md](docs/FEATURES.ar.md)**
+The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 
 **On the phone (warehouse worker)**
 - **Scan, then quantity.** A scan opens the item: a large photo, its description and the ordered quantity, then
@@ -132,16 +132,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first. All ERPNext calls go through
 [`hasr/erpnext_adapter/`](hasr/erpnext_adapter), the only place that imports `erpnext`; that is what keeps v15 and
 v16 working. Translations live in [`hasr/translations/ar.csv`](hasr/translations/ar.csv).
 
-## حَصر بالعربي
-
-حَصر تطبيق مفتوح المصدر على Frappe يتيح لعامل المخزن استلام البضاعة من هاتفه مباشرة على ERPNext: يختار أمر الشراء،
-ويمسح الصنف فتظهر صورته ووصفه، ثم يكتب الكمية وتاريخ الانتهاء على لوحة أرقام كبيرة. الهاتف لا يُنشئ إلا **مسودات**،
-والمشرف يراجع ويعتمد من واجهة Desk. الواجهة كاملة بالعربية ومن اليمين إلى اليسار.
-الشرح الكامل للخصائص: **[docs/FEATURES.ar.md](docs/FEATURES.ar.md)**
-
 <p align="center">
-  <img src="docs/screenshots/ar-wrong-item.png" width="230" alt="صنف خاطئ غير موجود في أمر الشراء">
-  <img src="docs/screenshots/ar-offer.png" width="230" alt="الكمية المجانية من عرض المورد">
+  <img src="docs/screenshots/ar-wrong-item.png" width="230" alt="A wrong item, not on this purchase order">
+  <img src="docs/screenshots/ar-offer.png" width="230" alt="Free quantity from a supplier offer">
 </p>
 
 ## License

@@ -1,6 +1,6 @@
 # hasr features
 
-What each part of hasr does, for the people who use it. بالعربية: [FEATURES.ar.md](FEATURES.ar.md)
+What each part of hasr does, for the people who use it.
 
 ## Receiving on the phone
 

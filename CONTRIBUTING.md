@@ -20,7 +20,7 @@ hasr does today. Open an issue before a large change, so we agree on the behavio
   Use logical CSS (`ps-`, `pe-`, `ms-`, `me-`, `start`, `end`), never left/right.
 - **Tests with every change** (`FrappeTestCase`), covering each acceptance criterion.
 - **Keep the docs in step.** A change that adds, removes or changes what users see also updates
-  [README.md](README.md), [docs/FEATURES.md](docs/FEATURES.md) and [docs/FEATURES.ar.md](docs/FEATURES.ar.md)
+  [README.md](README.md) and [docs/FEATURES.md](docs/FEATURES.md)
   (and the screenshots in `docs/screenshots/` when a screen changed), in the same pull request.
 - **Small commits, one concern each**, with conventional messages (`feat:`, `fix:`, `test:`, `docs:`).
 - **License GPLv3.** Do not paste code from sources with incompatible licenses.
