@@ -237,6 +237,8 @@ def session_payload(doc):
 		"started_at": doc.started_at,
 		"finished_at": doc.finished_at,
 		"supplier_delivery_note": doc.supplier_delivery_note,
+		"supplier_invoice_no": doc.supplier_invoice_no,
+		"require_supplier_invoice_no": cint(frappe.get_cached_doc("Hasr Settings").require_supplier_invoice_no),
 		"remaining_expected": doc.remaining_expected,
 		"review_note": doc.review_note,
 		"purchase_receipt": doc.purchase_receipt,
@@ -362,8 +364,12 @@ def clean_batches(line, batches, received_qty) -> list[dict]:
 	return rows
 
 
-def finish_session(session, supplier_delivery_note=None, remaining_expected=None):
+def finish_session(session, supplier_delivery_note=None, remaining_expected=None, supplier_invoice_no=None):
 	doc = get_editable_session(session)
+	if supplier_invoice_no is not None:
+		doc.supplier_invoice_no = (supplier_invoice_no or "").strip()[:140] or None
+	if frappe.get_cached_doc("Hasr Settings").require_supplier_invoice_no and not doc.supplier_invoice_no:
+		frappe.throw(_("Enter the supplier's invoice number."), title=_("Invoice number needed"))
 	if doc.received_by != frappe.session.user and not is_supervisor():
 		frappe.throw(_("Only {0} can finish this session.").format(doc.received_by), frappe.PermissionError)
 	has_qty = any(flt(l.received_qty) or flt(l.rejected_qty) for l in doc.lines)
@@ -815,6 +821,24 @@ def attach_files(files, doctype, name):
 		existing.add(f.file_name)
 
 
+def set_supplier_invoice_no(doc, method=None):
+	"""doc_event (validate) on Purchase Invoice: fill Supplier Invoice No from the hasr receipts it bills."""
+	if doc.get("bill_no"):
+		return
+	receipts = {row.purchase_receipt for row in doc.get("items") or [] if row.get("purchase_receipt")}
+	if not receipts:
+		return
+	numbers = set(
+		frappe.get_all(
+			SESSION,
+			filters={"purchase_receipt": ["in", list(receipts)], "supplier_invoice_no": ["is", "set"]},
+			pluck="supplier_invoice_no",
+		)
+	)
+	if len(numbers) == 1:  # several different invoices: leave it to the accountant
+		doc.bill_no = numbers.pop()
+
+
 def copy_receipt_files_to_invoice(doc, method=None):
 	"""doc_event on Purchase Invoice: bring the supplier invoice and evidence from the hasr receipts it bills."""
 	receipts = {row.purchase_receipt for row in doc.get("items") or [] if row.get("purchase_receipt")}
@@ -1082,7 +1106,15 @@ def approve(session, decisions=None, submit=False):
 		],
 		supplier_delivery_note=doc.supplier_delivery_note,
 		default_rejected_warehouse=settings.default_rejected_warehouse,
-		remarks=_("Received with hasr, session {0}").format(doc.name),
+		remarks=" ".join(
+			filter(
+				None,
+				[
+					_("Received with hasr, session {0}.").format(doc.name),
+					doc.supplier_invoice_no and _("Supplier invoice {0}.").format(doc.supplier_invoice_no),
+				],
+			)
+		),
 	)
 	copy_invoices(doc.name, pr.doctype, pr.name)
 	doc.purchase_receipt = pr.name

@@ -18,6 +18,7 @@
   "started_at",
   "finished_at",
   "column_break_2",
+  "supplier_invoice_no",
   "supplier_delivery_note",
   "remaining_expected",
   "purchase_receipt",
@@ -121,6 +122,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Copied to the Purchase Receipt remarks and to the Purchase Invoice's Supplier Invoice No.",
+   "fieldname": "supplier_invoice_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Supplier Invoice No"
+  },
+  {
    "fieldname": "supplier_delivery_note",
    "fieldtype": "Data",
    "label": "Supplier Delivery Note"
@@ -180,7 +188,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-27 12:00:00.000000",
+ "modified": "2026-11-01 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Receiving Session",

@@ -51,9 +51,10 @@ def set_line(session, po_item, received_qty, rejected_qty=0, batches=None):
 
 
 @frappe.whitelist(methods=["POST"])
-def finish_session(session, supplier_delivery_note=None, remaining_expected=None):
+def finish_session(session, supplier_delivery_note=None, remaining_expected=None, supplier_invoice_no=None):
 	require_counter()
-	return receiving.session_payload(receiving.finish_session(session, supplier_delivery_note, remaining_expected))
+	doc = receiving.finish_session(session, supplier_delivery_note, remaining_expected, supplier_invoice_no)
+	return receiving.session_payload(doc)
 
 
 @frappe.whitelist(methods=["POST"])

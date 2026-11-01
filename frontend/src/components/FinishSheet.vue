@@ -31,6 +31,20 @@
         </label>
       </template>
 
+      <label class="block space-y-1">
+        <span class="text-sm text-hasr-secondary">
+          {{ __('Supplier invoice No') }}<span v-if="session.require_supplier_invoice_no" class="text-hasr-danger"> *</span>
+        </span>
+        <input
+          v-model="invoiceNo"
+          type="text"
+          maxlength="140"
+          autocapitalize="characters"
+          :required="!!session.require_supplier_invoice_no"
+          class="ltr-text h-11 w-full rounded-hasr border-0 bg-hasr-surface2 px-3"
+        />
+      </label>
+
       <InvoiceFiles :session="session.name" :files="session.invoices" :editable="session.editable" @update:files="session.invoices = $event" />
 
       <label class="block space-y-1">
@@ -44,7 +58,7 @@
         <button
           type="button"
           class="h-11 flex-1 rounded-hasr bg-hasr-ink text-[15px] font-medium text-white disabled:opacity-50"
-          :disabled="sending"
+          :disabled="sending || (session.require_supplier_invoice_no && !invoiceNo.trim())"
           @click="finish"
         >
           {{ sending ? __('Sending…') : __('Finish and send for review') }}
@@ -69,6 +83,7 @@ const props = defineProps({ open: Boolean, session: Object })
 const emit = defineEmits(['update:open', 'finished'])
 const remaining = ref('Still coming')
 const deliveryNote = ref('')
+const invoiceNo = ref('')
 const error = ref('')
 const sending = ref(false)
 
@@ -93,6 +108,7 @@ watch(
   (open) => {
     if (!open) return
     deliveryNote.value = props.session.supplier_delivery_note || ''
+    invoiceNo.value = props.session.supplier_invoice_no || ''
     remaining.value = props.session.remaining_expected || 'Still coming'
     error.value = ''
   },
@@ -105,6 +121,7 @@ async function finish() {
     const session = await api('receiving.finish_session', {
       session: props.session.name,
       supplier_delivery_note: deliveryNote.value,
+      supplier_invoice_no: invoiceNo.value,
       remaining_expected: counts.value.partial || counts.value.none ? remaining.value : null,
     })
     emit('finished', session)

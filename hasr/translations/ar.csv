@@ -76,6 +76,7 @@ Each scan = 1,كل مسح = 1
 Email or username,البريد الإلكتروني أو اسم المستخدم
 Enter an expiry date for every row.,أدخل تاريخ انتهاء لكل سطر.
 Enter the expiry date for: {0},أدخل تاريخ الانتهاء لـ: {0}
+Enter the supplier's invoice number.,أدخل رقم فاتورة المورد.
 Everything on purchase order {0} has been received or is waiting for approval.,تم استلام كل ما في أمر الشراء {0} أو أنه بانتظار الاعتماد.
 Excess rejected,رُفضت الزيادة
 Expected item,الصنف المطلوب
@@ -99,6 +100,7 @@ Increase,زيادة
 Invalid value for remaining quantity.,قيمة غير صالحة للكمية المتبقية.
 Invoice,الفاتورة
 Invoice file not found.,ملف الفاتورة غير موجود.
+Invoice number needed,يلزم رقم الفاتورة
 Issues,مشكلات
 Item,الصنف
 Item code or name,كود الصنف أو اسمه
@@ -173,6 +175,7 @@ Quantity must be greater than zero.,يجب أن تكون الكمية أكبر �
 Receive,الاستلام
 Received quantity,الكمية المستلمة
 "Received with hasr, session {0}",استُلم عبر حَصر، الجلسة {0}
+"Received with hasr, session {0}.",استُلم عبر حَصر، الجلسة {0}.
 Receiving and stock counts for ERPNext,الاستلام والجرد لنظام ERPNext
 Receiving session {0} not found.,جلسة الاستلام {0} غير موجودة.
 Refresh,تحديث
@@ -217,6 +220,8 @@ Stock counts are coming in version 0.3,الجرد متاح في الإصدار 0
 Submit the Purchase Receipt now,اعتماد إيصال الاستلام الآن
 Supplier delivery note,رقم إشعار تسليم المورد
 Supplier invoice,فاتورة المورد
+Supplier invoice No,رقم فاتورة المورد
+Supplier invoice {0}.,فاتورة المورد {0}.
 Take a photo of the product,التقط صورة للمنتج
 Take a photo of the product so the supervisor can compare it.,التقط صورة للمنتج ليتمكن المشرف من مقارنتها.
 The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.,تتطلب الكاميرا اتصالًا آمنًا (HTTPS). استخدم قارئ الباركود أو اكتب الباركود.

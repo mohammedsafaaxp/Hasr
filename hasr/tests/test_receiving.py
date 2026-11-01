@@ -259,3 +259,32 @@ class TestReceiving(HasrTestCase, FrappeTestCase):
 		rows = {r.item_code: (r.qty, r.rejected_qty) for r in pr.items}
 		self.assertEqual(rows, {"HASR-CHEESE": (48, 6), "HASR-YOGURT": (9, 1)})
 		self.assertEqual(next(r for r in pr.items if r.item_code == "HASR-CHEESE").rejected_warehouse, fx.warehouse("Hasr Rejected"))
+
+	def test_invoice_number_required_and_carried(self):
+		frappe.set_user("Administrator")
+		frappe.db.set_single_value("Hasr Settings", "require_supplier_invoice_no", 1)
+		frappe.clear_document_cache("Hasr Settings", "Hasr Settings")
+		try:
+			po = fx.make_po([("HASR-YOGURT", 3)])
+			s = self.start(po)
+			self.assertEqual(s["require_supplier_invoice_no"], 1)
+			api.set_line(s["name"], s["lines"][0]["po_item"], 3)
+			self.assertRaisesRegex(frappe.ValidationError, "invoice number", api.finish_session, s["name"])
+			self.assertRaises(frappe.ValidationError, api.finish_session, s["name"], None, None, "   ")
+			out = api.finish_session(s["name"], None, None, " INV-88412 ")
+			self.assertEqual(out["supplier_invoice_no"], "INV-88412")
+
+			frappe.set_user(fx.SUPERVISOR)
+			pr = frappe.get_doc("Purchase Receipt", api.approve(s["name"], submit=1)["purchase_receipt"])
+			self.assertIn("INV-88412", pr.remarks)
+
+			frappe.set_user("Administrator")
+			from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice  # setup only
+
+			pi = make_purchase_invoice(pr.name)
+			pi.insert()
+			self.assertEqual(pi.bill_no, "INV-88412")
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.set_single_value("Hasr Settings", "require_supplier_invoice_no", 0)
+			frappe.clear_document_cache("Hasr Settings", "Hasr Settings")

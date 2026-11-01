@@ -26,7 +26,10 @@ fixtures = [
 
 # The supplier invoice and evidence photos follow the receipt into the Purchase Invoice
 doc_events = {
-	"Purchase Invoice": {"on_update": "hasr.receiving.copy_receipt_files_to_invoice"},
+	"Purchase Invoice": {
+		"validate": "hasr.receiving.set_supplier_invoice_no",
+		"on_update": "hasr.receiving.copy_receipt_files_to_invoice",
+	},
 }
 
 after_install = "hasr.install.after_install"
