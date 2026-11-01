@@ -22,7 +22,12 @@
           <span v-if="s.editable" class="hidden min-[400px]:inline">{{ __('Invoice') }}</span>
           <span v-if="s.invoices.length" class="tabular rounded-full bg-hasr-ink px-1.5 text-[12px] text-white">{{ s.invoices.length }}</span>
         </button>
-        <Pill v-if="!online" theme="orange"><LucideCloudOff class="size-4" />{{ __('Offline') }}</Pill>
+        <Pill v-if="queue && queue.pending.value.length" :theme="queue.offline.value || !online ? 'orange' : 'gray'">
+          <LucideCloudOff v-if="queue.offline.value || !online" class="size-4" />
+          <LucideLoader v-else class="size-4 animate-spin" />
+          {{ __('{0} waiting', [queue.pending.value.length]) }}
+        </Pill>
+        <Pill v-else-if="!online" theme="orange"><LucideCloudOff class="size-4" />{{ __('Offline') }}</Pill>
       </div>
 
       <p v-if="loadError" class="rounded-hasr bg-hasr-danger-bg p-3 text-sm text-hasr-danger">{{ loadError }}</p>
@@ -159,7 +164,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import IconButton from '../components/IconButton.vue'
 import Pill from '../components/Pill.vue'
@@ -177,7 +182,8 @@ import ImageZoom from '../components/ImageZoom.vue'
 import { barcodeRows, orderedText } from '../uom'
 import { api, deviceId, errorMessage, uuid4 } from '../api'
 import { __, formatNumber } from '../i18n'
-import { feedbackError, feedbackSuccess } from '../sound'
+import { feedbackError, feedbackSuccess, feedbackWarning } from '../sound'
+import { createScanQueue } from '../scanQueue'
 
 const props = defineProps({ session: String, poItem: String })
 const route = useRoute()
@@ -215,7 +221,6 @@ function zoom(src) {
   zoomOpen.value = true
 }
 const online = ref(navigator.onLine)
-const busy = ref(false)
 let toastTimer = null
 
 const activeLine = computed(() => (s.value && props.poItem ? s.value.lines.find((l) => l.po_item === props.poItem) : null))
@@ -287,6 +292,11 @@ async function load() {
   } catch (e) {
     loadError.value = errorMessage(e)
   }
+  if (!queue.value || queue.value.session !== props.session) {
+    if (queue.value) queue.value.stop()
+    queue.value = { ...createScanQueue(props.session, onQueueResult), session: props.session }
+    queue.value.flush() // scans saved on this phone before a reload or a lost connection
+  }
 }
 
 function mergeLines(lines) {
@@ -301,63 +311,55 @@ function showToast(t) {
   toastTimer = setTimeout(() => (toast.value = null), t.error ? 6000 : 8000)
 }
 
-async function push(scan) {
-  const out = await api('sync.push_scans', { scans: [scan] })
-  mergeLines(out.lines)
-  return out.results[0]
+const queue = shallowRef(null)
+
+function scanBase() {
+  return { client_uuid: uuid4(), session: s.value.name, session_type: 'Receiving', device_id: deviceId(), scanned_at: new Date().toISOString() }
 }
 
-async function onScan(code) {
-  if (!s.value || !s.value.editable || busy.value) return
-  busy.value = true
-  try {
-    const r = await push({
-      client_uuid: uuid4(),
-      session: s.value.name,
-      session_type: 'Receiving',
-      barcode: code,
-      qty: 1,
-      scanned_at: new Date().toISOString(),
-      device_id: deviceId(),
-    })
-    if (r.status === 'applied') {
-      feedbackSuccess()
-      const line = s.value.lines.find((l) => l.po_item === r.po_item)
-      const isCase = r.conversion_factor !== 1
-      showToast({
-        title: isCase
-          ? __('Added 1 {0} of {1}', [__(r.uom), r.item_name])
-          : __('Added {0}', [r.item_name]),
-        subtitle: isCase
-          ? __('1 {0} = {1} {2}', [__(r.uom), formatNumber(r.conversion_factor), __(line ? line.stock_uom : '')])
-          : __('{0} of {1}', [formatNumber(r.received_qty), formatNumber(line ? line.pending_qty : 0)]),
-        undo: r.client_uuid,
-      })
-      if (line && isOver(line)) feedbackError()
-      lastScan.value = { po_item: r.po_item, barcode: code, uom: r.uom, conversion_factor: r.conversion_factor }
-      await nextTick()
-      rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-    } else if (r.code === 'unknown_barcode') {
-      feedbackError()
-      unknownBarcode.value = code
-    } else if (r.status === 'rejected') {
-      feedbackError()
-      showToast({ title: r.message, error: true })
-    }
-  } catch (e) {
+// Every scan goes into the queue at once: none is dropped while another is being sent.
+function onScan(code, qty = 1, extra = {}) {
+  if (!s.value || !s.value.editable || !queue.value) return
+  queue.value.add({ ...scanBase(), barcode: code, qty, ...extra })
+}
+
+function undo(t) {
+  if (queue.value) queue.value.add({ ...scanBase(), undo_of: t.undo })
+}
+
+async function onQueueResult({ result: r, lines, error }, scan) {
+  if (error) {
     feedbackError()
-    showToast({ title: errorMessage(e), error: true })
-  } finally {
-    busy.value = false
+    showToast({ title: errorMessage(error), error: true })
+    return
   }
-}
-
-async function undo(t) {
-  try {
-    const r = await push({ client_uuid: uuid4(), session: s.value.name, session_type: 'Receiving', undo_of: t.undo, device_id: deviceId() })
+  mergeLines(lines)
+  if (r.status === 'duplicate') return // a retry of a scan the server already counted
+  if (scan.undo_of) {
     showToast({ title: r.status === 'applied' ? __('Scan undone') : r.message, error: r.status !== 'applied' })
-  } catch (e) {
-    showToast({ title: errorMessage(e), error: true })
+    return
+  }
+  if (r.status === 'applied') {
+    const line = s.value.lines.find((l) => l.po_item === r.po_item)
+    if (line && isIssue(line)) feedbackWarning()
+    else feedbackSuccess()
+    const isCase = r.conversion_factor !== 1
+    showToast({
+      title: isCase ? __('Added {0} {1} of {2}', [formatNumber(r.qty), __(r.uom), r.item_name]) : __('Added {0}', [r.item_name]),
+      subtitle: isCase
+        ? __('1 {0} = {1} {2}', [__(r.uom), formatNumber(r.conversion_factor), __(line ? line.stock_uom : '')])
+        : __('{0} of {1}', [formatNumber(r.received_qty), formatNumber(line ? line.pending_qty : 0)]),
+      undo: r.client_uuid,
+    })
+    lastScan.value = { po_item: r.po_item, barcode: scan.barcode, uom: r.uom, conversion_factor: r.conversion_factor }
+    await nextTick()
+    rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  } else if (r.code === 'unknown_barcode') {
+    feedbackError()
+    unknownBarcode.value = scan.barcode
+  } else {
+    feedbackError()
+    showToast({ title: r.message, error: true })
   }
 }
 
@@ -387,7 +389,10 @@ function onFinished(session) {
   showToast({ title: __('Sent for review') })
 }
 
-const setOnline = () => (online.value = navigator.onLine)
+const setOnline = () => {
+  online.value = navigator.onLine
+  if (online.value && queue.value) queue.value.flush()
+}
 watch(() => props.session, load)
 onMounted(() => {
   window.addEventListener('online', setOnline)
@@ -398,5 +403,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('online', setOnline)
   window.removeEventListener('offline', setOnline)
   clearTimeout(toastTimer)
+  if (queue.value) queue.value.stop()
 })
 </script>

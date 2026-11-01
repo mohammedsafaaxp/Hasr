@@ -269,7 +269,9 @@ whole {0} only,{0} كاملة فقط
 {0} over the limit. The supervisor will decide.,تتجاوز الحد المسموح بـ {0}، وسيقرر المشرف.
 {0} rejected,{0} مرفوضة
 "{0} scans applied, {1} rejected, {2} undone.",احتُسبت {0} عمليات مسح، ورُفضت {1}، وأُلغيت {2}.
+{0} scans. Move the item out of view before scanning the next one.,{0} عمليات مسح. أبعِد الصنف عن الكاميرا قبل مسح الصنف التالي.
 {0} to go,متبقٍّ {0}
+{0} waiting,{0} بالانتظار
 {0} {1} = {2} {3},{0} {1} = {2} {3}
 {0} {1} of {2} removed from the receipt: not the ordered item ({3}).,حُذفت {0} {1} من {2} من الاستلام: ليست الصنف المطلوب ({3}).
 {0} {1} over the {2}% over-receipt allowance,{0} {1} فوق نسبة السماح بالزيادة {2}%

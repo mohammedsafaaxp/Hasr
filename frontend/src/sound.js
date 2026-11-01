@@ -22,13 +22,20 @@ function vibrate(pattern) {
   if (navigator.vibrate) navigator.vibrate(pattern)
 }
 
+// Three sounds a worker can tell apart without looking:
+// success = one short high beep, warning = two mid beeps, error = one long low buzz.
 export function feedbackSuccess() {
-  tone(1320, 0.08)
+  tone(1320, 0.07)
   vibrate(40)
 }
 
+export function feedbackWarning() {
+  tone(660, 0.1)
+  tone(660, 0.1, 0.16)
+  vibrate([60, 80, 60])
+}
+
 export function feedbackError() {
-  tone(220, 0.15)
-  tone(180, 0.2, 0.18)
-  vibrate([90, 60, 90])
+  tone(180, 0.45)
+  vibrate([250, 100, 250])
 }

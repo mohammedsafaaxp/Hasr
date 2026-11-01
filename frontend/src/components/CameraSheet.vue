@@ -14,7 +14,8 @@
           {{ error }}
         </div>
       </div>
-      <p class="text-center text-sm text-hasr-muted">{{ last ? __('Scanned {0}', [last]) : __('Point the camera at a barcode') }}</p>
+      <p class="text-center text-sm text-hasr-muted">{{ last ? __('Scanned {0}', [last]) : __('Point the camera at a barcode') }}
+        <span v-if="count" class="tabular block text-[13px]">{{ __('{0} scans. Move the item out of view before scanning the next one.', [count]) }}</span></p>
       <button type="button" class="h-11 w-full rounded-hasr bg-hasr-surface2 text-[15px] font-medium" @click="$emit('update:open', false)">
         {{ __('Close') }}
       </button>
@@ -36,10 +37,14 @@ const last = ref('')
 let controls = null
 let lastCode = ''
 let lastAt = 0
+const GONE_AFTER_MS = 1200
+const count = ref(0)
 
 async function start() {
   error.value = ''
   last.value = ''
+  count.value = 0
+  lastCode = ''
   if (!window.isSecureContext || !navigator.mediaDevices) {
     error.value = __('The camera needs a secure (HTTPS) connection. Use a hardware scanner or type the barcode.')
     return
@@ -55,10 +60,13 @@ async function start() {
         if (!result) return
         const code = result.getText()
         const now = Date.now()
-        // the camera sees the same code many times a second; count it once per 1.5 s
-        if (code === lastCode && now - lastAt < 1500) return
+        // The camera reads a barcode many times a second while it is in view. Count it once,
+        // and only again after it has been out of view for a moment (the next carton).
+        const sameCartonStillInView = code === lastCode && now - lastAt < GONE_AFTER_MS
         lastCode = code
         lastAt = now
+        if (sameCartonStillInView) return
+        count.value += 1
         last.value = code
         emit('scan', code)
       },
