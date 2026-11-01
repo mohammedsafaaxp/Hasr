@@ -17,11 +17,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Pinned releases, the ones hasr was last verified on. Bump them on purpose
+        # (and re-run the tests) instead of following whatever the branch has today.
         include:
-          - erpnext: version-15
+          - erpnext: v15.124.1
+            frappe: v15.124.0
             python: "3.11"
             node: 20
-          - erpnext: version-16
+          - erpnext: v16.52.1
+            frappe: v16.53.0
             python: "3.14"
             node: 24
 
@@ -58,7 +62,7 @@ jobs:
         run: |
           pip install frappe-bench
           bench init --skip-redis-config-generation --skip-assets \
-            --frappe-branch ${{ matrix.erpnext }} --python "$(which python)" ~/frappe-bench
+            --frappe-branch ${{ matrix.frappe }} --python "$(which python)" ~/frappe-bench
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL character_set_server = 'utf8mb4'"
           mariadb --host 127.0.0.1 --port 3306 -u root -proot -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 

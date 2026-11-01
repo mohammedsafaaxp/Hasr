@@ -1271,4 +1271,5 @@ def get_review(session):
 	)
 	payload["scan_counts"] = {s.status: s.n for s in scans}
 	payload["allowance"] = {l.po_item: erp.get_over_receipt_allowance(l.item_code) for l in doc.lines}
+	payload["match_problems"] = match_problems(doc)
 	return payload

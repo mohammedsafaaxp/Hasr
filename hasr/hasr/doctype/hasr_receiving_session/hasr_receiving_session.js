@@ -218,7 +218,6 @@ function hasr_render_review(frm, on_data) {
 				</div>`);
 		}
 
-		const batch_lines = data.lines.filter((l) => l.has_batch_no && (l.received_qty || l.rejected_qty));
 		const facts = [];
 		if (data.invoices.length) {
 			const links = data.invoices
@@ -240,65 +239,63 @@ function hasr_render_review(frm, on_data) {
 		} else if (data.status === "Pending Approval") {
 			facts.push(`<p class="text-muted">${__("No supplier invoice was attached.")}</p>`);
 		}
-		if (batch_lines.length) {
-			const rows = batch_lines
-				.map((l) => {
-					const parts = (l.batches || []).map(
-						(b) => `${frappe.datetime.str_to_user(b.expiry_date)} × ${fmt(b.qty)}`
-					);
-					return `<tr><td>${esc(l.item_name)}</td><td>${
-						parts.length ? parts.join(", ") : `<span class="text-danger">${__("Expiry date needed")}</span>`
-					}</td></tr>`;
-				})
-				.join("");
-			facts.push(`
-				<div class="hasr-card">
-					<div class="hasr-card-body">
-						<div class="hasr-card-title">${__("Expiry dates")}</div>
-						<div class="text-muted">${__("One new batch is created per expiry date on approval.")}</div>
-						<table class="table table-sm hasr-batches"><tbody>${rows}</tbody></table>
-					</div>
-				</div>`);
-		}
-
-		for (const m of data.mismatches || []) {
-			const line = data.lines.find((l) => l.po_item === m.po_item) || {};
-			const pic = (src, label) =>
-				src
-					? `<a href="${esc(src)}" target="_blank" title="${esc(label)}"><img src="${esc(src)}" class="hasr-photo"></a>`
-					: `<div class="hasr-photo hasr-photo-empty" title="${esc(label)}">${frappe.utils.icon("image", "md")}</div>`;
-			const open = m.status === "Open";
-			cards.push(`
-				<div class="hasr-card ${open ? "hasr-warn" : ""}">
-					${pic(line.image, __("Expected item"))}
-					${pic(m.photo, __("What was received"))}
-					<div class="hasr-card-body">
-						<div class="hasr-card-title">${__("{0} does not match · {1} {2}", [
-							esc(m.item_name),
-							fmt(m.qty),
-							esc(__(line.stock_uom || "")),
-						])}</div>
-						<div class="text-muted">${m.note ? __("Note: {0}", [esc(m.note)]) : ""} ${
-				open ? "" : `· ${__(m.status)}`
-			}</div>
-					</div>
-					${
-						is_supervisor && open && ["Open", "Sent Back", "Pending Approval"].includes(data.status)
-							? `<button class="btn btn-default btn-sm" data-mismatch="${m.name}" data-decision="Wrong">
-									${__("Wrong item: remove {0}", [fmt(m.qty)])}</button>
-								<button class="btn btn-primary btn-sm" data-mismatch="${m.name}" data-decision="Correct">
-									${__("Correct item")}</button>`
-							: ""
-					}
-				</div>`);
-		}
-
 		const counts = data.scan_counts || {};
 		const sync = __("{0} scans applied, {1} rejected, {2} undone.", [
 			counts.Applied || 0,
 			counts.Rejected || 0,
 			counts.Undo || 0,
 		]);
+
+		// summary + the lines as the supervisor reads them (the raw child table stays collapsed below)
+		const done = data.lines.filter((l) => l.received_qty + l.rejected_qty >= l.pending_qty).length;
+		const summary = `
+			<div class="hasr-summary">
+				<span class="indicator-pill ${data.match_problems.length ? "orange" : "green"}">${
+			data.match_problems.length
+				? __("To check: {0}", [data.match_problems.length])
+				: __("Matches the order")
+		}</span>
+				<span>${__("{0} of {1} lines complete", [done, data.lines.length])}</span>
+				<span>${__("Supplier invoice")}: <b>${esc(data.supplier_invoice_no || "—")}</b></span>
+			</div>`;
+		const status_chip = (l) => {
+			const short = l.pending_qty - l.received_qty - l.rejected_qty;
+			if (["Over", "Accepted", "Excess rejected"].includes(l.over_allowance_state))
+				return `<span class="indicator-pill orange">${__("Over limit")}</span>`;
+			if (l.needs_expiry) return `<span class="indicator-pill orange">${__("Expiry date needed")}</span>`;
+			if (l.whole_unit_issue) return `<span class="indicator-pill orange">${__("Not a whole unit")}</span>`;
+			if (l.mismatch_open) return `<span class="indicator-pill orange">${__("Does not match?")}</span>`;
+			if (!l.received_qty && !l.rejected_qty) return `<span class="indicator-pill gray">${__("Not received")}</span>`;
+			if (short > 0.000001) return `<span class="indicator-pill gray">${__("{0} short", [fmt(short)])}</span>`;
+			return `<span class="indicator-pill green">${__("Complete")}</span>`;
+		};
+		const lines_table = `
+			<table class="table table-sm hasr-lines">
+				<thead><tr>
+					<th>#</th><th>${__("Item")}</th><th class="hasr-num">${__("Ordered")}</th>
+					<th class="hasr-num">${__("Received")}</th><th class="hasr-num">${__("Rejected")}</th>
+					<th>${__("Expiry dates")}</th><th>${__("Status")}</th>
+				</tr></thead>
+				<tbody>${data.lines
+					.map(
+						(l) => `<tr>
+							<td class="text-muted">${l.idx}</td>
+							<td>${esc(l.item_name)}<div class="text-muted small">${esc(l.item_code)}${
+							l.uom && l.uom !== l.stock_uom
+								? ` · ${__("1 {0} = {1} {2}", [esc(__(l.uom)), fmt(l.conversion_factor), esc(__(l.stock_uom))])}`
+								: ""
+						}</div></td>
+							<td class="hasr-num">${fmt(l.pending_qty)}</td>
+							<td class="hasr-num ${l.received_qty > l.pending_qty ? "text-warning" : ""}"><b>${fmt(l.received_qty)}</b></td>
+							<td class="hasr-num">${fmt(l.rejected_qty)}</td>
+							<td class="small">${(l.batches || [])
+								.map((b) => `${frappe.datetime.str_to_user(b.expiry_date)} × ${fmt(b.qty)}`)
+								.join("<br>") || (l.has_batch_no ? "—" : "")}</td>
+							<td>${status_chip(l)}</td>
+						</tr>`
+					)
+					.join("")}</tbody>
+			</table>`;
 
 		wrapper.html(`
 			<style>
@@ -308,6 +305,10 @@ function hasr_render_review(frm, on_data) {
 				.hasr-card-body { flex: 1; min-width: 0; }
 				.hasr-card-title { font-weight: 500; }
 				.hasr-photo { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+				.hasr-summary { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }
+				.hasr-lines-title { margin: 16px 0 8px; }
+				.hasr-lines td { vertical-align: middle; }
+				.hasr-num { text-align: end; }
 				.hasr-decide { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 				.hasr-invoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 				.hasr-invoice { display: flex; align-items: center; justify-content: center; width: 120px; height: 160px;
@@ -316,8 +317,11 @@ function hasr_render_review(frm, on_data) {
 				.hasr-batches { margin: 8px 0 0; }
 				.hasr-photo-empty { display: flex; align-items: center; justify-content: center; background: var(--control-bg); }
 			</style>
+			${summary}
 			${cards.length ? cards.join("") : `<p class="text-muted">${__("Nothing needs your decision.")}</p>`}
 			${facts.join("")}
+			<h5 class="hasr-lines-title">${__("Lines")}</h5>
+			${lines_table}
 			<p class="text-muted small">${sync}</p>
 		`);
 
