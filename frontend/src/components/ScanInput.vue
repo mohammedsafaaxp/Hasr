@@ -20,6 +20,9 @@
         @blur="refocusSoon"
       />
     </label>
+    <IconButton :label="__('Type item code')" :disabled="disabled" @click="$emit('type')">
+      <LucideKeyboard class="size-5" />
+    </IconButton>
     <IconButton dark :label="__('Scan with camera')" :disabled="disabled" @click="$emit('camera')">
       <LucideCamera class="size-5" />
     </IconButton>
@@ -32,7 +35,7 @@ import IconButton from './IconButton.vue'
 
 // Always holds focus while `active`, so keyboard-wedge scanners (which type the code and press Enter) just work.
 const props = defineProps({ active: { type: Boolean, default: true }, disabled: Boolean })
-const emit = defineEmits(['scan', 'camera'])
+const emit = defineEmits(['scan', 'camera', 'type'])
 const input = ref(null)
 const code = ref('')
 

@@ -59,6 +59,8 @@ class TestAdapter(HasrTestCase, FrappeTestCase):
 		typed = erp.resolve_barcode("HASR-YOGURT")
 		self.assertEqual((typed.item_code, typed.conversion_factor), ("HASR-YOGURT", 1))
 		self.assertIsNone(erp.resolve_barcode("0000000000000"))
+		# a unit the item does not define: no silent factor of 1
+		self.assertEqual(erp.get_conversion_factor("HASR-YOGURT", "Box"), 0)
 		self.assertIsNone(erp.resolve_barcode("  "))
 
 	def test_over_receipt_limit(self):

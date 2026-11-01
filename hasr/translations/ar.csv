@@ -9,6 +9,7 @@ Accept {0},قبول {0}
 Accept {0} only,قبول {0} فقط
 Accepted,مقبول
 Account,الحساب
+Add,إضافة
 Add another expiry date,إضافة تاريخ انتهاء آخر
 Added 1 {0} of {1},أُضيف 1 {0} من {1}
 Added {0},أُضيف {0}
@@ -25,6 +26,7 @@ Arrived in full,وصلت كاملة
 Arrived in part,وصلت جزئيًا
 Back,رجوع
 Back to line,العودة إلى السطر
+Barcode,الباركود
 Barcode is required.,الباركود مطلوب.
 Barcode linked,تم ربط الباركود
 Barcode unit,وحدة الباركود
@@ -41,6 +43,7 @@ Cancel session,إلغاء الجلسة
 Cancel this receiving session? Nothing is posted to stock.,هل تريد إلغاء جلسة الاستلام هذه؟ لن يُسجَّل أي شيء في المخزون.
 Cancelled,ملغى
 Capped,محدَّد
+Change,تغيير
 Check the received quantities against it. It is attached to the Purchase Receipt on approval.,طابق الكميات المستلمة معها. تُرفق بإيصال الاستلام عند الاعتماد.
 Chilled,مبرَّد
 Class A share cannot be greater than class B share.,لا يمكن أن تكون نسبة الفئة A أكبر من نسبة الفئة B.
@@ -63,6 +66,7 @@ Dismissed,متجاهَل
 Does not match?,غير مطابق؟
 Done,مكتمل
 "ERPNext considers these lines fully received already, so they cannot be added: {0}",يعتبر ERPNext هذه الأسطر مستلمة بالكامل، لذا لا يمكن إضافتها: {0}
+Each scan = 1,كل مسح = 1
 Email or username,البريد الإلكتروني أو اسم المستخدم
 Enter an expiry date for every row.,أدخل تاريخ انتهاء لكل سطر.
 Enter the expiry date for: {0},أدخل تاريخ الانتهاء لـ: {0}
@@ -77,9 +81,12 @@ File,ملف
 Finish and send for review,إنهاء الشحنة وإرسالها للمراجعة
 Finish shipment and send for review,إنهاء الاستلام وإرساله إلى المشرف
 Finish shipment {0},إنهاء الشحنة {0}
+For a damaged or missing label. Choose the unit you are counting.,عند تلف الملصق أو فقدانه. اختر الوحدة التي تعدّها.
 For now hasr receives purchase orders.,يستلم حَصر حاليًا أوامر الشراء.
 Frozen,مجمَّد
 Goes with the Purchase Receipt,تُرفق بإيصال الاستلام
+How many {0}?,كم {0}؟
+How many?,كم العدد؟
 In progress,قيد الاستلام
 Increase,زيادة
 Invalid value for remaining quantity.,قيمة غير صالحة للكمية المتبقية.
@@ -87,6 +94,7 @@ Invoice,الفاتورة
 Invoice file not found.,ملف الفاتورة غير موجود.
 Issues,مشكلات
 Item,الصنف
+Item code or name,كود الصنف أو اسمه
 Item details,تفاصيل الصنف
 Item group,مجموعة الصنف
 Item {0} is disabled.,الصنف {0} معطّل.
@@ -109,6 +117,7 @@ Needs your decision,بحاجة إلى قرارك
 New batch,دفعة جديدة
 No connection. Try again.,لا يوجد اتصال. حاول مرة أخرى.
 No conversion factor from {0} to {1} for {2}.,لا يوجد معامل تحويل من {0} إلى {1} للصنف {2}.
+No line on this order matches.,لا يوجد سطر مطابق في هذا الأمر.
 No photo in ERPNext yet,لا توجد صورة في ERPNext بعد
 No purchase orders are waiting.,لا توجد أوامر شراء بانتظار الاستلام.
 No supplier invoice was attached.,لم تُرفق فاتورة المورد.
@@ -163,8 +172,10 @@ Remove this quantity from the receipt? It will not be received.,هل تريد ح
 Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: للصنف {1} كمية مرفوضة دون مستودع مرفوضات. حدّد مستودعًا افتراضيًا في إعدادات حَصر.
 Save line,حفظ السطر
 Saving…,جارٍ الحفظ…
+Scan + quantity,مسح + كمية
 Scan again,المسح مرة أخرى
 Scan at least one item before sending the shipment for review.,امسح صنفًا واحدًا على الأقل قبل إرسال الشحنة للمراجعة.
+Scan mode,طريقة المسح
 Scan or type a barcode,امسح الباركود أو اكتبه
 Scan undone,أُلغي المسح
 Scan undone.,أُلغي المسح.
@@ -215,6 +226,7 @@ This report was already decided.,تم البت في هذا البلاغ مسبق
 This shipment can no longer be changed.,لم يعد بالإمكان تعديل هذه الشحنة.
 Today,اليوم
 Tomorrow,غدًا
+Type item code,اكتب كود الصنف
 Undo,تراجع
 Unit,الوحدة
 Units,الوحدات
@@ -254,7 +266,9 @@ whole {0} only,{0} كاملة فقط
 {0} days late,متأخر {0} أيام
 {0} does not match · {1} {2},{0} غير مطابق · {1} {2}
 {0} expired on {1}. Record expired goods as rejected quantity.,انتهت صلاحية {0} بتاريخ {1}. سجّل البضاعة المنتهية ككمية مرفوضة.
+{0} has no unit {1}. Choose one of its units.,الصنف {0} ليست له وحدة {1}. اختر إحدى وحداته.
 {0} is already fully received on purchase order {1}.,تم استلام {0} بالكامل في أمر الشراء {1}.
+"{0} is an item code, not a barcode. Use ""Type item code"" and choose the unit.",{0} كود صنف وليس باركودًا. استخدم «اكتب كود الصنف» واختر الوحدة.
 {0} is batch tracked. Enter the expiry date for what was received.,الصنف {0} يُتتبَّع بالدفعات. أدخل تاريخ انتهاء الكمية المستلمة.
 {0} is not a valid date.,{0} ليس تاريخًا صالحًا.
 {0} is not an open line on purchase order {1}. Dismiss the barcode instead.,{0} ليس سطرًا مفتوحًا في أمر الشراء {1}. تجاهل الباركود بدلًا من ذلك.

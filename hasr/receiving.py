@@ -464,7 +464,25 @@ def _apply_scan(scan, touched):
 	if scan.undo_of:
 		return _apply_undo(doc, scan, uuid)
 
+	if scan.item_code:
+		resolved = _resolve_typed_item(scan)
+		if isinstance(resolved, dict) and resolved.get("status") == "rejected":
+			resolved["client_uuid"] = uuid
+			return resolved
+		return apply_item_qty(doc, scan, uuid, resolved, qty=flt(scan.qty) or 1.0)
+
 	resolved = erp.resolve_barcode(scan.barcode)
+	if resolved and not resolved.barcode:
+		# an item code typed into the barcode field: the unit would be guessed, so ask for it
+		return {
+			"client_uuid": uuid,
+			"status": "rejected",
+			"code": "use_item_entry",
+			"item_code": resolved.item_code,
+			"message": _('{0} is an item code, not a barcode. Use "Type item code" and choose the unit.').format(
+				scan.barcode
+			),
+		}
 	if not resolved:
 		msg = _("Barcode {0} is not linked to any item.").format(scan.barcode)
 		_log_scan(doc, scan, uuid, "Rejected", msg)
@@ -476,6 +494,40 @@ def _apply_scan(scan, touched):
 		return {"client_uuid": uuid, "status": "rejected", "code": "disabled", "message": msg, "item_code": resolved.item_code}
 
 	return apply_item_qty(doc, scan, uuid, resolved, qty=flt(scan.qty) or 1.0)
+
+
+def _resolve_typed_item(scan):
+	"""Item code typed by the worker, with the unit they chose (no barcode to tell the unit)."""
+	item_code = (scan.item_code or "").strip()
+	item = frappe.db.get_value("Item", item_code, ["item_name", "stock_uom", "disabled"], as_dict=True)
+	if not item:
+		return {"status": "rejected", "code": "unknown_item", "message": _("Item {0} not found.").format(item_code)}
+	if item.disabled:
+		return {"status": "rejected", "code": "disabled", "message": _("Item {0} is disabled.").format(item_code)}
+	uom = scan.uom or item.stock_uom
+	if uom not in {u["uom"] for u in _line_uoms(item_code, item.stock_uom)}:
+		# ERPNext would fall back to a factor of 1 for a unit the item does not have; refuse instead
+		return {
+			"status": "rejected",
+			"code": "no_conversion",
+			"message": _("{0} has no unit {1}. Choose one of its units.").format(item_code, uom),
+		}
+	cf = erp.get_conversion_factor(item_code, uom)
+	if cf <= 0:
+		return {
+			"status": "rejected",
+			"code": "no_conversion",
+			"message": _("No conversion factor from {0} to {1} for {2}.").format(uom, item.stock_uom, item_code),
+		}
+	return frappe._dict(
+		item_code=item_code,
+		item_name=item.item_name,
+		barcode=None,
+		uom=uom,
+		stock_uom=item.stock_uom,
+		conversion_factor=cf,
+		disabled=0,
+	)
 
 
 def apply_item_qty(doc, scan, uuid, resolved, qty):

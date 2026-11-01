@@ -13,18 +13,26 @@ def uom_must_be_whole(uom: str | None) -> bool:
 
 
 def get_conversion_factor(item_code: str, uom: str | None) -> float:
-	"""Conversion factor from `uom` to the item's stock UOM (item row first, then ERPNext's resolver)."""
-	stock_uom = frappe.get_cached_value("Item", item_code, "stock_uom")
-	if not uom or uom == stock_uom:
-		return 1.0
-	cf = frappe.db.get_value(
-		"UOM Conversion Detail", {"parent": item_code, "parenttype": "Item", "uom": uom}, "conversion_factor"
-	)
-	if not cf:
-		from erpnext.stock.get_item_details import get_conversion_factor as erpnext_cf
+	"""Conversion factor from `uom` to the item's stock UOM, or 0 when ERPNext knows none.
 
-		cf = (erpnext_cf(item_code, uom) or {}).get("conversion_factor")
-	return flt(cf)
+	Looks at the item, then its template, then the global UOM Conversion Factor table, like ERPNext's
+	get_conversion_factor. VERIFIED (v15 and v16): ERPNext's own helper returns 1.0 when it finds nothing,
+	which would count a box as one unit; hasr returns 0 so the scan is refused with a clear message.
+	"""
+	item = frappe.get_cached_value("Item", item_code, ["stock_uom", "variant_of"], as_dict=True)
+	if not item:
+		return 0.0
+	if not uom or uom == item.stock_uom:
+		return 1.0
+	for parent in filter(None, (item_code, item.variant_of)):
+		cf = frappe.db.get_value(
+			"UOM Conversion Detail", {"parent": parent, "parenttype": "Item", "uom": uom}, "conversion_factor"
+		)
+		if cf:
+			return flt(cf)
+	from erpnext.stock.doctype.item.item import get_uom_conv_factor
+
+	return flt(get_uom_conv_factor(uom, item.stock_uom))
 
 
 def resolve_barcode(code: str) -> dict | None:

@@ -91,3 +91,35 @@ class TestSync(HasrTestCase, FrappeTestCase):
 	def test_scans_accepts_json_string(self):
 		out = sync.push_scans(frappe.as_json([fx.scan(self.session, fx.YOGURT_UNIT)]))
 		self.assertEqual(out["results"][0]["status"], "applied")
+
+
+class TestTypedItems(HasrTestCase, FrappeTestCase):
+	def setUp(self):
+		self.po = fx.make_po([("HASR-MILK", 4, "Box", 12), ("HASR-YOGURT", 10)])
+		frappe.set_user(fx.COUNTER)
+		self.session = api.start_session(self.po.name)["name"]
+
+	def received(self, item_code):
+		return next(l["received_qty"] for l in api.get_session(self.session)["lines"] if l["item_code"] == item_code)
+
+	def test_typed_item_code_with_unit(self):
+		out = sync.push_scans([fx.scan(self.session, None, item_code="HASR-MILK", uom="Box", qty=2)])
+		r = out["results"][0]
+		self.assertEqual((r["status"], r["uom"], r["qty_stock_uom"]), ("applied", "Box", 24))
+		sync.push_scans([fx.scan(self.session, None, item_code="HASR-MILK", qty=3)])  # no unit: stock unit
+		self.assertEqual(self.received("HASR-MILK"), 27)
+
+	def test_scan_with_quantity(self):
+		sync.push_scans([fx.scan(self.session, fx.MILK_CASE, qty=3)])  # scanned once, 3 boxes typed
+		self.assertEqual(self.received("HASR-MILK"), 36)
+
+	def test_item_code_in_barcode_field_asks_for_unit(self):
+		r = sync.push_scans([fx.scan(self.session, "HASR-YOGURT")])["results"][0]
+		self.assertEqual((r["status"], r["code"]), ("rejected", "use_item_entry"))
+		self.assertEqual(self.received("HASR-YOGURT"), 0)
+
+	def test_typed_unknown_item_and_bad_unit(self):
+		r = sync.push_scans([fx.scan(self.session, None, item_code="NO-SUCH-ITEM")])["results"][0]
+		self.assertEqual(r["code"], "unknown_item")
+		r = sync.push_scans([fx.scan(self.session, None, item_code="HASR-YOGURT", uom="Box")])["results"][0]
+		self.assertEqual(r["status"], "rejected")

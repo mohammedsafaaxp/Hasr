@@ -59,9 +59,24 @@
           v-if="s.editable"
           ref="scanInput"
           :active="!sheetOpen"
-          @scan="onScan"
+          @scan="onScanInput"
           @camera="cameraOpen = true"
+          @type="openItemEntry()"
         />
+        <div class="flex gap-1 rounded-hasr bg-hasr-surface2 p-1 text-[14px]" role="radiogroup" :aria-label="__('Scan mode')">
+          <button
+            v-for="m in scanModes"
+            :key="m.value"
+            type="button"
+            role="radio"
+            :aria-checked="scanMode === m.value"
+            class="h-9 flex-1 rounded-[6px]"
+            :class="scanMode === m.value ? 'bg-white font-medium shadow-sm' : 'text-hasr-secondary'"
+            @click="setScanMode(m.value)"
+          >
+            {{ m.label }}
+          </button>
+        </div>
 
         <LastScanCard
           v-if="lastLine"
@@ -148,7 +163,9 @@
       @details="(code) => router.push({ name: 'ItemDetails', params: { itemCode: code } })"
     />
     <UnknownBarcodeSheet :barcode="unknownBarcode" :session="s && s.name" @close="unknownBarcode = ''" @sent="onUnknownSent" />
-    <CameraSheet v-model:open="cameraOpen" @scan="onScan" />
+    <CameraSheet v-model:open="cameraOpen" @scan="onScanInput" />
+    <QtySheet :barcode="qtyBarcode" :lines="s ? s.lines : []" @close="qtyBarcode = ''" @confirm="onQtyConfirm" />
+    <ItemEntrySheet v-model:open="itemEntryOpen" :lines="s ? s.lines : []" :item-code="itemEntryCode" @confirm="onItemEntry" />
     <FinishSheet v-if="s" v-model:open="finishOpen" :session="s" @finished="onFinished" />
     <InvoiceSheet v-if="s" v-model:open="invoiceOpen" :session="s" />
     <ImageZoom v-model:open="zoomOpen" :src="zoomSrc" />
@@ -178,6 +195,8 @@ import FinishSheet from '../components/FinishSheet.vue'
 import InvoiceSheet from '../components/InvoiceSheet.vue'
 import LastScanCard from '../components/LastScanCard.vue'
 import MismatchSheet from '../components/MismatchSheet.vue'
+import QtySheet from '../components/QtySheet.vue'
+import ItemEntrySheet from '../components/ItemEntrySheet.vue'
 import ImageZoom from '../components/ImageZoom.vue'
 import { barcodeRows, orderedText } from '../uom'
 import { api, deviceId, errorMessage, uuid4 } from '../api'
@@ -226,7 +245,7 @@ let toastTimer = null
 const activeLine = computed(() => (s.value && props.poItem ? s.value.lines.find((l) => l.po_item === props.poItem) : null))
 const sheetOpen = computed(
   () =>
-    !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value || mismatch.value.line),
+    !!(activeLine.value || unknownBarcode.value || cameraOpen.value || finishOpen.value || invoiceOpen.value || zoomOpen.value || mismatch.value.line || qtyBarcode.value || itemEntryOpen.value),
 )
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
@@ -317,6 +336,56 @@ function scanBase() {
   return { client_uuid: uuid4(), session: s.value.name, session_type: 'Receiving', device_id: deviceId(), scanned_at: new Date().toISOString() }
 }
 
+const qtyBarcode = ref('')
+const itemEntryOpen = ref(false)
+const itemEntryCode = ref('')
+const scanMode = ref(readScanMode())
+const scanModes = computed(() => [
+  { value: 'each', label: __('Each scan = 1') },
+  { value: 'qty', label: __('Scan + quantity') },
+])
+
+function readScanMode() {
+  try {
+    return localStorage.getItem('hasr_scan_mode') || 'each'
+  } catch (e) {
+    return 'each'
+  }
+}
+
+function setScanMode(mode) {
+  scanMode.value = mode
+  try {
+    localStorage.setItem('hasr_scan_mode', mode)
+  } catch (e) {
+    /* not remembered */
+  }
+}
+
+function onScanInput(code) {
+  if (scanMode.value === 'qty') {
+    cameraOpen.value = false
+    qtyBarcode.value = code
+  } else {
+    onScan(code)
+  }
+}
+
+function onQtyConfirm({ barcode, qty }) {
+  qtyBarcode.value = ''
+  onScan(barcode, qty)
+}
+
+function openItemEntry(code = '') {
+  itemEntryCode.value = code
+  itemEntryOpen.value = true
+}
+
+function onItemEntry({ item_code, uom, qty }) {
+  itemEntryOpen.value = false
+  if (s.value && s.value.editable && queue.value) queue.value.add({ ...scanBase(), barcode: null, item_code, uom, qty })
+}
+
 // Every scan goes into the queue at once: none is dropped while another is being sent.
 function onScan(code, qty = 1, extra = {}) {
   if (!s.value || !s.value.editable || !queue.value) return
@@ -351,9 +420,12 @@ async function onQueueResult({ result: r, lines, error }, scan) {
         : __('{0} of {1}', [formatNumber(r.received_qty), formatNumber(line ? line.pending_qty : 0)]),
       undo: r.client_uuid,
     })
-    lastScan.value = { po_item: r.po_item, barcode: scan.barcode, uom: r.uom, conversion_factor: r.conversion_factor }
+    lastScan.value = { po_item: r.po_item, barcode: scan.barcode || scan.item_code, uom: r.uom, conversion_factor: r.conversion_factor }
     await nextTick()
     rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  } else if (r.code === 'use_item_entry') {
+    feedbackWarning()
+    openItemEntry(r.item_code)
   } else if (r.code === 'unknown_barcode') {
     feedbackError()
     unknownBarcode.value = scan.barcode
