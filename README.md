@@ -53,6 +53,9 @@ truth for items, barcodes, units, orders and stock, and hasr never changes ERPNe
   its photo (reported with a picture). Over-receipts: accept all, or return the excess.
 - **Wrong items are refused clearly.** A scan of an item that is not on the order says so at once; if it came
   with the shipment the worker reports it, and the supervisor returns it or adds it to the purchase order.
+- **Free goods from supplier offers** (a setting): the worker enters how many of the received units are free.
+  The Purchase Receipt gets a free row at price 0, linked to an ERPNext Pricing Rule for the offer, so the cost
+  is spread over all units and only the paid quantity counts against the order.
 - **Separation of duties:** approver roles are a setting, nobody approves what they received, and every
   line is checked against the user's warehouses.
 - **Today's Shipments** page in Desk: one click approves a shipment that matches its order exactly.
