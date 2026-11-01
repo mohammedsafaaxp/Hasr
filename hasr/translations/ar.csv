@@ -353,8 +353,20 @@ whole {0} only,{0} كاملة فقط
 "{0}: {1} Recorded for the supervisor, not counted.",{0}: {1} سُجّل للمشرف ولم يُحتسب.
 "{0}: {1} received and {2} rejected {3} is not a whole number of {4} (1 {4} = {5} {3}). Adjust the quantity, or change the unit on the purchase order.",{0}: المستلم {1} والمرفوض {2} {3} ليسا عددًا صحيحًا من {4} (1 {4} = {5} {3}). عدّل الكمية أو غيّر الوحدة في أمر الشراء.
 {0}: {1} rejected,{0}: {1} مرفوضة
-Scan the barcode to check the item,امسح الباركود للتحقق من الصنف
-Scanner,القارئ
 Matches this item,مطابق لهذا الصنف
 This barcode is not for this item,هذا الباركود لا يخص هذا الصنف
 Report to the supervisor,إبلاغ المشرف
+Scan the carton or the item to check it,امسح الكرتونة أو الحبة للتحقق
+Tap to scan,اضغط للمسح
+Or enter the barcode or item code,أو أدخل الباركود أو كود الصنف
+Check,تحقّق
+How many did you receive?,كم استلمت؟
+Next,التالي
+"Type the digits on the pack, for example","اكتب الأرقام كما هي على العلبة، مثلًا"
+last date,آخر تاريخ
+Month and year only,شهر وسنة فقط
+The date above takes the rest: {0} {1},التاريخ أعلاه يأخذ الباقي: {0} {1}
++ Another date,+ تاريخ آخر
+Expired. Do not receive it.,منتهي الصلاحية، لا تستلمه.
+{0} days left,باقٍ {0} يومًا
+Delete digit,حذف رقم
