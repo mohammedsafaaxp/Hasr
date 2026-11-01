@@ -133,8 +133,10 @@
           <LucideScanBarcode class="size-6" />
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-[17px]">{{ __('Unknown barcode') }}</p>
-          <p class="truncate text-[14px] text-hasr-muted"><span class="ltr-text">{{ u.barcode }}</span> · {{ __('waiting for the supervisor') }}</p>
+          <p class="text-[17px]">{{ u.kind === 'Not on order' ? __('Not on this order') : __('Unknown barcode') }}</p>
+          <p class="truncate text-[14px] text-hasr-muted">
+            <span class="ltr-text">{{ u.kind === 'Not on order' ? u.item_code : u.barcode }}</span> · {{ __('waiting for the supervisor') }}
+          </p>
         </div>
         <span class="tabular text-[17px] font-semibold text-hasr-warning">{{ formatNumber(u.qty) }}</span>
       </li>
@@ -423,6 +425,10 @@ async function onQueueResult({ result: r, lines, error }, scan) {
     lastScan.value = { po_item: r.po_item, barcode: scan.barcode || scan.item_code, uom: r.uom, conversion_factor: r.conversion_factor }
     await nextTick()
     rowEls[r.po_item]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  } else if (r.status === 'exception') {
+    feedbackWarning()
+    showToast({ title: r.message, warn: true })
+    load() // show the exception in the list
   } else if (r.code === 'use_item_entry') {
     feedbackWarning()
     openItemEntry(r.item_code)

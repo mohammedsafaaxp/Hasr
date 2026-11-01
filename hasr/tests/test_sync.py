@@ -59,12 +59,25 @@ class TestSync(HasrTestCase, FrappeTestCase):
 			frappe.get_doc({"doctype": "Item", "item_code": "HASR-PHONE-MADE", "item_group": "All Item Groups", "stock_uom": "Nos"}).insert,
 		)
 
-	def test_item_not_on_po_rejected(self):
-		out = sync.push_scans([fx.scan(self.session, fx.BUTTER_UNIT)])
+	def test_item_not_on_po_becomes_exception(self):
+		out = sync.push_scans([fx.scan(self.session, fx.BUTTER_UNIT), fx.scan(self.session, fx.BUTTER_UNIT, qty=2)])
 		r = out["results"][0]
-		self.assertEqual((r["status"], r["code"]), ("rejected", "not_on_po"))
-		self.assertIn("is not on purchase order", r["message"])
-		self.assertEqual(out["lines"] and sum(l["received_qty"] for l in out["lines"]), 0)
+		self.assertEqual((r["status"], r["code"]), ("exception", "not_on_po"))
+		self.assertIn("Not on purchase order", r["message"])
+		self.assertEqual(sum(l["received_qty"] for l in out["lines"]), 0, "not counted on any line")
+		exceptions = [u for u in api.get_session(self.session)["unknown_barcodes"] if u["kind"] == "Not on order"]
+		self.assertEqual(len(exceptions), 1, "repeated scans add to one exception")
+		self.assertEqual((exceptions[0]["item_code"], exceptions[0]["qty"]), ("HASR-BUTTER", 3))
+
+	def test_not_on_order_blocks_approval_until_returned(self):
+		sync.push_scans([fx.scan(self.session, fx.YOGURT_UNIT), fx.scan(self.session, fx.BUTTER_UNIT)])
+		api.finish_session(self.session)
+		frappe.set_user(fx.SUPERVISOR)
+		self.assertRaisesRegex(frappe.ValidationError, "not on the order", api.approve, self.session)
+		exception = next(u for u in api.get_session(self.session)["unknown_barcodes"] if u["kind"] == "Not on order")
+		self.assertRaisesRegex(frappe.ValidationError, "Return it to the supplier", api.link_unknown_barcode, exception["name"], "HASR-YOGURT")
+		api.dismiss_unknown_barcode(exception["name"])
+		self.assertEqual(api.approve(self.session)["status"], "Approved")
 
 	def test_undo(self):
 		scan = fx.scan(self.session, fx.MILK_CASE)

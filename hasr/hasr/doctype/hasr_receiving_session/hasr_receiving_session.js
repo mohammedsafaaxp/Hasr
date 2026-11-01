@@ -177,14 +177,20 @@ function hasr_render_review(frm, is_supervisor) {
 				<div class="hasr-card">
 					${photo}
 					<div class="hasr-card-body">
-						<div class="hasr-card-title">${__("Unknown barcode {0} · {1} units", [esc(u.barcode), fmt(u.qty)])}</div>
+						<div class="hasr-card-title">${
+							u.kind === "Not on order"
+								? __("{0} is not on the order · {1} units", [esc(u.item_code), fmt(u.qty)])
+								: __("Unknown barcode {0} · {1} units", [esc(u.barcode), fmt(u.qty)])
+						}</div>
 						<div class="text-muted">${u.note ? __("Note: {0}", [esc(u.note)]) : ""} ${
 				u.status !== "Open" ? `· ${__(u.status)} ${esc(u.linked_item || "")}` : ""
 			}</div>
 					</div>
 					${
 						is_supervisor && u.status === "Open"
-							? `<button class="btn btn-default btn-sm" data-dismiss="${u.name}">${__("Dismiss")}</button>
+							? u.kind === "Not on order"
+								? `<button class="btn btn-primary btn-sm" data-dismiss="${u.name}">${__("Return to supplier")}</button>`
+								: `<button class="btn btn-default btn-sm" data-dismiss="${u.name}">${__("Dismiss")}</button>
 								<button class="btn btn-primary btn-sm" data-link="${u.name}">${__("Link to item")}</button>`
 							: ""
 					}

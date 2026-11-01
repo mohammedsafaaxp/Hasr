@@ -8,9 +8,12 @@
     >
       <div
         class="flex size-9 shrink-0 items-center justify-center rounded-full"
-        :class="toast.error ? 'bg-hasr-danger-bg text-hasr-danger' : 'bg-hasr-success-bg text-hasr-success'"
+        :class="
+          toast.error ? 'bg-hasr-danger-bg text-hasr-danger' : toast.warn ? 'bg-hasr-warning-bg text-hasr-warning' : 'bg-hasr-success-bg text-hasr-success'
+        "
       >
         <LucideX v-if="toast.error" class="size-5" />
+        <LucideTriangleAlert v-else-if="toast.warn" class="size-5" />
         <LucideCheck v-else class="size-5" />
       </div>
       <div class="min-w-0 flex-1">

@@ -220,7 +220,7 @@ def session_payload(doc):
 	unknown = frappe.get_all(
 		"Hasr Unknown Barcode",
 		filters={"session_doctype": SESSION, "session": doc.name},
-		fields=["name", "barcode", "qty", "note", "status", "photo", "linked_item"],
+		fields=["name", "kind", "barcode", "item_code", "qty", "note", "status", "photo", "linked_item"],
 		order_by="creation asc",
 	)
 	po = erp.get_purchase_order(doc.purchase_order) or {}
@@ -536,18 +536,28 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		on_po = frappe.db.exists(
 			"Purchase Order Item", {"parent": doc.purchase_order, "item_code": resolved.item_code}
 		)
+		name = resolved.item_name or resolved.item_code
 		if on_po:
-			msg = _("{0} is already fully received on purchase order {1}.").format(
-				resolved.item_name or resolved.item_code, doc.purchase_order
-			)
+			note = _("Already fully received on purchase order {0}.").format(doc.purchase_order)
 			code = "fully_received"
 		else:
-			msg = _("{0} is not on purchase order {1}. It was not counted.").format(
-				resolved.item_name or resolved.item_code, doc.purchase_order
-			)
+			note = _("Not on purchase order {0}.").format(doc.purchase_order)
 			code = "not_on_po"
-		_log_scan(doc, scan, uuid, "Rejected", msg, resolved)
-		return {"client_uuid": uuid, "status": "rejected", "code": code, "message": msg, "item_code": resolved.item_code}
+		# not counted on any line: kept as an exception the supervisor must decide on
+		qty_stock = qty * (flt(resolved.conversion_factor) or 1.0)
+		exception = _record_not_on_order(doc, resolved, qty_stock, note)
+		msg = _("{0}: {1} Recorded for the supervisor, not counted.").format(name, note)
+		_log_scan(doc, scan, uuid, "Rejected", msg, resolved, qty=qty, qty_stock=qty_stock)
+		return {
+			"client_uuid": uuid,
+			"status": "exception",
+			"code": code,
+			"message": msg,
+			"item_code": resolved.item_code,
+			"item_name": name,
+			"exception": exception.name,
+			"exception_qty": flt(exception.qty),
+		}
 
 	cf = flt(resolved.conversion_factor)
 	if cf <= 0:
@@ -574,6 +584,39 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		"over_allowance_state": line.over_allowance_state,
 		"message": _("Added {0} {1} of {2}").format(f"{qty:g}", _(resolved.uom), resolved.item_name),
 	}
+
+
+def _record_not_on_order(doc, resolved, qty_stock, note):
+	"""One open exception per item and session; repeated scans add to its quantity."""
+	name = frappe.db.get_value(
+		"Hasr Unknown Barcode",
+		{
+			"session_doctype": SESSION,
+			"session": doc.name,
+			"kind": "Not on order",
+			"item_code": resolved.item_code,
+			"status": "Open",
+		},
+	)
+	if name:
+		exception = frappe.get_doc("Hasr Unknown Barcode", name)
+		exception.qty = flt(exception.qty) + qty_stock
+		exception.save(ignore_permissions=True)
+		return exception
+	return frappe.get_doc(
+		{
+			"doctype": "Hasr Unknown Barcode",
+			"kind": "Not on order",
+			"barcode": resolved.barcode or resolved.item_code,
+			"item_code": resolved.item_code,
+			"session_doctype": SESSION,
+			"session": doc.name,
+			"qty": qty_stock,
+			"note": note,
+			"status": "Open",
+			"reported_by": frappe.session.user,
+		}
+	).insert(ignore_permissions=True)
 
 
 def _match_line(doc, item_code, po_item=None):
@@ -914,6 +957,8 @@ def link_unknown_barcode(name, item_code, uom=None):
 	unknown = frappe.get_doc("Hasr Unknown Barcode", name)
 	if unknown.status != "Open":
 		frappe.throw(_("Unknown barcode {0} is already {1}.").format(unknown.barcode, _(unknown.status)))
+	if unknown.kind == "Not on order":
+		frappe.throw(_("This item is known but not on the order. Return it to the supplier instead."))
 	doc = get_session_doc(unknown.session, for_update=True)
 	if doc.status not in (*EDITABLE_STATUSES, "Pending Approval"):
 		frappe.throw(_("Session {0} is {1} and can no longer be changed.").format(doc.name, _(doc.status)))
@@ -1000,7 +1045,10 @@ def approve(session, decisions=None, submit=False):
 			_("Decide on the over-receipt first: {0}").format(", ".join(undecided)), title=_("Needs your decision")
 		)
 	if frappe.db.exists("Hasr Unknown Barcode", {"session_doctype": SESSION, "session": doc.name, "status": "Open"}):
-		frappe.throw(_("Link or dismiss the unknown barcodes first."), title=_("Needs your decision"))
+		frappe.throw(
+			_("Decide on the unknown barcodes and the items that are not on the order first."),
+			title=_("Needs your decision"),
+		)
 	missing_expiry = [l.item_name or l.item_code for l in doc.lines if needs_expiry(l)]
 	if missing_expiry:
 		frappe.throw(_("Enter the expiry date for: {0}").format(", ".join(missing_expiry)), title=_("Expiry date needed"))

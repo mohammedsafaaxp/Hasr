@@ -16,6 +16,7 @@ Added {0},أُضيف {0}
 Added {0} {1} of {2},أُضيف {0} {1} من {2}
 All,الكل
 All warehouses,جميع المستودعات
+Already fully received on purchase order {0}.,مستلم بالكامل مسبقًا في أمر الشراء {0}.
 Already received.,تم استلامه مسبقًا.
 Ambient,حرارة الغرفة
 Another shipment of this purchase order is open. Finish or cancel it first.,توجد شحنة أخرى مفتوحة لأمر الشراء هذا. أنهِها أو ألغِها أولًا.
@@ -55,6 +56,7 @@ Counting arrives in a later version.,الجرد متاح في إصدار لاح�
 "Damaged or expired, goes to the rejected warehouse",تالفة أو منتهية الصلاحية، تُنقل إلى مستودع المرفوضات
 Decide on the over-receipt first: {0},اتخذ قرارًا بشأن الزيادة في الاستلام أولًا: {0}
 Decide on the reported item mismatches first.,اتخذ قرارًا بشأن بلاغات عدم مطابقة الأصناف أولًا.
+Decide on the unknown barcodes and the items that are not on the order first.,اتخذ قرارًا بشأن الباركودات غير المعروفة والأصناف غير الموجودة في الأمر أولًا.
 Decision must be Accept or Cap.,يجب أن يكون القرار قبولًا أو تحديدًا.
 Decision must be Correct or Wrong.,يجب أن يكون القرار: صحيح أو خاطئ.
 Decision: {0},القرار: {0}
@@ -124,6 +126,9 @@ No supplier invoice was attached.,لم تُرفق فاتورة المورد.
 Nos,حبة
 Not a whole number of {0},ليست عددًا صحيحًا من {0}
 Not in this shipment,لم تصل في هذه الشحنة
+Not on order,ليس ضمن الأمر
+Not on purchase order {0}.,ليس ضمن أمر الشراء {0}.
+Not on this order,ليس ضمن هذا الأمر
 Note for the supervisor,ملاحظة للمشرف
 Note: {0},ملاحظة: {0}
 Nothing needs your decision.,لا يوجد ما يحتاج إلى قرارك.
@@ -169,6 +174,7 @@ Refresh,تحديث
 Rejected quantity,الكمية المرفوضة
 Remove,حذف
 Remove this quantity from the receipt? It will not be received.,هل تريد حذف هذه الكمية من الاستلام؟ لن تُستلم.
+Return to supplier,إرجاع إلى المورد
 Row {0}: {1} has a rejected quantity but no rejected warehouse. Set a default in Hasr Settings.,السطر {0}: للصنف {1} كمية مرفوضة دون مستودع مرفوضات. حدّد مستودعًا افتراضيًا في إعدادات حَصر.
 Save line,حفظ السطر
 Saving…,جارٍ الحفظ…
@@ -220,6 +226,7 @@ The supervisor decides whether to close the order,يقرر المشرف إغلا
 The supervisor reviews it before anything changes in stock,يراجعها المشرف قبل أي تغيير في المخزون
 The supplier will not send the rest,لن يرسل المورد المتبقي
 This barcode is not linked to any item. Take a photo and send it to the supervisor to link it. You can keep receiving the rest.,هذا الباركود غير مرتبط بأي صنف. التقط صورة للمنتج وأرسلها إلى المشرف لربطه، ويمكنك متابعة استلام بقية الأصناف.
+This item is known but not on the order. Return it to the supplier instead.,هذا الصنف معروف لكنه ليس ضمن الأمر. أرجِعه إلى المورد بدلًا من ذلك.
 This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot finish the shipment until this is fixed.,هذا الأمر بوحدة {0} (1 {0} = {1} {2}). أدخل {0} كاملة فقط: {3}… لا يمكن إنهاء الشحنة قبل تصحيح ذلك.
 This receiving session belongs to {0}.,جلسة الاستلام هذه تخص {0}.
 This report was already decided.,تم البت في هذا البلاغ مسبقًا.
@@ -274,6 +281,7 @@ whole {0} only,{0} كاملة فقط
 {0} is not an open line on purchase order {1}. Dismiss the barcode instead.,{0} ليس سطرًا مفتوحًا في أمر الشراء {1}. تجاهل الباركود بدلًا من ذلك.
 {0} is not batch tracked.,{0} لا يُتتبَّع بالدفعات.
 {0} is not on purchase order {1}. It was not counted.,{0} غير موجود في أمر الشراء {1}، ولم يُحتسب.
+{0} is not on the order · {1} units,{0} ليس ضمن الأمر · {1} وحدة
 {0} is within the allowance; nothing to decide.,{0} ضمن الحد المسموح، ولا يلزم اتخاذ قرار.
 {0} items,{0} أصناف
 {0} of {1},{0} من {1}
@@ -291,4 +299,5 @@ whole {0} only,{0} كاملة فقط
 {0} {1} over the {2}% over-receipt allowance,{0} {1} فوق نسبة السماح بالزيادة {2}%
 "{0}: received {1}, ordered {2}",{0}: المستلم {1}، المطلوب {2}
 {0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).,{0}: يجب أن تكون الكمية عددًا صحيحًا من {1} (1 {1} = {2} {3}).
+"{0}: {1} Recorded for the supervisor, not counted.",{0}: {1} سُجّل للمشرف ولم يُحتسب.
 "{0}: {1} received and {2} rejected {3} is not a whole number of {4} (1 {4} = {5} {3}). Adjust the quantity, or change the unit on the purchase order.",{0}: المستلم {1} والمرفوض {2} {3} ليسا عددًا صحيحًا من {4} (1 {4} = {5} {3}). عدّل الكمية أو غيّر الوحدة في أمر الشراء.

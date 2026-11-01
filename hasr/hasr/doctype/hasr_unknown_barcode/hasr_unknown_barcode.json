@@ -8,6 +8,8 @@
  "field_order": [
   "naming_series",
   "barcode",
+  "kind",
+  "item_code",
   "status",
   "session_doctype",
   "session",
@@ -37,6 +39,24 @@
    "label": "Barcode",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "default": "Unknown barcode",
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Kind",
+   "options": "Unknown barcode\nNot on order",
+   "read_only": 1
+  },
+  {
+   "description": "For Not on order: the item that was scanned but is not an open line of the purchase order.",
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Scanned Item",
+   "options": "Item",
+   "read_only": 1
   },
   {
    "default": "Open",
@@ -118,7 +138,7 @@
  "image_field": "photo",
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-27 12:00:00.000000",
+ "modified": "2026-11-01 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Unknown Barcode",
