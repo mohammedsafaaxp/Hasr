@@ -125,7 +125,7 @@
         <button type="button" class="tabular flex shrink-0 items-center gap-1.5 self-center text-[17px] font-semibold" :class="qtyClass(l)" @click="openLine(l)">
           <LucideTriangleAlert v-if="isIssue(l)" class="size-5" />
           <LucideCheck v-else-if="isDone(l)" class="size-5" />
-          <span class="ltr-text">{{ formatNumber(l.received_qty) }} / {{ formatNumber(l.pending_qty) }}</span>
+          <span class="ltr-text">{{ formatNumber(paid(l)) }} / {{ formatNumber(l.pending_qty) }}</span>
         </button>
       </li>
       <li v-for="u in openUnknown" :key="u.name" class="flex items-center gap-3 border-b border-hasr-line bg-[#FFFAF0] px-4 py-3.5">
@@ -160,6 +160,7 @@
       :session="s && s.name"
       :editable="s && s.editable"
       :expiry-warning-pct="s ? s.expiry_warning_pct : 0"
+      :free-enabled="!!(s && s.free_qty_enabled)"
       @close="closeLine"
       @saved="onLineSaved"
       @mismatch="(l, code) => openMismatch(l, code || (l.barcodes[0] && l.barcodes[0].barcode), 1)"
@@ -253,7 +254,9 @@ const sheetOpen = computed(
 const openUnknown = computed(() => (s.value ? s.value.unknown_barcodes.filter((u) => u.status === 'Open') : []))
 
 const isOver = (l) => ['Over', 'Accepted'].includes(l.over_allowance_state)
-const isDone = (l) => l.received_qty >= l.pending_qty
+// free goods of a supplier offer are not on the order
+const paid = (l) => l.received_qty - (l.free_qty || 0)
+const isDone = (l) => paid(l) >= l.pending_qty
 const isIssue = (l) => isOver(l) || l.needs_expiry || l.whole_unit_issue || l.mismatch_open
 const counts = computed(() => {
   const lines = s.value ? s.value.lines : []
@@ -289,15 +292,16 @@ function filterClass(f) {
 
 function lineHint(l) {
   if (isOver(l)) {
-    const over = l.already_received_qty + l.received_qty - l.allowed_qty
+    const over = l.already_received_qty + paid(l) - l.allowed_qty
     return __('{0} over the limit', [formatNumber(Math.ceil(over))])
   }
   if (l.mismatch_open) return __('reported: does not match')
   if (l.whole_unit_issue) return __('whole {0} only', [__(l.uom)])
   if (l.needs_expiry) return __('expiry date needed')
   if (!l.received_qty) return __('not scanned')
-  const left = l.pending_qty - l.received_qty
-  return left > 0 ? __('{0} to go', [formatNumber(left)]) : __('complete')
+  const left = l.pending_qty - paid(l)
+  const status = left > 0 ? __('{0} to go', [formatNumber(left)]) : __('complete')
+  return l.free_qty ? `${status} · ${__('{0} free', [formatNumber(l.free_qty)])}` : status
 }
 
 function qtyClass(l) {

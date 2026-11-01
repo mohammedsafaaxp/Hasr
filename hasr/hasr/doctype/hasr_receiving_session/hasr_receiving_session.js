@@ -186,7 +186,7 @@ function hasr_render_review(frm, on_data) {
 
 		for (const line of data.lines) {
 			if (!["Over", "Accepted", "Capped"].includes(line.over_allowance_state)) continue;
-			const total = line.already_received_qty + line.received_qty;
+			const total = line.already_received_qty + line.received_qty - (line.free_qty || 0);
 			const over = total - line.allowed_qty;
 			const state = line.over_allowance_state;
 			cards.push(`
@@ -283,7 +283,7 @@ function hasr_render_review(frm, on_data) {
 		]);
 
 		// summary + the lines as the supervisor reads them (the raw child table stays collapsed below)
-		const done = data.lines.filter((l) => l.received_qty >= l.pending_qty).length;
+		const done = data.lines.filter((l) => l.received_qty - (l.free_qty || 0) >= l.pending_qty).length;
 		const summary = `
 			<div class="hasr-summary">
 				<span class="indicator-pill ${data.match_problems.length ? "orange" : "green"}">${
@@ -295,7 +295,7 @@ function hasr_render_review(frm, on_data) {
 				<span>${__("Supplier invoice")}: <b>${esc(data.supplier_invoice_no || "—")}</b></span>
 			</div>`;
 		const status_chip = (l) => {
-			const short = l.pending_qty - l.received_qty;
+			const short = l.pending_qty - (l.received_qty - (l.free_qty || 0));
 			if (["Over", "Accepted"].includes(l.over_allowance_state))
 				return `<span class="indicator-pill orange">${__("Over limit")}</span>`;
 			if (l.needs_expiry) return `<span class="indicator-pill orange">${__("Expiry date needed")}</span>`;
@@ -322,7 +322,9 @@ function hasr_render_review(frm, on_data) {
 								: ""
 						}</div></td>
 							<td class="hasr-num">${fmt(l.pending_qty)}</td>
-							<td class="hasr-num ${l.received_qty > l.pending_qty ? "text-warning" : ""}"><b>${fmt(l.received_qty)}</b></td>
+							<td class="hasr-num ${l.received_qty - (l.free_qty || 0) > l.pending_qty ? "text-warning" : ""}"><b>${fmt(l.received_qty)}</b>${
+								l.free_qty ? `<div class="small text-success">${__("{0} free (offer)", [fmt(l.free_qty)])}</div>` : ""
+							}</td>
 							<td class="small">${(l.batches || [])
 								.map((b) => `${frappe.datetime.str_to_user(b.expiry_date)} × ${fmt(b.qty)}`)
 								.join("<br>") || (l.has_batch_no ? "—" : "")}</td>

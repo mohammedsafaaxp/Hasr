@@ -20,6 +20,7 @@
   "allowed_qty",
   "column_break_r",
   "received_qty",
+  "free_qty",
   "scanned_qty",
   "manual_adjust_qty",
   "over_allowance_state",
@@ -120,6 +121,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "free_qty",
+   "fieldtype": "Float",
+   "label": "Free (Supplier Offer)",
+   "read_only": 1,
+   "description": "Part of the received quantity the supplier gave free. It goes on a free row of the Purchase Receipt at price 0.",
+   "default": "0"
+  },
+  {
    "fieldname": "scanned_qty",
    "fieldtype": "Float",
    "label": "Scanned",
@@ -152,7 +161,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-11-01 16:23:49.000000",
+ "modified": "2026-11-01 16:39:58.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Receiving Line",

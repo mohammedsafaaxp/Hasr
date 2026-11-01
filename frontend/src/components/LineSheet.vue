@@ -122,7 +122,21 @@
           <p v-if="line.received_qty" class="-mt-2 text-center text-[13px] text-hasr-muted">
             {{ __('Counted so far: {0} {1}. Type the total.', [formatNumber(line.received_qty), __(line.stock_uom)]) }}
           </p>
-          <p class="tabular text-center text-[44px] font-semibold leading-tight" dir="ltr">{{ qtyText || '0' }}</p>
+          <div v-if="freeEnabled" class="grid grid-cols-2 gap-2">
+            <button
+              v-for="t in qtyTiles"
+              :key="t.key"
+              type="button"
+              class="rounded-tile border-[1.5px] p-2 text-center"
+              :class="target === t.key ? 'border-hasr-ink' : 'border-hasr-line'"
+              :aria-pressed="target === t.key"
+              @click="setTarget(t.key)"
+            >
+              <span class="block text-[13px] text-hasr-muted">{{ t.label }}</span>
+              <span class="tabular block text-[34px] font-semibold leading-tight" dir="ltr">{{ t.value || '0' }}</span>
+            </button>
+          </div>
+          <p v-else class="tabular text-center text-[44px] font-semibold leading-tight" dir="ltr">{{ qtyText || '0' }}</p>
           <div v-if="line.uoms.length > 1" class="flex justify-center">
             <div class="inline-flex gap-0.5 rounded-hasr bg-hasr-surface2 p-1" role="radiogroup" :aria-label="__('Unit')">
               <button
@@ -141,6 +155,12 @@
           </div>
           <p class="min-h-5 text-center text-sm text-hasr-muted">
             <template v-if="cf !== 1">= {{ formatNumber(receivedStock) }} {{ __(line.stock_uom) }}</template>
+            <template v-if="freeStock > 0 && freeStock <= receivedStock">
+              {{ cf !== 1 ? ' · ' : '' }}{{ __('Paid: {0} {1}, free: {2}', [formatNumber(receivedStock - freeStock), __(line.stock_uom), formatNumber(freeStock)]) }}
+            </template>
+          </p>
+          <p v-if="freeStock > receivedStock" class="text-center text-sm text-hasr-danger" role="alert">
+            {{ __('The free quantity cannot be more than what was received.') }}
           </p>
           <div v-if="wholeWarning" class="flex gap-2 rounded-hasr bg-hasr-warning-bg p-3 text-sm text-hasr-warning" role="alert">
             <LucideTriangleAlert class="mt-0.5 size-4 shrink-0" />
@@ -154,12 +174,19 @@
           <button
             v-if="line.has_batch_no && receivedStock > 0"
             type="button"
-            class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white"
+            class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white disabled:opacity-50"
+            :disabled="freeStock > receivedStock"
             @click="go('expiry')"
           >
             {{ __('Next') }}
           </button>
-          <button v-else type="button" class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white disabled:opacity-50" :disabled="saving" @click="save">
+          <button
+            v-else
+            type="button"
+            class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white disabled:opacity-50"
+            :disabled="saving || freeStock > receivedStock"
+            @click="save"
+          >
             {{ saving ? __('Saving…') : __('Save line') }}
           </button>
         </div>
@@ -260,12 +287,16 @@ import { feedbackError, feedbackSuccess } from '../sound'
 import { daysUntil, digitsToIso, displayDate, isoToDigits, slotParts } from '../expiry'
 
 // entry: how the line was opened from a scan ({ checked, uom }): the scan already checked the item and tells the unit
-const props = defineProps({ line: Object, entry: Object, session: String, editable: Boolean, expiryWarningPct: Number })
+const props = defineProps({ line: Object, entry: Object, session: String, editable: Boolean, expiryWarningPct: Number, freeEnabled: Boolean })
 const emit = defineEmits(['close', 'saved', 'details', 'mismatch'])
 
 const step = ref('check')
 const qtyText = ref('')
 const freshQty = ref(true)
+// with supplier offers on, the keypad types either the received total or the free part of it
+const target = ref('qty')
+const freeText = ref('')
+const freshFree = ref(true)
 const uom = ref('')
 const dates = ref([])
 const entry = ref('')
@@ -289,9 +320,14 @@ const stepIndex = computed(() => steps.value.indexOf(step.value))
 const cf = computed(() => props.line?.uoms.find((u) => u.uom === uom.value)?.conversion_factor || 1)
 const qty = computed(() => Number(qtyText.value) || 0)
 const receivedStock = computed(() => round(qty.value * cf.value))
+const freeStock = computed(() => (props.freeEnabled ? round((Number(freeText.value) || 0) * cf.value) : 0))
+const qtyTiles = computed(() => [
+  { key: 'qty', label: __('Received (total)'), value: qtyText.value },
+  { key: 'free', label: __('Of which free (offer)'), value: freeText.value },
+])
 const overBy = computed(() => {
   if (!props.line) return 0
-  return round(props.line.already_received_qty + receivedStock.value - props.line.allowed_qty)
+  return round(props.line.already_received_qty + receivedStock.value - freeStock.value - props.line.allowed_qty)
 })
 
 // The Purchase Receipt stays in the order's unit, so a box line takes whole boxes only.
@@ -299,7 +335,8 @@ const wholeWarning = computed(() => {
   const l = props.line
   if (!l || !l.uom_must_be_whole) return ''
   const poCf = l.conversion_factor || 1
-  if (Math.abs(receivedStock.value / poCf - Math.round(receivedStock.value / poCf)) < 1e-6) return ''
+  const paid = receivedStock.value - freeStock.value
+  if (Math.abs(paid / poCf - Math.round(paid / poCf)) < 1e-6) return ''
   const examples = [1, 2, 3].map((n) => formatNumber(n * poCf)).join(langRef.value === 'ar' ? '، ' : ', ')
   return __('This order is in {0} (1 {0} = {1} {2}). Enter whole {0} only: {3}… You cannot finish the shipment until this is fixed.', [
     __(l.uom),
@@ -368,6 +405,9 @@ watch(
     if (scannedUom && line.uoms.some((u) => u.uom === scannedUom)) uom.value = scannedUom
     qtyText.value = line.received_qty ? String(round(line.received_qty / cf.value)) : ''
     freshQty.value = true
+    freeText.value = line.free_qty ? String(round(line.free_qty / cf.value)) : ''
+    freshFree.value = true
+    target.value = 'qty'
     const saved = line.batches || []
     dates.value = saved.slice(0, -1).map((b) => ({ ...b }))
     entry.value = saved.length ? isoToDigits(saved[saved.length - 1].expiry_date) : ''
@@ -429,21 +469,38 @@ function startTyping() {
 }
 
 // 2. quantity
+function typeDigit(text, k) {
+  if (k === 'del') return text.slice(0, -1)
+  if (k === '.') return text.includes('.') ? text : (text || '0') + '.'
+  return ((text === '0' ? '' : text) + k).slice(0, 7)
+}
+
 function onQtyKey(k) {
-  let text = freshQty.value ? '' : qtyText.value
+  if (target.value === 'free') {
+    freeText.value = typeDigit(freshFree.value ? '' : freeText.value, k)
+    freshFree.value = false
+    return
+  }
+  qtyText.value = typeDigit(freshQty.value ? '' : qtyText.value, k)
   freshQty.value = false
-  if (k === 'del') text = text.slice(0, -1)
-  else if (k === '.') text = text.includes('.') ? text : (text || '0') + '.'
-  else text = (text === '0' ? '' : text) + k
-  qtyText.value = text.slice(0, 7)
+}
+
+function setTarget(next) {
+  target.value = next
+  // the first digit replaces what is shown, like a calculator
+  if (next === 'free') freshFree.value = true
+  else freshQty.value = true
 }
 
 function setUom(next) {
   if (next === uom.value) return
   const stock = receivedStock.value
+  const free = freeStock.value
   uom.value = next
   qtyText.value = stock ? String(round(stock / cf.value)) : ''
+  freeText.value = free ? String(round(free / cf.value)) : ''
   freshQty.value = true
+  freshFree.value = true
 }
 
 // 3. expiry
@@ -489,6 +546,7 @@ async function save() {
       po_item: props.line.po_item,
       received_qty: receivedStock.value,
     }
+    if (props.freeEnabled) args.free_qty = freeStock.value
     const batches = batchesToSend()
     if (batches) args.batches = batches
     const session = await api('receiving.set_line', args)

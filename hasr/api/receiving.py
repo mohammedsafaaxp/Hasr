@@ -50,9 +50,9 @@ def my_sessions():
 
 
 @frappe.whitelist(methods=["POST"])
-def set_line(session, po_item, received_qty, batches=None):
+def set_line(session, po_item, received_qty, batches=None, free_qty=None):
 	require_counter()
-	doc = receiving.set_line(session, po_item, received_qty, parse_json_arg(batches))
+	doc = receiving.set_line(session, po_item, received_qty, parse_json_arg(batches), free_qty)
 	return receiving.session_payload(doc)
 
 

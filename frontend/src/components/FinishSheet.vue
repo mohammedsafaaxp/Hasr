@@ -95,7 +95,7 @@ const options = computed(() => [
 const counts = computed(() => {
   const c = { full: 0, partial: 0, none: 0 }
   for (const l of props.session.lines) {
-    const got = l.received_qty
+    const got = l.received_qty - (l.free_qty || 0)
     if (got >= l.pending_qty) c.full++
     else if (got > 0) c.partial++
     else c.none++

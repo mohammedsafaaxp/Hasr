@@ -52,6 +52,7 @@ class HasrReceivingSession(Document):
 			)[0][0]
 		)
 		line.received_qty = max(flt(line.scanned_qty) + flt(line.manual_adjust_qty), 0.0)
+		line.free_qty = min(flt(line.free_qty), flt(line.received_qty))  # an undone scan can leave less than the free part
 		sync_single_batch(line)
 		update_line_state(line)
 
@@ -70,8 +71,8 @@ def sync_single_batch(line):
 
 
 def line_total(line) -> float:
-	"""Everything ERPNext will count against the PO line."""
-	return flt(line.already_received_qty) + flt(line.received_qty)
+	"""Everything ERPNext will count against the PO line: free goods of an offer are not on the order."""
+	return flt(line.already_received_qty) + flt(line.received_qty) - flt(line.free_qty)
 
 
 def is_over(line) -> bool:

@@ -64,7 +64,7 @@ def in_flight_qty(purchase_order, exclude_session=None) -> dict[str, float]:
 	"""
 	rows = frappe.db.sql(
 		"""
-		select l.po_item, sum(l.received_qty) as qty
+		select l.po_item, sum(l.received_qty - l.free_qty) as qty
 		from `tabHasr Receiving Line` l
 		join `tabHasr Receiving Session` s on s.name = l.parent
 		left join `tabPurchase Receipt` pr on pr.name = s.purchase_receipt
@@ -232,6 +232,7 @@ def session_payload(doc):
 				"pending_qty": flt(l.pending_qty),
 				"allowed_qty": flt(l.allowed_qty),
 				"received_qty": flt(l.received_qty),
+				"free_qty": flt(l.free_qty),
 				"over_allowance_state": l.over_allowance_state,
 			}
 		)
@@ -278,6 +279,7 @@ def session_payload(doc):
 		"approval_block_reason": approval_block_reason(doc),
 		"mismatches": get_mismatches(doc.name),
 		"expiry_warning_pct": flt(frappe.get_cached_doc("Hasr Settings").expiry_warning_pct),
+		"free_qty_enabled": free_qty_enabled(),
 	}
 
 
@@ -293,16 +295,46 @@ def _line_uoms(item_code, stock_uom):
 	return uoms
 
 
-def set_line(session, po_item, received_qty, batches=None):
+def free_qty_enabled() -> bool:
+	return bool(cint(frappe.get_cached_doc("Hasr Settings").enable_free_qty))
+
+
+def paid_qty(line) -> float:
+	"""What the supplier is paid for: the received quantity without the free part of an offer."""
+	return flt(line.received_qty) - flt(line.free_qty)
+
+
+def split_free(batches, free_qty) -> list[dict]:
+	"""Spread the free part over the expiry dates, from the last one back: each row gets "qty" (paid) and
+	"free_qty"."""
+	rows = [dict(b, qty=flt(b["qty"]), free_qty=0.0) for b in batches]
+	left = flt(free_qty)
+	for row in reversed(rows):
+		take = min(row["qty"], left)
+		row["qty"] -= take
+		row["free_qty"] = take
+		left -= take
+	return rows
+
+
+def set_line(session, po_item, received_qty, batches=None, free_qty=None):
 	doc = get_editable_session(session)
 	line = doc.get_line(po_item)
 	received_qty = flt(received_qty)
 	if received_qty < 0:
 		frappe.throw(_("Quantities cannot be negative."))
+	if free_qty is not None:
+		free_qty = flt(free_qty)
+		if free_qty and not free_qty_enabled():
+			frappe.throw(_("Free quantity is turned off in Hasr Settings."))
+		if free_qty < 0 or free_qty > received_qty + EPSILON:
+			frappe.throw(_("The free quantity must be between 0 and the received quantity."))
 	if batches is not None:
 		batches = clean_batches(line, batches, received_qty)
 	doc.recompute_line(line)
 	line.manual_adjust_qty = received_qty - flt(line.scanned_qty)
+	if free_qty is not None:
+		line.free_qty = free_qty
 	if batches is not None:
 		line.batches_json = frappe.as_json(batches) if batches else None
 	doc.recompute_line(line)
@@ -350,7 +382,10 @@ def whole_unit_issue(line) -> str | None:
 	if cf == 1 or not erp.uom_must_be_whole(line.uom):
 		return None
 	batches = get_batches(line)
-	accepted = [flt(b["qty"]) for b in batches] if len(batches) > 1 else [flt(line.received_qty)]
+	if len(batches) > 1:
+		accepted = [b["qty"] for b in split_free(batches, line.free_qty)]
+	else:
+		accepted = [paid_qty(line)]
 	if all(_is_whole(q / cf) for q in accepted):
 		return None
 	return _("{0}: the quantity must be a whole number of {1} (1 {1} = {2} {3}).").format(
@@ -723,7 +758,7 @@ def _match_line(doc, item_code, po_item=None):
 	if not candidates:
 		return None
 	for line in candidates:
-		if flt(line.received_qty) < flt(line.pending_qty) - EPSILON:
+		if paid_qty(line) < flt(line.pending_qty) - EPSILON:
 			return line
 	return candidates[-1]
 
@@ -1196,7 +1231,7 @@ def _apply_decision(doc, line, decision):
 		line.over_allowance_state = "Accepted"
 		return
 	target = max(flt(line.pending_qty), 0.0)
-	line.manual_adjust_qty = target - flt(line.scanned_qty)
+	line.manual_adjust_qty = target + flt(line.free_qty) - flt(line.scanned_qty)
 	line.over_allowance_state = "Capped"
 	doc.recompute_line(line)
 
@@ -1243,8 +1278,9 @@ def approve(session, decisions=None, submit=False):
 		[
 			{
 				"po_item": l.po_item,
-				"qty": l.received_qty,
-				"batches": get_batches(l),
+				"qty": paid_qty(l),
+				"free_qty": flt(l.free_qty),
+				"batches": split_free(get_batches(l), l.free_qty),
 			}
 			for l in doc.lines
 		],
@@ -1292,12 +1328,15 @@ def match_problems(doc) -> list[str]:
 		name = l.item_name or l.item_code
 		if is_line_over(l):
 			problems.append(_("{0}: more than ordered").format(name))
-		elif abs(flt(l.received_qty) - flt(l.pending_qty)) > EPSILON:
+		elif abs(paid_qty(l) - flt(l.pending_qty)) > EPSILON:
 			problems.append(
 				_("{0}: received {1} of {2}").format(
-					name, frappe.format(flt(l.received_qty)), frappe.format(flt(l.pending_qty))
+					name, frappe.format(paid_qty(l)), frappe.format(flt(l.pending_qty))
 				)
 			)
+		if flt(l.free_qty):
+			# an offer is checked against the supplier's invoice before it is approved
+			problems.append(_("{0}: {1} free (supplier offer)").format(name, frappe.format(flt(l.free_qty))))
 		if needs_expiry(l):
 			problems.append(_("{0}: expiry date needed").format(name))
 		if whole_unit_issue(l):

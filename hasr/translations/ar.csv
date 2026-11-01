@@ -399,3 +399,28 @@ Add to the order and receive,إضافة إلى الأمر واستلامه
 Added to the purchase order,أُضيف إلى أمر الشراء
 Add to the purchase order,إضافة إلى أمر الشراء
 "Return it, or add it to the purchase order if you want it.",أرجِعه، أو أضِفه إلى أمر الشراء إن كنت تريده.
+{0} free (offer),{0} مجانًا (عرض)
+{0} free,{0} مجانًا
+Of which free (offer),منها مجانًا (عرض)
+The free quantity cannot be more than what was received.,لا يمكن أن تزيد الكمية المجانية على المستلَمة.
+Received (total),المستلَم (الإجمالي)
+"Paid: {0} {1}, free: {2}",المدفوع: {0} {1}، المجاني: {2}
+Free quantity is turned off in Hasr Settings.,الكمية المجانية معطّلة في إعدادات حصر.
+Supplier offer recorded on receipt of purchase order {0}.,عرض من المورد سُجّل عند استلام أمر الشراء {0}.
+The free quantity must be between 0 and the received quantity.,يجب أن تكون الكمية المجانية بين 0 والكمية المستلَمة.
+{0}: {1} free (supplier offer),{0}: {1} مجانًا (عرض من المورد)
+{0}: {1} free with {2} {3},{0}: {1} مجانًا مع {2} من {3}
+Free (Supplier Offer),مجاني (عرض المورد)
+Part of the received quantity the supplier gave free. It goes on a free row of the Purchase Receipt at price 0.,جزء الكمية المستلَمة الذي أعطاه المورد مجانًا. يُسجَّل في سطر مجاني في إيصال الاستلام بسعر 0.
+Receiving,الاستلام
+Approval,الاعتماد
+Short Shelf Life Warning (%),تنبيه الصلاحية القصيرة (%)
+"Warn the worker when a product arrives with little shelf life left. Example: 30 means warn when less than 30% of the item's shelf life is left (an item that keeps 100 days, arriving with 25 days left). 0 turns the warning off. The item's Shelf Life In Days must be set in ERPNext.",ينبّه العامل عندما يصل منتج بصلاحية متبقية قليلة. مثال: 30 تعني التنبيه إذا بقي أقل من 30% من مدة صلاحية الصنف (صنف يدوم 100 يوم ووصل وقد بقي له 25 يومًا). 0 يوقف التنبيه. يجب ضبط «مدة الصلاحية بالأيام» للصنف في ERPNext.
+Require Supplier Invoice No,رقم فاتورة المورد إلزامي
+The worker must type the number on the supplier's invoice before sending a shipment for review. It is written on the Purchase Receipt and filled in the Purchase Invoice.,يجب أن يكتب العامل رقم فاتورة المورد قبل إرسال الشحنة للمراجعة. يُكتب الرقم في إيصال الاستلام ويُملأ في فاتورة الشراء.
+Free Quantity from Supplier Offers,الكمية المجانية من عروض الموردين
+"For suppliers who add free goods (for example 12 delivered, 2 of them free). The worker enters how many of the received quantity are free. On approval the Purchase Receipt gets a free row at price 0 linked to a Pricing Rule for the offer, and the item's cost is spread over all the units. Off: the field is not shown.",للموردين الذين يضيفون بضاعة مجانية (مثلًا وصل 12 منها 2 مجانًا). يُدخل العامل كم من الكمية المستلَمة مجاني. عند الاعتماد يُضاف إلى إيصال الاستلام سطر مجاني بسعر 0 مرتبط بقاعدة تسعير (Pricing Rule) للعرض، وتتوزع كلفة الصنف على جميع الوحدات. عند التعطيل لا يظهر الحقل.
+Roles That Can Approve,الأدوار التي تعتمد
+"Who can approve receipts, decide over-receipts and wrong items, and send shipments back. Empty: Hasr Supervisor. System Manager can always approve. Nobody approves a shipment they received themselves.",من يعتمد الاستلام، ويقرر في الزيادة والأصناف الخاطئة، ويعيد الشحنات. إن تُرك فارغًا: مشرف حصر. مدير النظام يعتمد دائمًا. لا أحد يعتمد شحنة استلمها بنفسه.
+One-Click Approval Submits the Receipt,الاعتماد بنقرة واحدة يُرحّل الإيصال
+"On the Today's Shipments page, a shipment that matches its order can be approved with one click. On: that click also submits the Purchase Receipt and stock moves at once. Off: the receipt stays a draft for someone to check and submit.",في صفحة «شحنات اليوم» تُعتمد الشحنة المطابقة لأمرها بنقرة واحدة. عند التفعيل: تُرحّل النقرة إيصال الاستلام أيضًا ويتحرك المخزون فورًا. عند التعطيل: يبقى الإيصال مسودة ليراجعه أحد ويرحّله.

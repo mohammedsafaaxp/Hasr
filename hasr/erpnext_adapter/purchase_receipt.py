@@ -5,6 +5,7 @@ from frappe import _
 from frappe.utils import flt
 
 from hasr.erpnext_adapter.batches import attach_batch, create_batch, get_batch_settings, link_batches_to_voucher
+from hasr.erpnext_adapter.offers import get_or_create_free_item_rule, make_free_row
 
 
 def create_draft_purchase_receipt(
@@ -16,15 +17,18 @@ def create_draft_purchase_receipt(
 ):
 	"""Insert a draft Purchase Receipt for `lines` of `purchase_order`.
 
-	Each line: {"po_item", "qty", "rejected_qty", "rejected_warehouse"?, "batches"?} with quantities in stock
-	UOM. `batches` is [{"expiry_date", "qty"}] for batch-tracked items: one Batch is created per expiry date and
-	the PO row is split into one Purchase Receipt row per batch (rejected qty goes on the first one).
+	Each line: {"po_item", "qty", "rejected_qty", "rejected_warehouse"?, "free_qty"?, "batches"?} with quantities
+	in stock UOM. `batches` is [{"expiry_date", "qty", "free_qty"?}] for batch-tracked items: one Batch is created
+	per expiry date and the PO row is split into one Purchase Receipt row per batch (rejected qty goes on the first
+	one). `free_qty` (a supplier offer) becomes a free row at price 0, linked to a Pricing Rule.
 	Returns the inserted (docstatus 0) Purchase Receipt.
 	"""
 	from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
 
 	wanted = {
-		line["po_item"]: line for line in lines if flt(line.get("qty")) > 0 or flt(line.get("rejected_qty")) > 0
+		line["po_item"]: line
+		for line in lines
+		if flt(line.get("qty")) > 0 or flt(line.get("rejected_qty")) > 0 or flt(line.get("free_qty")) > 0
 	}
 	if not wanted:
 		frappe.throw(_("Nothing was received in this session."))
@@ -32,6 +36,7 @@ def create_draft_purchase_receipt(
 	pr = make_purchase_receipt(purchase_order, args={"filtered_children": list(wanted)})
 
 	planned = []  # (template row, accepted, rejected, batch_no)
+	free = []  # (template row, free qty, batch_no)
 	created_batches = {}
 	for row in pr.items:
 		line = wanted.get(row.purchase_order_item)
@@ -40,7 +45,10 @@ def create_draft_purchase_receipt(
 		accepted, rejected = flt(line.get("qty")), flt(line.get("rejected_qty"))
 		batches = line.get("batches") or []
 		if not get_batch_settings(row.item_code).has_batch_no:
-			planned.append((row, accepted, rejected, None))
+			if accepted or rejected:
+				planned.append((row, accepted, rejected, None))
+			if flt(line.get("free_qty")):
+				free.append((row, flt(line.get("free_qty")), None))
 			continue
 		if not batches:
 			frappe.throw(_("{0} is batch tracked. Enter the expiry date for what was received.").format(row.item_code))
@@ -51,6 +59,8 @@ def create_draft_purchase_receipt(
 			qty, rej = flt(entry.get("qty")), rejected if i == 0 else 0.0
 			if qty or rej:
 				planned.append((row, qty, rej, created_batches[key]))
+			if flt(entry.get("free_qty")):
+				free.append((row, flt(entry.get("free_qty")), created_batches[key]))
 
 	items = []
 	for row, accepted, rejected, batch_no in planned:
@@ -71,7 +81,18 @@ def create_draft_purchase_receipt(
 				)
 		items.append(row)
 
-	missing = set(wanted) - {row.purchase_order_item for row in items}
+	free_rows = []
+	for template, qty, batch_no in free:
+		rule = get_or_create_free_item_rule(
+			pr.supplier, pr.company, template.item_code, wanted[template.purchase_order_item].get("qty"), qty, pr.posting_date,
+			_("Supplier offer recorded on receipt of purchase order {0}.").format(purchase_order),
+		)
+		row = make_free_row(pr, template, qty, rule)
+		if batch_no:
+			attach_batch(row, batch_no)
+		free_rows.append(row)
+
+	missing = set(wanted) - {row.purchase_order_item for row in items} - {t.purchase_order_item for t, _q, _b in free}
 	if missing:
 		names = ", ".join(
 			frappe.db.get_value("Purchase Order Item", po_item, "item_code") or po_item for po_item in missing
@@ -80,7 +101,9 @@ def create_draft_purchase_receipt(
 			_("ERPNext considers these lines fully received already, so they cannot be added: {0}").format(names)
 		)
 
-	pr.set("items", items)
+	pr.set("items", items + free_rows)
+	if free_rows:
+		pr.ignore_pricing_rule = 1  # the free rows are already there; ERPNext must not add or drop any
 	for idx, row in enumerate(pr.items, start=1):
 		row.idx = idx
 	if supplier_delivery_note:
