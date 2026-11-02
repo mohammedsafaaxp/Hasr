@@ -45,6 +45,7 @@ def list_open_orders(warehouse=None, search=None):
 	for s in sessions:
 		by_po.setdefault(s.purchase_order, []).append(s)
 
+	in_flight, waiting = _in_flight_by_order([o.name for o in orders])
 	for order in orders:
 		mine = by_po.get(order.name, [])
 		order.shipments = len(mine)
@@ -53,7 +54,38 @@ def list_open_orders(warehouse=None, search=None):
 		order.open_session_by = active.received_by if active else None
 		order.open_session_status = active.status if active else None
 		order.pending_sessions = len([s for s in mine if s.status == "Pending Approval"])
+		# shipments sent for review, or approved with a draft receipt: not in ERPNext's received quantity yet
+		order.waiting_shipments = waiting.get(order.name, 0)
+		flight = in_flight.get(order.name, {})
+		done = [l for l in order.lines if l.received_qty + flight.get(l.po_item, 0.0) >= l.ordered_qty - EPSILON]
+		order.items_done = len(done)
+		order.items_left = len(
+			[l for l in order.lines if l not in done and (allowed is None or l.warehouse in allowed)]
+		)
+		del order["lines"]
 	return orders
+
+
+def _in_flight_by_order(purchase_orders):
+	"""in_flight_qty for many orders at once, and how many shipments each has waiting."""
+	rows = frappe.db.sql(
+		"""
+		select s.purchase_order, s.name as session, l.po_item, l.received_qty - l.free_qty as qty
+		from `tabHasr Receiving Line` l
+		join `tabHasr Receiving Session` s on s.name = l.parent
+		left join `tabPurchase Receipt` pr on pr.name = s.purchase_receipt
+		where s.purchase_order in %(pos)s
+		and (s.status = 'Pending Approval' or (s.status = 'Approved' and pr.docstatus = 0))
+		""",
+		{"pos": tuple(purchase_orders) or ("",)},
+		as_dict=True,
+	)
+	qty, sessions = {}, {}
+	for r in rows:
+		lines = qty.setdefault(r.purchase_order, {})
+		lines[r.po_item] = lines.get(r.po_item, 0.0) + flt(r.qty)
+		sessions.setdefault(r.purchase_order, set()).add(r.session)
+	return qty, {po: len(names) for po, names in sessions.items()}
 
 
 def in_flight_qty(purchase_order, exclude_session=None) -> dict[str, float]:

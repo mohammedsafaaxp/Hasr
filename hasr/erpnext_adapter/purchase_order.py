@@ -99,19 +99,29 @@ def get_open_purchase_orders(
 	rows = frappe.get_all(
 		"Purchase Order Item",
 		filters={"parent": ["in", [o.name for o in orders]]},
-		fields=["parent", "qty", "received_qty", "delivered_by_supplier"],
+		fields=["name", "parent", "qty", "stock_qty", "received_qty", "conversion_factor", "warehouse", "delivered_by_supplier"],
 	)
 	counts = {}
 	for row in rows:
 		if row.delivered_by_supplier:
 			continue
-		c = counts.setdefault(row.parent, {"item_count": 0, "items_received": 0})
+		c = counts.setdefault(row.parent, {"item_count": 0, "items_received": 0, "lines": []})
 		c["item_count"] += 1
 		if flt(row.received_qty) >= flt(row.qty):
 			c["items_received"] += 1
+		cf = flt(row.conversion_factor) or 1.0
+		# in stock UOM, like the receiving lines: what is ordered and what ERPNext has received
+		c["lines"].append(
+			frappe._dict(
+				po_item=row.name,
+				warehouse=row.warehouse,
+				ordered_qty=flt(row.stock_qty) or flt(row.qty) * cf,
+				received_qty=flt(row.received_qty) * cf,
+			)
+		)
 
 	for order in orders:
-		order.update(counts.get(order.name, {"item_count": 0, "items_received": 0}))
+		order.update(counts.get(order.name, {"item_count": 0, "items_received": 0, "lines": []}))
 	return orders
 
 

@@ -424,3 +424,7 @@ Roles That Can Approve,الأدوار التي تعتمد
 "Who can approve receipts, decide over-receipts and wrong items, and send shipments back. Empty: Hasr Supervisor. System Manager can always approve. Nobody approves a shipment they received themselves.",من يعتمد الاستلام، ويقرر في الزيادة والأصناف الخاطئة، ويعيد الشحنات. إن تُرك فارغًا: مشرف حصر. مدير النظام يعتمد دائمًا. لا أحد يعتمد شحنة استلمها بنفسه.
 One-Click Approval Submits the Receipt,الاعتماد بنقرة واحدة يُرحّل الإيصال
 "On the Today's Shipments page, a shipment that matches its order can be approved with one click. On: that click also submits the Purchase Receipt and stock moves at once. Off: the receipt stays a draft for someone to check and submit.",في صفحة «شحنات اليوم» تُعتمد الشحنة المطابقة لأمرها بنقرة واحدة. عند التفعيل: تُرحّل النقرة إيصال الاستلام أيضًا ويتحرك المخزون فورًا. عند التعطيل: يبقى الإيصال مسودة ليراجعه أحد ويرحّله.
+Waiting for approval,بانتظار الاعتماد
+1 shipment waiting for approval,شحنة واحدة بانتظار الاعتماد
+{0} shipments waiting for approval,{0} شحنات بانتظار الاعتماد
+Fully received,مستلَم بالكامل

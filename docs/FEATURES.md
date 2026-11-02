@@ -13,6 +13,18 @@ The shortcut gets the hasr icon and opens full screen like an app. Its name foll
 The home screen lists submitted, open purchase orders for the worker's warehouses, with the supplier and how
 many items are left. One shipment per order is open at a time, so two phones never receive the same order twice.
 
+Each order shows where it stands, counting shipments that are still waiting for the supervisor:
+
+| Status | Meaning | Opens |
+|---|---|---|
+| a date, *Today*, *late* | nothing received yet | yes |
+| *Partial 1 of 2* | some items are received or waiting for approval, others are still to come | yes |
+| *In progress* | your shipment is open | yes |
+| *Being received* | someone else's shipment is open | no |
+| *Waiting for approval* | everything is received and waiting for the supervisor | no |
+
+The list refreshes when you come back to it.
+
 <img src="screenshots/en-home.png" width="230" alt="Purchase orders waiting to be received">
 
 ### Scan, then quantity

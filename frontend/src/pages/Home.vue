@@ -46,11 +46,14 @@
       <p v-else-if="loaded && !orders.length" class="p-8 text-center text-[15px] text-hasr-muted">{{ __('No purchase orders are waiting.') }}</p>
       <ul>
         <li v-for="o in orders" :key="o.name">
-          <button
-            type="button"
-            class="flex w-full items-center gap-3 border-b border-hasr-line px-4 py-4 text-start active:bg-hasr-surface2 disabled:opacity-60"
-            :disabled="opening === o.name"
-            @click="open(o)"
+          <!-- an order with nothing left to receive here is shown, but does not open -->
+          <component
+            :is="canOpen(o) ? 'button' : 'div'"
+            :type="canOpen(o) ? 'button' : undefined"
+            class="flex w-full items-center gap-3 border-b border-hasr-line px-4 py-4 text-start"
+            :class="canOpen(o) ? 'active:bg-hasr-surface2 disabled:opacity-60' : 'bg-hasr-surface2/40'"
+            :disabled="canOpen(o) ? opening === o.name : undefined"
+            @click="canOpen(o) && open(o)"
           >
             <div class="min-w-0 flex-1 space-y-1">
               <div class="flex items-center justify-between gap-2">
@@ -59,11 +62,14 @@
               </div>
               <p class="truncate text-[15px] text-hasr-muted">
                 <span class="ltr-text">{{ o.name }}</span> · {{ o.item_count === 1 ? __('1 item') : __('{0} items', [o.item_count]) }}
-                <template v-if="o.shipments"> · {{ __('shipment {0}', [o.shipments + (o.open_session ? 0 : 1)]) }}</template>
+                <template v-if="o.waiting_shipments">
+                  · {{ o.waiting_shipments === 1 ? __('1 shipment waiting for approval') : __('{0} shipments waiting for approval', [o.waiting_shipments]) }}
+                </template>
+                <template v-else-if="o.shipments && canOpen(o)"> · {{ __('shipment {0}', [o.shipments + (o.open_session ? 0 : 1)]) }}</template>
               </p>
             </div>
-            <LucideChevronRight class="size-5 shrink-0 text-hasr-muted rtl:-scale-x-100" />
-          </button>
+            <LucideChevronRight v-if="canOpen(o)" class="size-5 shrink-0 text-hasr-muted rtl:-scale-x-100" />
+          </component>
         </li>
       </ul>
     </main>
@@ -154,13 +160,23 @@ function daysFromToday(date) {
   return Math.round((new Date(date + 'T00:00:00') - today) / 86400000)
 }
 
+// Open: my own shipment in progress, or something is still left to receive (not counting shipments waiting
+// for approval). Someone else's open shipment, or an order waiting for approval, has no arrow.
+function canOpen(o) {
+  if (o.open_session) return o.open_session_by === session.user
+  return o.items_left > 0
+}
+
 function badge(o) {
   if (o.open_session) {
     if (o.open_session_by === session.user) return { theme: 'blue', label: __('In progress') }
     return { theme: 'gray', label: __('Being received') }
   }
-  if (o.items_received > 0 || o.per_received > 0) {
-    return { theme: 'orange', label: __('Partial {0} of {1}', [o.items_received, o.item_count]) }
+  if (!o.items_left) {
+    return o.waiting_shipments ? { theme: 'orange', label: __('Waiting for approval') } : { theme: 'green', label: __('Fully received') }
+  }
+  if (o.items_done > 0) {
+    return { theme: 'orange', label: __('Partial {0} of {1}', [o.items_done, o.item_count]) }
   }
   const days = o.schedule_date ? daysFromToday(o.schedule_date) : null
   if (days === null) return { theme: 'gray', label: __('Open') }
@@ -201,14 +217,19 @@ watch(warehouse, (w) => {
 })
 
 const setOnline = () => (online.value = navigator.onLine)
+// back from a shipment, or the phone woke up: show the current status
+const onVisible = () => document.visibilityState === 'visible' && load()
+
 onMounted(async () => {
   window.addEventListener('online', setOnline)
   window.addEventListener('offline', setOnline)
+  document.addEventListener('visibilitychange', onVisible)
   warehouses.value = await api('receiving.list_warehouses').catch(() => [])
   if (warehouse.value && !warehouses.value.some((w) => w.name === warehouse.value)) warehouse.value = ''
   load()
 })
 onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', onVisible)
   window.removeEventListener('online', setOnline)
   window.removeEventListener('offline', setOnline)
 })
