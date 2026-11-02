@@ -4,6 +4,11 @@ What each part of hasr does, for the people who use it.
 
 ## Receiving on the phone
 
+### Add it to the home screen
+Open `https://<your-site>/hasr` on the phone and choose *Add to Home Screen* (Safari) or *Install app* (Chrome).
+The shortcut gets the hasr icon and opens full screen like an app. Its name follows the app language:
+*hasr* in English, *حَصر* in Arabic. Installing needs HTTPS, as the camera does.
+
 ### Pick a purchase order
 The home screen lists submitted, open purchase orders for the worker's warehouses, with the supplier and how
 many items are left. One shipment per order is open at a time, so two phones never receive the same order twice.

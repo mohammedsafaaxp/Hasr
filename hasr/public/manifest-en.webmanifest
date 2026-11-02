@@ -1,0 +1,19 @@
+{
+  "id": "/hasr",
+  "name": "hasr",
+  "short_name": "hasr",
+  "description": "Receive goods from your phone, on ERPNext",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/hasr",
+  "scope": "/hasr",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "/assets/hasr/images/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/hasr/images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/hasr/images/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

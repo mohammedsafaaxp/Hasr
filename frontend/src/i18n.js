@@ -54,6 +54,15 @@ export async function setLanguage(code, { remember = false } = {}) {
   const html = document.documentElement
   html.setAttribute('lang', code)
   html.setAttribute('dir', isRTL(code) ? 'rtl' : 'ltr')
+  setAppName(code)
+}
+
+// The name and icon a phone uses for the home-screen shortcut follow the app language.
+function setAppName(code) {
+  const name = code === 'ar' ? 'حَصر' : 'hasr'
+  document.title = name
+  document.getElementById('hasr-manifest')?.setAttribute('href', `/assets/hasr/manifest-${code === 'ar' ? 'ar' : 'en'}.webmanifest`)
+  document.getElementById('hasr-app-title')?.setAttribute('content', name)
 }
 
 export const translationPlugin = {

@@ -34,6 +34,7 @@ ERPNext's code.
 The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 
 **On the phone (warehouse worker)**
+- **Add to the home screen** and it opens like an app, with the hasr icon and its name in the app language.
 - **Scan, then quantity.** A scan opens the item: a large photo, its description and the ordered quantity, then
   a keypad for how many arrived. The unit comes from the barcode (a case barcode opens in cases).
 - **Check the item.** Opening an item by hand starts with a scan (or the item code) to confirm it is the right product.
