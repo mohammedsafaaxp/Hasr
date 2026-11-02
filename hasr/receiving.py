@@ -20,6 +20,22 @@ from hasr.permissions import (
 SESSION = "Hasr Receiving Session"
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
 UUID_RE = re.compile(r"^[A-Za-z0-9:_\-]{8,64}$")
+# what an upload's first bytes must look like for the type the phone claims
+FILE_SIGNATURES = {
+	"image/jpeg": (b"\xff\xd8\xff",),
+	"image/png": (b"\x89PNG\r\n\x1a\n",),
+	"image/webp": (b"RIFF",),
+	"application/pdf": (b"%PDF-",),
+}
+
+
+def check_file_content(content: bytes, mime: str):
+	"""Refuse a file whose content is not what its declared type says (an HTML or script file renamed .jpg)."""
+	ok = any(content.startswith(sig) for sig in FILE_SIGNATURES.get(mime, ()))
+	if ok and mime == "image/webp":
+		ok = content[8:12] == b"WEBP"
+	if not ok:
+		frappe.throw(_("The file is not a valid {0}.").format(mime.split("/")[-1].upper()))
 
 
 # ---------------------------------------------------------------- orders
@@ -195,13 +211,26 @@ def get_session_doc(name, for_update=False):
 		# serialize writers on the same session (two phones, or retries)
 		frappe.db.sql("select name from `tabHasr Receiving Session` where name = %s for update", name)
 	doc = frappe.get_doc(SESSION, name)
-	if doc.received_by != frappe.session.user and not is_supervisor():
-		frappe.throw(_("This receiving session belongs to {0}.").format(doc.received_by), frappe.PermissionError)
+	if doc.received_by != frappe.session.user:
+		if not is_supervisor():
+			frappe.throw(_("This receiving session belongs to {0}.").format(doc.received_by), frappe.PermissionError)
+		# a supervisor limited to some warehouses only sees shipments for those warehouses
+		allowed = get_allowed_warehouses()
+		missing = sorted({l.warehouse for l in doc.lines if l.warehouse and allowed is not None and l.warehouse not in allowed})
+		if missing:
+			frappe.throw(_("You do not have access to these warehouses: {0}").format(", ".join(missing)), frappe.PermissionError)
 	return doc
 
 
 def get_editable_session(name):
+	"""Only the person who received a shipment changes its quantities, invoice and reports. A supervisor who
+	could edit someone else's shipment could then approve it, since it is not "theirs"."""
 	doc = get_session_doc(name, for_update=True)
+	if doc.received_by != frappe.session.user:
+		frappe.throw(
+			_("Only {0}, who is receiving this shipment, can change it. Send it back to them instead.").format(doc.received_by),
+			frappe.PermissionError,
+		)
 	if not doc.is_editable():
 		frappe.throw(_("Session {0} is {1} and can no longer be changed.").format(doc.name, _(doc.status)))
 	return doc
@@ -469,8 +498,6 @@ def finish_session(session, supplier_delivery_note=None, remaining_expected=None
 		doc.supplier_invoice_no = (supplier_invoice_no or "").strip()[:140] or None
 	if frappe.get_cached_doc("Hasr Settings").require_supplier_invoice_no and not doc.supplier_invoice_no:
 		frappe.throw(_("Enter the supplier's invoice number."), title=_("Invoice number needed"))
-	if doc.received_by != frappe.session.user and not is_supervisor():
-		frappe.throw(_("Only {0} can finish this session.").format(doc.received_by), frappe.PermissionError)
 	has_qty = any(flt(l.received_qty) for l in doc.lines)
 	has_unknown = frappe.db.exists(
 		"Hasr Unknown Barcode", {"session_doctype": SESSION, "session": doc.name, "status": "Open"}
@@ -562,8 +589,6 @@ def _apply_scan(scan, touched):
 	doc = touched.get(scan.session)
 	if not doc:
 		doc = get_editable_session(scan.session)
-		if doc.received_by != frappe.session.user and not is_supervisor():
-			frappe.throw(_("This receiving session belongs to {0}.").format(doc.received_by), frappe.PermissionError)
 		touched[doc.name] = doc
 
 	if scan.undo_of:
@@ -919,6 +944,7 @@ def attach_invoice(session, data_url):
 	content = base64.b64decode(match.group(2))
 	if len(content) > MAX_INVOICE_BYTES:
 		frappe.throw(_("The invoice file is too large."))
+	check_file_content(content, match.group(1))
 	count = len(get_invoices(doc.name)) + 1
 	file_doc = frappe.get_doc(
 		{
@@ -1103,6 +1129,7 @@ def _save_image(data_url, doc, stem):
 	content = base64.b64decode(match.group(2))
 	if len(content) > MAX_PHOTO_BYTES:
 		frappe.throw(_("The photo is too large."))
+	check_file_content(content, match.group(1))
 	ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[match.group(1)]
 	return frappe.get_doc(
 		{
@@ -1124,6 +1151,7 @@ def _save_photo(data_url, unknown):
 	content = base64.b64decode(match.group(2))
 	if len(content) > MAX_PHOTO_BYTES:
 		frappe.throw(_("The photo is too large."))
+	check_file_content(content, match.group(1))
 	ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[match.group(1)]
 	return frappe.get_doc(
 		{

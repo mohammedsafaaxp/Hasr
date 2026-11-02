@@ -187,7 +187,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-01 16:40:13.000000",
+ "modified": "2026-11-02 11:29:29.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Settings",
@@ -204,8 +204,7 @@
   },
   {
    "read": 1,
-   "role": "Hasr Supervisor",
-   "write": 1
+   "role": "Hasr Supervisor"
   }
  ],
  "sort_field": "modified",

@@ -99,7 +99,7 @@ function hasr_send_back(frm) {
 
 function hasr_link_unknown(frm, unknown) {
 	const d = new frappe.ui.Dialog({
-		title: __("Link barcode {0} to an item", [unknown.barcode]),
+		title: __("Link barcode {0} to an item", [frappe.utils.escape_html(unknown.barcode)]),
 		fields: [
 			{
 				fieldname: "item_code",
@@ -155,7 +155,10 @@ function hasr_add_to_order(frm, unknown) {
 		fields.push({ fieldname: "expiry_date", fieldtype: "Date", label: __("Expiry date"), reqd: 1 });
 	}
 	const d = new frappe.ui.Dialog({
-		title: __("Add {0} to purchase order {1}", [unknown.item_name || unknown.item_code, frm.doc.purchase_order]),
+		title: __("Add {0} to purchase order {1}", [
+			frappe.utils.escape_html(unknown.item_name || unknown.item_code),
+			frappe.utils.escape_html(frm.doc.purchase_order),
+		]),
 		fields,
 		primary_action_label: __("Add to the order and receive"),
 		primary_action(values) {

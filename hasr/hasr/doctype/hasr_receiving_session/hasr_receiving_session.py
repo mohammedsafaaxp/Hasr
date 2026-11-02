@@ -13,10 +13,22 @@ EPSILON = 1e-6
 
 class HasrReceivingSession(Document):
 	def validate(self):
+		self.refuse_direct_changes()
 		self.open_lock = self.purchase_order if self.status in EDITABLE_STATUSES else None
 		self.validate_one_open_session()
 		for line in self.lines:
 			update_line_state(line)
+
+	def refuse_direct_changes(self):
+		"""Shipments change only through hasr's API, which checks roles, warehouses and who received them, and
+		saves with ignore_permissions. A save from the Desk form or /api/resource checks permissions, so it is
+		refused: otherwise quantities, status or "received by" could be edited around those checks."""
+		if self.flags.ignore_permissions or frappe.flags.in_install or frappe.flags.in_migrate:
+			return
+		frappe.throw(
+			_("Shipments are changed in the hasr app and the review screen, not edited directly."),
+			frappe.PermissionError,
+		)
 
 	def validate_one_open_session(self):
 		if not self.open_lock:

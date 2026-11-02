@@ -24,5 +24,6 @@ def get_boot():
 		"full_name": frappe.utils.get_fullname(user) if user != "Guest" else None,
 		"lang": frappe.local.lang,
 		"site_name": frappe.local.site,
-		"version": frappe.get_attr("hasr.__version__"),
+		# not told to visitors who are not signed in: it helps nobody but an attacker
+		"version": frappe.get_attr("hasr.__version__") if user != "Guest" else None,
 	}

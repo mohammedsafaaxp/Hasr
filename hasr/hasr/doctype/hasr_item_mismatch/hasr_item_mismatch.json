@@ -133,7 +133,7 @@
  "image_field": "photo",
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-29 14:00:00.000000",
+ "modified": "2026-11-02 11:29:29.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Item Mismatch",
@@ -155,8 +155,7 @@
    "export": 1,
    "read": 1,
    "report": 1,
-   "role": "Hasr Supervisor",
-   "write": 1
+   "role": "Hasr Supervisor"
   }
  ],
  "sort_field": "modified",

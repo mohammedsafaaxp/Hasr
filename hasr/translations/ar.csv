@@ -438,3 +438,6 @@ Expiry date at receipt,تاريخ الانتهاء عند الاستلام
 Required,مطلوب
 Not needed,غير مطلوب
 Never,لم يُستلم بعد
+"Shipments are changed in the hasr app and the review screen, not edited directly.","تُعدَّل الشحنات من تطبيق حصر وشاشة المراجعة، لا مباشرةً."
+"Only {0}, who is receiving this shipment, can change it. Send it back to them instead.","لا يعدّل هذه الشحنة إلا {0} الذي يستلمها. أعِدها إليه بدلًا من ذلك."
+The file is not a valid {0}.,الملف ليس {0} صالحًا.

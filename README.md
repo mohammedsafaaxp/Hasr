@@ -55,6 +55,7 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 - **Approve** creates the Purchase Receipt as a draft, or submits it. Batches, the invoice files and the invoice
   number go with it, and on to the Purchase Invoice.
 - **Today's Shipments:** one click approves a shipment that matches its order exactly.
+- **Locked down:** records change only through hasr's checks, never by editing them directly; uploads are checked.
 - **Separation of duties:** approver roles are a setting, nobody approves what they received, and every line is
   checked against the user's warehouses.
 
@@ -101,7 +102,7 @@ not allow custom apps cannot run hasr.
    **User Permissions** on *Warehouse*.
 3. **Supervisors:** give the **Hasr Supervisor** role and the right to create Purchase Receipts (for example
    *Stock User* or *Purchase User*). To add items to an order they also need to change Purchase Orders.
-4. **Hasr Settings:** each option explains itself on the page (invoice number, short shelf life warning, supplier
+4. **Hasr Settings** (System Manager): each option explains itself on the page (invoice number, short shelf life warning, supplier
    offers, approver roles, one-click approval).
 
 ## How it works

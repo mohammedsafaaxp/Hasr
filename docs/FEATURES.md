@@ -119,9 +119,21 @@ needs access to every warehouse on it. A worker only sees the lines of their own
   counts as received on the order. An active offer in ERPNext is reused; otherwise hasr records one for that day only.
 - The **supplier invoice** number and files.
 
+## Security
+
+- **Only through hasr.** Shipments, exceptions and mismatch reports change only through hasr's own actions,
+  which check the role, the warehouses and who received the shipment. Editing them directly in Desk or through
+  `/api/resource` is refused, even for a System Manager.
+- **Nobody approves their own work.** Only the worker who received a shipment changes its quantities, invoice
+  and reports; a supervisor sends it back instead. So nobody can adjust a shipment and then approve it.
+- **Warehouses.** Workers see their own shipments; supervisors see shipments of the warehouses they have access to.
+- **Settings.** Supervisors can read Hasr Settings; only a System Manager changes them (they decide who approves).
+- **Uploads.** Invoice files and photos are private files, limited in size, and their content must match their
+  type (a renamed HTML file is refused).
+
 ## Settings
 
-**Hasr Settings** explains each option on the page:
+**Hasr Settings** explains each option on the page. Only a System Manager changes them:
 
 | Setting | What it does |
 |---|---|
