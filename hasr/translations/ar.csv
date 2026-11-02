@@ -428,3 +428,13 @@ Waiting for approval,بانتظار الاعتماد
 1 shipment waiting for approval,شحنة واحدة بانتظار الاعتماد
 {0} shipments waiting for approval,{0} شحنات بانتظار الاعتماد
 Fully received,مستلَم بالكامل
+Barcodes and units,الباركودات والوحدات
+No barcode in ERPNext yet,لا يوجد باركود في ERPNext بعد
+No barcode,بلا باركود
+Storage and expiry,التخزين والصلاحية
+Not set,غير محدد
+Storage,التخزين
+Expiry date at receipt,تاريخ الانتهاء عند الاستلام
+Required,مطلوب
+Not needed,غير مطلوب
+Never,لم يُستلم بعد

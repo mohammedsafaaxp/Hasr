@@ -42,6 +42,13 @@ item code. A match goes on; a barcode of another product is shown in red with *R
 
 <img src="screenshots/ar-check.png" width="230" alt="Checking the item"> <img src="screenshots/ar-quantity.png" width="230" alt="Typing the quantity">
 
+### Item details
+*Item details* on an item shows everything that helps tell it apart: photos (swipe, tap to zoom), name, code,
+brand and description; every barcode with the unit it counts (*1 Box = 12 Nos*); shelf life, storage, whether
+an expiry date is needed at receipt, and when it was last received. Stock balances are never shown on the phone.
+
+<img src="screenshots/en-item-details.png" width="230" alt="Item details">
+
 ### Expiry dates and batches
 For batch-tracked items:
 - Type six digits as printed on the pack: `150327` is 15/03/2027. A date that does not exist (31/02) is refused at once.
