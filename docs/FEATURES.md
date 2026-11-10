@@ -1,6 +1,6 @@
 # hasr features
 
-What each part of hasr does, for the people who use it.
+What each part of hasr does, for the people who use it: receiving on the phone, stock counts, and review in Desk.
 
 ## Receiving on the phone
 
@@ -106,7 +106,55 @@ Cold rooms and back stores often have no signal. Once the app has been opened on
 Three sounds: one short beep (counted), two beeps (check this line), a long buzz (refused). Signing out removes
 the saved data from the phone.
 
-## Review in Desk
+## Stock counts
+
+Counting follows common audit practice (ISA 501, cycle counting by ABC class): counts are blind, every difference
+is recounted by someone else, and every posted difference has a reason.
+
+### Set up a count (supervisor, in Desk)
+Open **Hasr Count Session → New**:
+- **Warehouse** and **Count Type**: *Full* (everything in scope at one moment) or *Cycle* (a small batch while
+  work goes on).
+- **Scope**: the whole warehouse, an item group, a brand, chosen items, the items *due by ABC class*, or
+  *problem items* (a difference in the last 180 days, or a negative balance).
+- **How counters enter counts**: *Scan* each item, or pick from a *List*.
+- **Zones**: an aisle, a shelf or a cold room, with one counter each.
+- **Freeze stock** (optional): sales, receipts and transfers of these items in this warehouse are refused until the
+  count is approved. A freeze lifts by itself after the hours set in Hasr Settings.
+
+**Start count** takes the balances and sends the count to the counters' phones.
+
+### Count on the phone
+The **Count** tab lists the counts you are part of. Scan an item (or pick it from the list), choose the batch for
+batch items (a GS1 code picks it by itself), and type how many are on the shelf, in any of the item's units.
+Typing again replaces your earlier number. Counting works offline; counts are sent when the connection is back.
+
+**The phone never shows the system quantity.** When your zone is done, **Finish zone and hand over**.
+
+<img src="screenshots/en-count.png" width="230" alt="Counting a zone"> <img src="screenshots/en-count-qty.png" width="230" alt="Typing the count">
+
+### Review, recount and approve
+- **Close counting**: zone counts add up per item and batch. Anything not counted is taken as not found.
+- A line outside its **tolerance** (by ABC class) goes to **recount**. *Give recount to…* someone who did not count
+  it the first time; they see only those items, blind.
+- A sample of the lines that matched is **test-counted** by the supervisor (*Enter test counts*). A test count that
+  differs wins.
+- **Finish review**, give a **reason** for each difference (theft, damage, receiving error, picking error, unit
+  of measure error, unknown, other), then **Approve**. Whoever counted cannot approve.
+- Approval creates a **Stock Reconciliation** for the differences only, batch by batch: the balance at that
+  moment plus the counted difference, so sales since the count stay in the books. Submit it at once or later; a
+  freeze lasts until it is submitted.
+- Without a freeze, an item's balance is taken when it is first counted, so earlier sales do not show as a loss.
+
+<img src="screenshots/desk-count.png" width="760" alt="Count review in Desk">
+
+### ABC classes and accuracy
+- Every week each warehouse's items are classed **A, B or C** by the value used in the last 12 months (80% / 95%
+  by default). The class sets the tolerance and how often an item is due for a count (*ABC Due* scope).
+- **Hasr Inventory Accuracy** (report): the share of counted lines within tolerance per warehouse, ABC class or
+  month, with the value of gains and losses.
+
+## Review receipts in Desk
 
 Open **Hasr Receiving Session** for a shipment in *Pending Approval*.
 
@@ -145,6 +193,8 @@ needs access to every warehouse on it. A worker only sees the lines of their own
   and reports; a supervisor sends it back instead. So nobody can adjust a shipment and then approve it.
 - **Warehouses.** Workers see their own shipments; supervisors see shipments of the warehouses they have access to.
 - **Settings.** Supervisors can read Hasr Settings; only a System Manager changes them (they decide who approves).
+- **Counts are blind.** The phone never receives system quantities or values; counts change only through hasr's
+  actions once started, and nobody who counted approves.
 - **Uploads.** Invoice files and photos are private files, limited in size, and their content must match their
   type (a renamed HTML file is refused).
 
@@ -160,6 +210,12 @@ needs access to every warehouse on it. A worker only sees the lines of their own
 | Free Quantity from Supplier Offers | Shows *of which free* on the phone and adds free rows to the receipt. |
 | Roles That Can Approve | Who approves and decides. Empty: Hasr Supervisor. |
 | One-Click Approval Submits the Receipt | On *Today's Shipments*, the one-click approval also submits. |
+| Allow Stock Freeze | Lets a count freeze its items. |
+| Maximum Freeze (Hours) | A freeze lifts by itself after this. Default 24, 0 = no limit. |
+| Supervisor Test Count (%) | Share of matching lines the supervisor counts again. Default 10. |
+| Class A / B share (%) | Cut-offs of the usage value for classes A and B. Default 80 / 95. |
+| Tolerance A / B / C (%) | How far a count may differ from the system before it is recounted. |
+| Count Class A / B / C Every (Days) | When an item is due for a count again. Default 30 / 90 / 180. |
 
 ## Languages
 

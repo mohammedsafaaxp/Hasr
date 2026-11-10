@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/logo.svg" width="80" height="80" alt="hasr logo">
   <h1>hasr · حَصر</h1>
-  <p><b>Receive goods from a phone, on top of ERPNext.</b></p>
+  <p><b>Receive goods and count stock from a phone, on top of ERPNext.</b></p>
   <p>
     <a href="https://github.com/mohammedsafaaxp/Hasr/actions/workflows/ci.yml"><img src="https://github.com/mohammedsafaaxp/Hasr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/ERPNext-v15%20%7C%20v16-blue" alt="ERPNext v15 | v16">
@@ -13,20 +13,20 @@
   <img src="docs/screenshots/en-receive.png" width="210" alt="Receiving a purchase order">
   <img src="docs/screenshots/ar-check.png" width="210" alt="Checking the item against its photo">
   <img src="docs/screenshots/ar-quantity.png" width="210" alt="Typing the quantity on the keypad">
-  <img src="docs/screenshots/ar-expiry.png" width="210" alt="Expiry dates">
+  <img src="docs/screenshots/en-count.png" width="210" alt="Counting a zone">
 </p>
 
 ## What is hasr?
 
-In most warehouses that run ERPNext, receiving still happens on paper and is typed in later. hasr puts that
-work on the phone the warehouse worker already carries.
+In most warehouses that run ERPNext, receiving and stock counts still happen on paper and are typed in later.
+hasr puts that work on the phone the warehouse worker already carries.
 
 hasr is a Frappe app installed **on the same site as ERPNext**. Workers open `https://<your-site>/hasr`, pick a
-purchase order and scan what arrives. The phone only creates **drafts**; a supervisor reviews them in Desk and
-approves. ERPNext stays the source of truth for items, barcodes, units, orders and stock, and hasr never changes
+purchase order and scan what arrives, or count their zone of a stock count. The phone only creates **drafts**; a
+supervisor reviews them in Desk and approves. ERPNext stays the source of truth for items, barcodes, units, orders and stock, and hasr never changes
 ERPNext's code.
 
-> **Status:** receiving against a purchase order works, with batches, the supplier invoice and supplier offers.
+> **Version 1.0:** receiving against purchase orders and stock counts, online and offline, in English and Arabic.
 
 ## Features
 
@@ -48,8 +48,17 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 - **Works offline.** The app opens without a connection; scans and quantities wait on the phone and are sent in
   order when it is back. Each scan carries an ID, so a retry never counts twice.
 
+**Stock counts**
+- **Full or cycle counts** of a warehouse, an item group, a brand, chosen items, items due by **ABC class**, or
+  problem items, split into **zones** with one counter each.
+- **Blind**: the phone never shows the system quantity. Batch items are counted per batch.
+- Differences outside tolerance are **recounted by someone else**; the supervisor **test-counts** a sample.
+- Optional **stock freeze** during the count, lifted on approval or after a maximum time.
+- Approval creates a **Stock Reconciliation** with a reason for every difference. An **accuracy report** per
+  warehouse, ABC class and month.
+
 **In Desk (supervisor)**
-- **Review screen:** summary, every line with its status, the invoice, and decision cards.
+- **Receipt review:** summary, every line with its status, the invoice, and decision cards.
 - **Decisions:** accept an over-receipt or return the excess; return a wrong item or **add it to the purchase order**;
   link or dismiss an unknown barcode; confirm or remove a reported mismatch; send the shipment back.
 - **Approve** creates the Purchase Receipt as a draft, or submits it. Batches, the invoice files and the invoice
@@ -61,6 +70,7 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 
 **In ERPNext**
 - Purchase Receipts keep the order's unit and link to the order; one row per batch.
+- Stock Reconciliations post only the counted differences, batch by batch.
 - Free goods become a free row at price 0 with a Pricing Rule, so the item's cost is spread over all units.
 - Rows added to an order go through ERPNext's own *Update Items*.
 - English and Arabic (right-to-left) throughout; the app follows the device language.
@@ -88,6 +98,14 @@ On a production bench, restart afterwards:
 bench restart
 ```
 
+### Try it with demo data
+
+On a test site (it adds invented items, orders and stock):
+
+```bash
+bench --site your-test-site.local execute hasr.demo.setup
+```
+
 ### Frappe Cloud
 
 Add the app from this repository to your bench group, then install it on the site. Shared hosting plans that do
@@ -100,10 +118,12 @@ not allow custom apps cannot run hasr.
    similar products apart.
 2. **Workers:** give them the **Hasr Counter** role. To limit someone to some warehouses, add ERPNext
    **User Permissions** on *Warehouse*.
-3. **Supervisors:** give the **Hasr Supervisor** role and the right to create Purchase Receipts (for example
-   *Stock User* or *Purchase User*). To add items to an order they also need to change Purchase Orders.
+3. **Supervisors:** give the **Hasr Supervisor** role and the right to create Purchase Receipts and Stock
+   Reconciliations (for example *Stock Manager*). To add items to an order they also need to change Purchase
+   Orders. Installing hasr lets Hasr Supervisor read Batches, which approving counts of batch items needs.
 4. **Hasr Settings** (System Manager): each option explains itself on the page (invoice number, short shelf life warning, GS1
-   codes, supplier offers, approver roles, one-click approval).
+   codes, supplier offers, approver roles, one-click approval, and for counts: freeze, test counts, ABC classes
+   and tolerances).
 
 ## How it works
 
@@ -113,6 +133,10 @@ not allow custom apps cannot run hasr.
 4. **Finish shipment and send for review** moves the shipment to *Pending Approval*.
 5. The supervisor opens it in **Desk → Hasr Receiving Session**, makes the decisions and clicks **Approve and
    create Purchase Receipt**. Stock moves only when that Purchase Receipt is submitted.
+
+For a stock count: **Desk → Hasr Count Session → New**, choose the scope and the zones, **Start count**. Counters
+find it under the **Count** tab; the supervisor closes counting, has differences recounted, gives reasons and
+approves. See [docs/FEATURES.md](docs/FEATURES.md#stock-counts).
 
 Camera scanning needs HTTPS (or `localhost`). Hardware scanners work anywhere.
 
