@@ -34,3 +34,11 @@ class TestInstall(FrappeTestCase):
 		self.assertTrue(rows and rows[0].Non_unique == 0)
 		rows = frappe.db.sql("show index from `tabHasr Scan` where Column_name = 'client_uuid'", as_dict=True)
 		self.assertTrue(rows and rows[0].Non_unique == 0)
+
+	def test_supervisors_read_batches(self):
+		from hasr.install import ensure_batch_access
+		from hasr.tests import fixtures as fx
+
+		fx.setup_users()
+		ensure_batch_access()
+		self.assertTrue(frappe.permissions.has_permission("Batch", "read", user=fx.SUPERVISOR))
