@@ -243,7 +243,12 @@ function count_assign(frm, data) {
 			d.hide();
 			count_call(frm, "assign_recount", { user: values.user }).then((res) => {
 				if (res && res.refused && res.refused.length)
-					frappe.msgprint(__("{0} counted these the first time; give them to someone else: {1}", [values.user, res.refused.join(", ")]));
+					frappe.msgprint(
+						__("{0} counted these the first time; give them to someone else: {1}", [
+							frappe.utils.escape_html(values.user),
+							res.refused.map(frappe.utils.escape_html).join(", "),
+						])
+					);
 			});
 		},
 	});
@@ -262,7 +267,7 @@ function count_test(frm, data) {
 		...sample.map((l) => ({
 			fieldname: l.name,
 			fieldtype: "Float",
-			label: `${l.item_name}${l.batch_no ? " · " + l.batch_no : ""} (${__(l.stock_uom)})`,
+			label: frappe.utils.escape_html(`${l.item_name}${l.batch_no ? " · " + l.batch_no : ""} (${__(l.stock_uom)})`),
 			default: l.test_counted ? l.test_count_qty : undefined,
 		})),
 	];
@@ -295,7 +300,10 @@ function count_reasons(frm, data) {
 	];
 	for (const l of diffs) {
 		fields.push(
-			{ fieldtype: "Section Break", label: `${l.item_name}${l.batch_no ? " · " + l.batch_no : ""}: ${fmt(l.variance_qty)} ${__(l.stock_uom)}` },
+			{
+				fieldtype: "Section Break",
+				label: frappe.utils.escape_html(`${l.item_name}${l.batch_no ? " · " + l.batch_no : ""}: ${fmt(l.variance_qty)} ${__(l.stock_uom)}`),
+			},
 			{ fieldname: `r_${l.name}`, fieldtype: "Select", label: __("Reason"), options, default: l.reason || "" },
 			{ fieldtype: "Column Break" },
 			{ fieldname: `n_${l.name}`, fieldtype: "Data", label: __("Note"), default: l.reason_note || "" }

@@ -127,7 +127,9 @@ Open **Hasr Count Session → New**:
 ### Count on the phone
 The **Count** tab lists the counts you are part of. Scan an item (or pick it from the list), choose the batch for
 batch items (a GS1 code picks it by itself), and type how many are on the shelf, in any of the item's units.
-Typing again replaces your earlier number. Counting works offline; counts are sent when the connection is back.
+Typing again replaces your earlier number. Items whose unit is never split (pieces, bottles) take whole numbers
+only. Counting works offline; counts are sent when the connection is back, and only under the name of the person
+who counted them, also when someone else uses the phone in between.
 
 **The phone never shows the system quantity.** When your zone is done, **Finish zone and hand over**.
 
@@ -138,13 +140,16 @@ Typing again replaces your earlier number. Counting works offline; counts are se
 - A line outside its **tolerance** (by ABC class) goes to **recount**. *Give recount to…* someone who did not count
   it the first time; they see only those items, blind.
 - A sample of the lines that matched is **test-counted** by the supervisor (*Enter test counts*). A test count that
-  differs wins.
+  differs wins, and then another approver has to approve the count.
 - **Finish review**, give a **reason** for each difference (theft, damage, receiving error, picking error, unit
-  of measure error, unknown, other), then **Approve**. Whoever counted cannot approve.
+  of measure error, unknown, other), then **Approve**. Whoever counted cannot approve, nor can a supervisor whose
+  test count changed a quantity.
 - Approval creates a **Stock Reconciliation** for the differences only, batch by batch: the balance at that
   moment plus the counted difference, so sales since the count stay in the books. Submit it at once or later; a
-  freeze lasts until it is submitted.
-- Without a freeze, an item's balance is taken when it is first counted, so earlier sales do not show as a loss.
+  freeze lasts until it is submitted. hasr keeps the reconciliation's quantities and rates as counted while it
+  is a draft. Cancelling a submitted reconciliation puts the count back to *Pending Approval*.
+- Without a freeze, an item's balance is taken when it is counted, and again when it is recounted, so sales in
+  between do not show as a loss.
 
 <img src="screenshots/desk-count.png" width="760" alt="Count review in Desk">
 

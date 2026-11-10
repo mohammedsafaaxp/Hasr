@@ -63,11 +63,14 @@
         <p class="min-h-5 text-center text-sm text-hasr-muted">
           <template v-if="cf !== 1">= {{ formatNumber(stockQty) }} {{ __(item.stock_uom) }}</template>
         </p>
-        <Keypad decimal @key="onKey" />
+        <p v-if="notWhole" class="text-center text-sm text-hasr-danger" role="alert">
+          {{ __('{0} is counted in whole {1}. Type a whole number.', [item.item_name, __(item.stock_uom)]) }}
+        </p>
+        <Keypad :decimal="!item.whole_units || cf !== 1" @key="onKey" />
         <button
           type="button"
           class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white disabled:opacity-50"
-          :disabled="!editable || qtyText === '' || (item.has_batch_no && !batchNo)"
+          :disabled="!editable || qtyText === '' || notWhole || (item.has_batch_no && !batchNo)"
           @click="save"
         >
           {{ __('Save count') }}
@@ -106,6 +109,7 @@ const batches = computed(() => {
 })
 const cf = computed(() => props.item?.uoms.find((u) => u.uom === uom.value)?.conversion_factor || 1)
 const stockQty = computed(() => Math.round((Number(qtyText.value) || 0) * cf.value * 1e6) / 1e6)
+const notWhole = computed(() => !!props.item?.whole_units && Math.abs(stockQty.value - Math.round(stockQty.value)) > 1e-6)
 const countedOf = (batch) => {
   const v = props.counts?.[`${props.item.item_code}|${batch || ''}`]
   return v === undefined ? null : v

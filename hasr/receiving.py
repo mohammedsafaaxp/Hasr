@@ -8,6 +8,7 @@ from frappe import _
 from frappe.utils import cint, flt, now_datetime, strip_html_tags
 
 from hasr import barcodes
+from hasr.api import MAX_QTY, parse_qty
 from hasr import erpnext_adapter as erp
 from hasr.hasr.doctype.hasr_receiving_session.hasr_receiving_session import EDITABLE_STATUSES, EPSILON
 from hasr.permissions import (
@@ -382,11 +383,9 @@ def split_free(batches, free_qty) -> list[dict]:
 def set_line(session, po_item, received_qty, batches=None, free_qty=None):
 	doc = get_editable_session(session)
 	line = doc.get_line(po_item)
-	received_qty = flt(received_qty)
-	if received_qty < 0:
-		frappe.throw(_("Quantities cannot be negative."))
+	received_qty = parse_qty(received_qty)
 	if free_qty is not None:
-		free_qty = flt(free_qty)
+		free_qty = parse_qty(free_qty)
 		if free_qty and not free_qty_enabled():
 			frappe.throw(_("Free quantity is turned off in Hasr Settings."))
 		if free_qty < 0 or free_qty > received_qty + EPSILON:
@@ -704,7 +703,7 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		msg = _("No conversion factor from {0} to {1} for {2}.").format(resolved.uom, resolved.stock_uom, resolved.item_code)
 		_log_scan(doc, scan, uuid, "Rejected", msg, resolved)
 		return {"client_uuid": uuid, "status": "rejected", "code": "no_conversion", "message": msg}
-	if qty <= 0:
+	if not (0 < qty <= MAX_QTY):  # also refuses nan and inf
 		return {"client_uuid": uuid, "status": "rejected", "code": "invalid", "message": _("Quantity must be greater than zero.")}
 
 	qty_stock = qty * cf

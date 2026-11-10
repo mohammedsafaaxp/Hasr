@@ -16,8 +16,10 @@ from frappe import _
 from frappe.utils import add_days, add_to_date, cint, flt, getdate, now_datetime, nowdate
 
 from hasr import barcodes
+from hasr import erpnext_adapter as erp
 from hasr.erpnext_adapter import stock_count as erp_count
-from hasr.permissions import check_warehouse_access, get_allowed_warehouses, is_approver, is_supervisor
+from hasr.api import parse_qty
+from hasr.permissions import COUNTER_ROLES, get_allowed_warehouses, has_any_role, is_approver, is_supervisor
 
 COUNT = "Hasr Count Session"
 FREEZE = "Hasr Stock Freeze"
@@ -70,12 +72,25 @@ def counted_by_users(doc) -> set[str]:
 	} | {l.recount_by for l in doc.lines if l.recount_by}
 
 
+def deciding_test_counters(doc) -> set[str]:
+	"""Supervisors whose test count replaced what the counters counted: they set a final quantity themselves."""
+	decided = {
+		key(l.item_code, l.batch_no)
+		for l in doc.lines
+		if l.test_counted
+		and abs(flt(l.test_count_qty) - (flt(l.count_2_qty) if l.recounted else flt(l.count_1_qty))) > EPSILON
+	}
+	return {e.counted_by for e in doc.entries if e.round == "Test" and key(e.item_code, e.batch_no) in decided}
+
+
 def approval_block_reason(doc, user=None) -> str | None:
 	user = user or frappe.session.user
 	if not is_approver(user):
 		return _("Your role cannot approve stock counts. See Hasr Settings.")
 	if user in counted_by_users(doc):
 		return _("You counted in this stock count. Another approver has to approve it.")
+	if user in deciding_test_counters(doc):
+		return _("Your test count changed a quantity in this stock count. Another approver has to approve it.")
 	allowed = get_allowed_warehouses(user)
 	if allowed is not None and doc.warehouse not in allowed:
 		return _("You do not have access to this warehouse.")
@@ -200,6 +215,14 @@ def current_balance(doc, line) -> float:
 	return erp_count.get_balance(line.item_code, doc.warehouse)
 
 
+def check_whole_units(item_code, item_name, qty):
+	"""A count in a unit that is never split (pieces, boxes) is a whole number; ERPNext would refuse the
+	reconciliation at approval otherwise, when it is too late to count again."""
+	stock_uom = frappe.get_cached_value("Item", item_code, "stock_uom")
+	if abs(qty - round(qty)) > EPSILON and erp.uom_must_be_whole(stock_uom):
+		frappe.throw(_("{0} is counted in whole {1}. Type a whole number.").format(item_name or item_code, _(stock_uom)))
+
+
 def refresh_snapshot(doc, line):
 	"""Without a freeze, the balance is taken when the item is counted, so movements before then do not count."""
 	line.system_qty = current_balance(doc, line)
@@ -322,8 +345,10 @@ def assign_recount(name, user):
 	doc = get_count_doc(name, for_update=True)
 	check_count_supervisor(doc)
 	require_status(doc, "Recount")
-	if not frappe.db.exists("User", user):
+	if not frappe.db.get_value("User", user, "enabled") or user == "Guest":
 		frappe.throw(_("User {0} not found.").format(user))
+	if not has_any_role(COUNTER_ROLES, user):
+		frappe.throw(_("{0} needs the Hasr Counter role to count.").format(user))
 	first = {}
 	for e in doc.entries:
 		if e.round == "Count":
@@ -352,9 +377,11 @@ def set_test_count(name, line_name, qty):
 	line = next((l for l in doc.lines if l.name == line_name), None)
 	if not line or not line.test_sample:
 		frappe.throw(_("This line is not in the test sample."))
-	qty = flt(qty)
-	if qty < 0:
-		frappe.throw(_("Quantities cannot be negative."))
+	qty = parse_qty(qty)
+	check_whole_units(line.item_code, line.item_name, qty)
+	counted = flt(line.count_2_qty) if line.recounted else flt(line.count_1_qty)
+	if abs(qty - counted) > EPSILON and not is_frozen(doc):
+		refresh_snapshot(doc, line)  # this count decides the line: compared with the balance now
 	line.test_count_qty = qty
 	line.test_counted = 1
 	_upsert_entry(doc, "Test", "", line.item_code, line.batch_no, qty)
@@ -472,6 +499,8 @@ def refresh_reconciliation(sr, method=None):
 		line = variance.get(key(row.item_code, row.batch_no))
 		if line:
 			row.qty = max(current_balance(doc, line) + flt(line.variance_qty), 0.0)
+			if flt(line.valuation_rate):
+				row.valuation_rate = line.valuation_rate  # a count corrects quantities, never what stock is worth
 
 
 def reconciliation_done(sr, method=None):
@@ -481,12 +510,26 @@ def reconciliation_done(sr, method=None):
 		release_freeze(name, by=frappe.session.user)
 
 
+def reconciliation_cancelled(sr, method=None):
+	"""Stock Reconciliation on_cancel: the differences are no longer in the books, so the count is open for
+	approval again (a new reconciliation is made then)."""
+	name = frappe.db.get_value(COUNT, {"stock_reconciliation": sr.name}, "name")
+	if not name:
+		return
+	release_freeze(name, by=frappe.session.user)
+	frappe.db.set_value(
+		COUNT, name, {"status": "Pending Approval", "stock_reconciliation": None, "approved_by": None, "approved_at": None}
+	)
+
+
 def mark_counted(doc):
 	today = getdate(nowdate())
 	for item_code in sorted({l.item_code for l in doc.lines if l.counted or l.recounted}):
 		name = frappe.db.get_value(ABC, {"item_code": item_code, "warehouse": doc.warehouse})
 		abc = frappe.get_doc(ABC, name) if name else frappe.new_doc(ABC)
-		abc.update({"item_code": item_code, "warehouse": doc.warehouse, "abc_class": abc.abc_class or "C", "last_counted_on": today})
+		# not classified yet: C until the weekly job has usage to go by (a new document would default to A)
+		abc_class = abc.abc_class if name else "C"
+		abc.update({"item_code": item_code, "warehouse": doc.warehouse, "abc_class": abc_class, "last_counted_on": today})
 		abc.next_due_on = add_days(today, frequency_for(abc.abc_class))
 		abc.flags.ignore_permissions = True
 		abc.save()
@@ -630,6 +673,8 @@ def get_counter_doc(name, for_update=False):
 		return doc
 	if doc.status in ("Counting", "Recount"):
 		frappe.throw(_("You are not counting in stock count {0}.").format(doc.name), frappe.PermissionError)
+	if doc.status == "Draft":
+		frappe.throw(_("Stock count {0} has not started yet.").format(doc.name))
 	frappe.throw(_("Stock count {0} is {1}; counting has ended.").format(doc.name, _(doc.status)))
 
 
@@ -663,6 +708,7 @@ def phone_items(codes, recount_batches=None) -> list[dict]:
 			"brand": items[c].brand,
 			"stock_uom": items[c].stock_uom,
 			"has_batch_no": items[c].has_batch_no,
+			"whole_units": erp.uom_must_be_whole(items[c].stock_uom),
 			"uoms": _line_uoms(c, items[c].stock_uom),
 			"barcodes": item_barcodes.get(c, []),
 			"batches": batches.get(c, []),
@@ -760,12 +806,11 @@ def set_count(name, item_code, qty, batch_no=None, client_uuid=None, counted_at=
 	zone = my_zone(doc, user) if round_ == "Count" else None
 	if zone and zone.handed_over:
 		frappe.throw(_("You handed over zone {0}; it can no longer be changed.").format(zone.zone_name))
-	qty = flt(qty)
-	if qty < 0:
-		frappe.throw(_("Quantities cannot be negative."))
+	qty = parse_qty(qty)
 	item = frappe.db.get_value("Item", item_code, ["item_name", "has_batch_no", "is_stock_item", "disabled"], as_dict=True)
 	if not item or not item.is_stock_item:
 		frappe.throw(_("Item {0} not found.").format(item_code))
+	check_whole_units(item_code, item.item_name, qty)
 	batch_no = (batch_no or "").strip() or None
 	if item.has_batch_no and not batch_no:
 		frappe.throw(_("{0} is counted per batch. Choose the batch.").format(item.item_name))
@@ -788,8 +833,10 @@ def set_count(name, item_code, qty, batch_no=None, client_uuid=None, counted_at=
 		else:
 			line.system_qty = current_balance(doc, line)
 
-	if round_ == "Count" and not line.counted and not is_frozen(doc):
-		refresh_snapshot(doc, line)  # cycle or unfrozen count: the balance at the moment it is counted
+	if not is_frozen(doc) and (round_ == "Recount" or not line.counted):
+		# unfrozen count: the balance at the moment it is counted (and again when it is recounted), so stock
+		# that moved in between is not taken for a difference
+		refresh_snapshot(doc, line)
 	zone_name = zone.zone_name if zone else RECOUNT_ZONE
 	_upsert_entry(doc, round_, zone_name, item_code, batch_no, qty, _device_time(counted_at))
 	if round_ == "Count":

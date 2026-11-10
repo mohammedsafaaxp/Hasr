@@ -52,7 +52,8 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 - **Full or cycle counts** of a warehouse, an item group, a brand, chosen items, items due by **ABC class**, or
   problem items, split into **zones** with one counter each.
 - **Blind**: the phone never shows the system quantity. Batch items are counted per batch.
-- Differences outside tolerance are **recounted by someone else**; the supervisor **test-counts** a sample.
+- Differences outside tolerance are **recounted by someone else**; the supervisor **test-counts** a sample, and a
+  test count that changes a quantity is approved by a second person.
 - Optional **stock freeze** during the count, lifted on approval or after a maximum time.
 - Approval creates a **Stock Reconciliation** with a reason for every difference. An **accuracy report** per
   warehouse, ABC class and month.

@@ -24,14 +24,17 @@ First public release. Works on ERPNext v15 and v16, in English and Arabic.
 - Optional stock freeze during a count, lifted on approval, cancellation, by hand or after a maximum time.
 - Approval creates a Stock Reconciliation for the differences; weekly ABC classification; inventory accuracy
   report.
+- Several counters can save to the same count at the same moment; whole-unit items are counted in whole numbers;
+  without a freeze a recount is compared with the balance at the recount.
 
 ### Review and control
 - Desk review of shipments and counts; Today's Shipments with one-click approval of matching shipments.
-- Approver roles in Hasr Settings; nobody approves what they received or counted; warehouse access from ERPNext
-  User Permissions.
+- Approver roles in Hasr Settings; nobody approves what they received or counted, or a count where their own test
+  count changed a quantity; warehouse access from ERPNext User Permissions.
 - Records change only through hasr's checks; uploads are checked; the phone never sees stock balances.
 
 ### Phone app
 - Installs to the home screen with its own name and icon, in the app language.
 - Works offline: the app opens without a connection, scans, quantities and counts wait on the phone and are sent
-  in order. Each scan carries an ID, so nothing counts twice.
+  in order. Each scan carries an ID, so nothing counts twice, and what waits on a shared phone is sent only by the
+  person who scanned it.

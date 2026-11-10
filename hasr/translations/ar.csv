@@ -689,3 +689,8 @@ Lines Counted,الأسطر المعدودة
 Accuracy (%),الدقة (%)
 Net Difference,صافي الفرق
 Hasr Inventory Accuracy,دقة سجلات المخزون في حصر
+Type a quantity.,اكتب الكمية.
+{0} is not a quantity.,{0} ليست كمية صحيحة.
+Your test count changed a quantity in this stock count. Another approver has to approve it.,عدّ الاختبار الذي أدخلته غيّر كمية في هذا الجرد. يجب أن يعتمده شخص آخر.
+{0} is counted in whole {1}. Type a whole number.,يُعدّ {0} بوحدة {1} كاملة. اكتب عددًا صحيحًا.
+Stock count {0} has not started yet.,الجرد {0} لم يبدأ بعد.

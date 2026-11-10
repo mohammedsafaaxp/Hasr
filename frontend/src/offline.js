@@ -39,10 +39,21 @@ export async function cachedApi(key, method, args) {
 export function clearCache() {
   try {
     Object.keys(localStorage)
-      .filter((k) => k.startsWith(PREFIX)) // queued scans stay: they are sent when this user signs in again
+      .filter((k) => k.startsWith(PREFIX)) // queued scans stay: they are sent when their owner signs in again
       .forEach((k) => localStorage.removeItem(k))
   } catch (e) {
     /* nothing stored */
+  }
+}
+
+/** Saved answers belong to one person: when someone else signs in on this phone they start empty. */
+export function claimCache(user) {
+  try {
+    const owner = localStorage.getItem('hasr_owner')
+    if (owner && owner !== user) forgetUserData()
+    localStorage.setItem('hasr_owner', user)
+  } catch (e) {
+    /* storage blocked: nothing is saved anyway */
   }
 }
 

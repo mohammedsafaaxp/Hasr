@@ -38,7 +38,7 @@ doc_events = {
 	"Stock Reconciliation": {
 		"before_validate": "hasr.counting.refresh_reconciliation",
 		"on_submit": "hasr.counting.reconciliation_done",
-		"on_cancel": "hasr.counting.reconciliation_done",
+		"on_cancel": "hasr.counting.reconciliation_cancelled",
 	},
 }
 

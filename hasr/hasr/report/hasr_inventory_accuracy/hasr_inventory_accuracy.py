@@ -11,7 +11,9 @@ from hasr.permissions import get_allowed_warehouses
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
-	group_by = filters.get("group_by") or "Warehouse"
+	group_by = filters.get("group_by")
+	if group_by not in ("Warehouse", "ABC Class", "Month"):
+		group_by = "Warehouse"
 	rows = data(filters, group_by)
 	return columns(group_by), rows, None, chart(rows, group_by)
 

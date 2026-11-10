@@ -2,15 +2,19 @@ import { ref } from 'vue'
 import { call } from 'frappe-ui'
 import { lang } from './i18n'
 import { isNetworkError } from './api'
+import { session as signedIn } from './session'
 
 /**
  * Every scan is kept on the phone until the server has answered it, then sent in order.
  * Nothing is dropped: a scan made while another is in flight waits its turn, and a scan that
  * cannot reach the server is retried. Retrying is safe because each scan carries its own
  * client_uuid and the server counts a uuid once.
+ *
+ * The queue belongs to the person who is signed in: what one worker scanned without a connection is never
+ * sent under the name of the next person to use the phone. It waits until its owner signs in again.
  */
 export function createScanQueue(session, onResult) {
-  const key = `hasr_queue_${session}`
+  const key = `hasr_queue_${signedIn.user}_${session}`
   const pending = ref(load())
   const offline = ref(false)
   let flushing = false
@@ -19,6 +23,10 @@ export function createScanQueue(session, onResult) {
 
   function load() {
     try {
+      // queues saved before 1.0 had no owner: they go to whoever opens the session first, as they did then
+      const old = localStorage.getItem(`hasr_queue_${session}`)
+      if (old && !localStorage.getItem(key)) localStorage.setItem(key, old)
+      localStorage.removeItem(`hasr_queue_${session}`)
       return JSON.parse(localStorage.getItem(key) || '[]')
     } catch (e) {
       return []

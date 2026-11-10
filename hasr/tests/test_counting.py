@@ -316,3 +316,129 @@ class TestCounting(HasrTestCase, FrappeTestCase):
 		self.assertEqual(row["warehouse"], self.wh)
 		self.assertGreaterEqual(row["lines"], 2)
 		self.assertLessEqual(row["ira"], 100)
+
+	# ---------------------------------------------------------------- fixes after the 1.0 test pass
+
+	def test_a_quantity_must_be_a_real_number(self):
+		name = new_count(["HASR-CHEESE"])
+		frappe.set_user(fx.COUNTER)
+		for bad in ("abc", "", None, "nan", "inf", "1e30", -1):
+			self.assertRaises(frappe.ValidationError, api.set_count, name, "HASR-CHEESE", bad, client_uuid=frappe.generate_hash(length=20))
+		self.assertEqual(api.get_count(name)["counts"], [])
+
+	def test_whole_units_are_counted_in_whole_numbers(self):
+		name = new_count(["HASR-CHEESE"])
+		self.assertRaisesRegex(frappe.ValidationError, "whole", count, name, "HASR-CHEESE", 2.5)
+		frappe.set_user(fx.COUNTER)
+		self.assertTrue(api.get_count(name)["items"][0]["whole_units"])
+
+	def test_first_count_of_an_unclassified_item_leaves_it_in_class_c(self):
+		frappe.db.delete("Hasr ABC Class", {"item_code": "HASR-CHEESE", "warehouse": self.wh})
+		name = new_count(["HASR-CHEESE"])
+		count(name, "HASR-CHEESE", self.balance("HASR-CHEESE"))
+		frappe.set_user(fx.SUPERVISOR)
+		api.close_counting(name)
+		frappe.set_user(fx.SUPERVISOR_2)
+		api.approve(name)
+		self.assertEqual(frappe.db.get_value("Hasr ABC Class", {"item_code": "HASR-CHEESE", "warehouse": self.wh}, "abc_class"), "C")
+
+	def test_without_freeze_a_recount_is_compared_with_the_balance_at_the_recount(self):
+		milk = self.balance("HASR-MILK")
+		name = new_count(["HASR-MILK"])
+		count(name, "HASR-MILK", milk - 2)
+		frappe.set_user(fx.SUPERVISOR)
+		api.close_counting(name)
+		api.assign_recount(name, fx.COUNTER_2)
+		stock_entry("Material Issue", "HASR-MILK", 3, self.wh)  # sold between the count and the recount
+		count(name, "HASR-MILK", milk - 5, user=fx.COUNTER_2)
+		frappe.set_user(fx.SUPERVISOR)
+		review = api.finish_review(name)
+		self.assertEqual(review["lines"][0]["variance_qty"], -2)
+
+	def test_recount_goes_to_a_counter_only(self):
+		name = new_count(["HASR-MILK"])
+		count(name, "HASR-MILK", self.balance("HASR-MILK") - 2)
+		frappe.set_user(fx.SUPERVISOR)
+		api.close_counting(name)
+		self.assertRaises(frappe.ValidationError, api.assign_recount, name, "Guest")
+		self.assertRaises(frappe.ValidationError, api.assign_recount, name, "nobody@example.com")
+
+	def test_a_test_count_that_changes_a_quantity_is_approved_by_someone_else(self):
+		set_setting(test_count_sample_pct=100)
+		cheese = self.balance("HASR-CHEESE")
+		name = new_count(["HASR-CHEESE"])
+		count(name, "HASR-CHEESE", cheese)
+		frappe.set_user(fx.SUPERVISOR)
+		review = api.close_counting(name)
+		api.set_test_count(name, review["lines"][0]["name"], cheese)
+		self.assertIsNone(api.review(name)["approval_block_reason"])  # agreed with the counter: decided nothing
+		api.set_test_count(name, review["lines"][0]["name"], cheese - 1)
+		review = api.finish_review(name)
+		self.assertIn("test count", review["approval_block_reason"])
+		api.set_reasons(name, json.dumps({review["lines"][0]["name"]: {"reason": "Damage"}}))
+		self.assertRaises(frappe.PermissionError, api.approve, name)
+		frappe.set_user(fx.SUPERVISOR_2)
+		self.assertEqual(api.approve(name)["status"], "Approved")
+
+	def test_cancelling_the_reconciliation_reopens_the_count_and_its_rate_is_kept(self):
+		cheese = self.balance("HASR-CHEESE")
+		name = new_count(["HASR-CHEESE"])
+		count(name, "HASR-CHEESE", cheese - 1)
+		frappe.set_user(fx.SUPERVISOR)
+		api.close_counting(name)
+		api.assign_recount(name, fx.COUNTER_2)
+		count(name, "HASR-CHEESE", cheese - 1, user=fx.COUNTER_2)
+		frappe.set_user(fx.SUPERVISOR)
+		review = api.finish_review(name)
+		api.set_reasons(name, json.dumps({review["lines"][0]["name"]: {"reason": "Damage"}}))
+		frappe.set_user(fx.SUPERVISOR_2)
+		api.approve(name)
+		frappe.set_user("Administrator")
+		sr = frappe.get_doc("Stock Reconciliation", frappe.db.get_value(COUNT, name, "stock_reconciliation"))
+		rate = sr.items[0].valuation_rate
+		sr.items[0].valuation_rate = 1
+		sr.items[0].qty = 0
+		sr.save()
+		self.assertEqual((sr.items[0].qty, sr.items[0].valuation_rate), (cheese - 1, rate))
+		sr.submit()
+		self.assertEqual(self.balance("HASR-CHEESE"), cheese - 1)
+		sr.cancel()
+		self.assertEqual(self.balance("HASR-CHEESE"), cheese)
+		self.assertEqual(frappe.db.get_value(COUNT, name, ["status", "stock_reconciliation"]), ("Pending Approval", None))
+		frappe.set_user(fx.SUPERVISOR_2)
+		self.assertEqual(api.approve(name, submit=1)["status"], "Approved")
+		self.assertEqual(self.balance("HASR-CHEESE"), cheese - 1)
+
+	def test_a_write_that_lost_a_race_is_tried_again(self):
+		from hasr.api import retry_on_conflict
+
+		calls = []
+
+		@retry_on_conflict(COUNT)
+		def save(session):
+			calls.append(session)
+			if len(calls) < 3:
+				raise frappe.QueryDeadlockError("Record has changed since last read")
+			return "saved"
+
+		from unittest.mock import patch
+
+		# the retry rolls the request back and locks the record first; here that would undo the test's own data
+		with patch.object(frappe.db, "rollback") as rollback, patch.object(frappe.db, "sql") as sql:
+			self.assertEqual(save(session="CNT-NONE"), "saved")
+		self.assertEqual((len(calls), rollback.call_count), (3, 2))
+		self.assertIn("for update", sql.call_args[0][0])
+
+		@retry_on_conflict(COUNT)
+		def broken(session):
+			raise frappe.ValidationError("no")
+
+		self.assertRaises(frappe.ValidationError, broken, session="CNT-NONE")
+
+	def test_counting_defaults_reach_sites_that_had_settings_before(self):
+		from hasr.patches.set_counting_defaults import execute
+
+		set_setting(freeze_max_hours=0, test_count_sample_pct=0)
+		execute()
+		s = frappe.get_doc("Hasr Settings")
+		self.assertEqual((s.freeze_max_hours, flt(s.test_count_sample_pct)), (24, 10))
