@@ -19,7 +19,13 @@ frappe.ui.form.on("Hasr Count Session", {
 
 	refresh(frm) {
 		frm.page.set_indicator(__(frm.doc.status), COUNT_COLORS[frm.doc.status] || "gray");
-		if (frm.doc.status !== "Draft") frm.disable_save();
+		if (frm.doc.status !== "Draft") {
+			frm.disable_save();
+			// what to count and who counts are fixed once counting starts
+			["warehouse", "count_type", "entry_method", "freeze", "scope_type", "item_group", "brand", "scope_items", "note", "zones"].forEach(
+				(f) => frm.set_df_property(f, "read_only", 1)
+			);
+		}
 		if (frm.is_new()) return;
 
 		if (frm.doc.stock_reconciliation) {
