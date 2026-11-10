@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, now_datetime, strip_html_tags
 
+from hasr import barcodes
 from hasr import erpnext_adapter as erp
 from hasr.hasr.doctype.hasr_receiving_session.hasr_receiving_session import EDITABLE_STATUSES, EPSILON
 from hasr.permissions import (
@@ -253,14 +254,14 @@ def session_payload(doc):
 			fields=["name", "image", "description", "brand", "has_batch_no", "has_expiry_date", "shelf_life_in_days"],
 		)
 	}
-	barcodes = {}
+	item_barcodes = {}
 	for b in frappe.get_all(
 		"Item Barcode",
 		filters={"parent": ["in", list(items) or [""]], "parenttype": "Item"},
 		fields=["parent", "barcode", "uom"],
 		order_by="idx asc",
 	):
-		barcodes.setdefault(b.parent, []).append({"barcode": b.barcode, "uom": b.uom})
+		item_barcodes.setdefault(b.parent, []).append({"barcode": b.barcode, "uom": b.uom})
 
 	mismatch_lines = open_mismatch_lines(doc.name)
 	lines = []
@@ -286,7 +287,7 @@ def session_payload(doc):
 				"uom_must_be_whole": (flt(l.conversion_factor) or 1.0) != 1 and erp.uom_must_be_whole(l.uom),
 				"whole_unit_issue": bool(whole_unit_issue(l)),
 				"mismatch_open": l.po_item in mismatch_lines,
-				"barcodes": barcodes.get(l.item_code, []),
+				"barcodes": item_barcodes.get(l.item_code, []),
 				"uoms": _line_uoms(l.item_code, l.stock_uom),
 				"ordered_qty": flt(l.ordered_qty),
 				"already_received_qty": flt(l.already_received_qty),
@@ -601,7 +602,7 @@ def _apply_scan(scan, touched):
 			return resolved
 		return apply_item_qty(doc, scan, uuid, resolved, qty=flt(scan.qty) or 1.0)
 
-	resolved = erp.resolve_barcode(scan.barcode)
+	resolved = barcodes.resolve(scan.barcode)
 	if resolved and not resolved.barcode:
 		# an item code typed into the barcode field: the unit would be guessed, so ask for it
 		return {
@@ -707,6 +708,15 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 		return {"client_uuid": uuid, "status": "rejected", "code": "invalid", "message": _("Quantity must be greater than zero.")}
 
 	qty_stock = qty * cf
+	if resolved.get("expiry_date") and erp.get_batch_settings(resolved.item_code).has_batch_no:
+		# a GS1 code carries the expiry date: it goes on the line like a date typed on the keypad
+		if frappe.utils.getdate(resolved.expiry_date) < frappe.utils.getdate():
+			msg = _("{0} expired on {1}. Do not receive expired goods.").format(
+				resolved.item_name, frappe.format(frappe.utils.getdate(resolved.expiry_date), "Date")
+			)
+			_log_scan(doc, scan, uuid, "Rejected", msg, resolved, qty=qty, qty_stock=qty_stock)
+			return {"client_uuid": uuid, "status": "rejected", "code": "expired", "message": msg, "item_code": resolved.item_code}
+		add_to_batch(line, resolved.expiry_date, qty_stock)
 	_log_scan(doc, scan, uuid, "Applied", None, resolved, po_item=line.po_item, qty=qty, qty_stock=qty_stock)
 	doc.recompute_line(line)
 	return {
@@ -725,6 +735,17 @@ def apply_item_qty(doc, scan, uuid, resolved, qty):
 	}
 
 
+def add_to_batch(line, expiry_date, qty):
+	batches = get_batches(line)
+	expiry_date = str(frappe.utils.getdate(expiry_date))
+	row = next((b for b in batches if b["expiry_date"] == expiry_date), None)
+	if row:
+		row["qty"] = flt(row["qty"]) + qty
+	else:
+		batches.append({"expiry_date": expiry_date, "qty": qty})
+	line.batches_json = frappe.as_json(sorted(batches, key=lambda b: b["expiry_date"]))
+
+
 def not_on_order_reason(doc, item_code):
 	"""Why an item has no line in this session: (code, sentence for the worker and the supervisor)."""
 	other_wh = _line_in_other_warehouse(doc, item_code)
@@ -741,7 +762,7 @@ def identify(session, code):
 	"""Which line of the session a scanned code belongs to, without counting anything."""
 	doc = get_session_doc(session)
 	code = (code or "").strip()
-	resolved = erp.resolve_barcode(code)
+	resolved = barcodes.resolve(code)
 	if not resolved:
 		return {"status": "unknown", "barcode": code, "message": _("Barcode {0} is not linked to any item.").format(code)}
 	if resolved.disabled:
@@ -749,7 +770,12 @@ def identify(session, code):
 	line = _match_line(doc, resolved.item_code)
 	if line:
 		# a typed item code says nothing about the unit; a barcode does
-		return {"status": "line", "po_item": line.po_item, "uom": resolved.uom if resolved.barcode else None}
+		return {
+			"status": "line",
+			"po_item": line.po_item,
+			"uom": resolved.uom if resolved.barcode else None,
+			"expiry_date": resolved.get("expiry_date"),
+		}
 	reason, note = not_on_order_reason(doc, resolved.item_code)
 	name = resolved.item_name or resolved.item_code
 	return {
@@ -824,7 +850,7 @@ def _apply_undo(doc, scan, uuid):
 	original = frappe.db.get_value(
 		"Hasr Scan",
 		{"client_uuid": scan.undo_of, "session": doc.name, "session_doctype": SESSION},
-		["name", "status", "undone", "po_item"],
+		["name", "status", "undone", "po_item", "expiry_date", "qty_stock_uom"],
 		as_dict=True,
 	)
 	if not original or original.status != "Applied" or original.undone:
@@ -832,6 +858,10 @@ def _apply_undo(doc, scan, uuid):
 	frappe.db.set_value("Hasr Scan", original.name, "undone", 1)
 	_log_scan(doc, scan, uuid, "Undo", None, po_item=original.po_item)
 	line = doc.get_line(original.po_item)
+	if original.expiry_date:
+		add_to_batch(line, original.expiry_date, -flt(original.qty_stock_uom))
+		rows = [b for b in get_batches(line) if flt(b["qty"]) > EPSILON]
+		line.batches_json = frappe.as_json(rows) if rows else None
 	doc.recompute_line(line)
 	return {
 		"client_uuid": uuid,
@@ -862,6 +892,8 @@ def _log_scan(doc, scan, uuid, status, message, resolved=None, po_item=None, qty
 			"qty": qty,
 			"conversion_factor": resolved.get("conversion_factor"),
 			"qty_stock_uom": qty_stock,
+			"batch_no": resolved.get("gs1_batch"),
+			"expiry_date": resolved.get("expiry_date"),
 			"scanned_at": _device_time(scan.scanned_at),
 			"device_id": (scan.device_id or "")[:140] or None,
 			"user": frappe.session.user,
@@ -887,7 +919,7 @@ def report_unknown_barcode(session, barcode, qty=1, note=None, photo=None, clien
 	barcode = (barcode or "").strip()
 	if not barcode:
 		frappe.throw(_("Barcode is required."))
-	if erp.resolve_barcode(barcode):
+	if barcodes.resolve(barcode):
 		frappe.throw(_("Barcode {0} is linked to an item now. Scan it again.").format(barcode))
 	if client_uuid:
 		existing = frappe.db.get_value("Hasr Unknown Barcode", {"client_uuid": client_uuid})

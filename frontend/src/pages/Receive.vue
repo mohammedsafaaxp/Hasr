@@ -207,6 +207,7 @@ import { api, deviceId, errorMessage, uuid4 } from '../api'
 import { __, formatNumber } from '../i18n'
 import { feedbackError, feedbackSuccess, feedbackWarning } from '../sound'
 import { createScanQueue } from '../scanQueue'
+import { gtinCandidates, parseGs1 } from '../gs1'
 
 const props = defineProps({ session: String, poItem: String })
 const route = useRoute()
@@ -384,11 +385,14 @@ function onScanInput(code) {
 /** The line a code belongs to, from what the phone already has: a barcode (with its unit) or the item code. */
 function findLocal(code) {
   const upper = code.toUpperCase()
+  // a GS1 code carries the GTIN (in one of the forms a barcode is stored in) and the expiry date
+  const gs1 = parseGs1(code)
+  const codes = gs1 && gs1.gtin ? gtinCandidates(gs1.gtin) : [code]
   const matches = []
   for (const l of s.value.lines) {
-    const b = l.barcodes.find((x) => x.barcode === code)
-    if (b) matches.push({ line: l, uom: b.uom || l.stock_uom })
-    else if (l.item_code.toUpperCase() === upper) matches.push({ line: l, uom: null })
+    const b = l.barcodes.find((x) => codes.includes(x.barcode))
+    if (b) matches.push({ line: l, uom: b.uom || l.stock_uom, expiry: gs1 ? gs1.expiry : null })
+    else if (!gs1 && l.item_code.toUpperCase() === upper) matches.push({ line: l, uom: null })
   }
   // the same item on two lines: the first one still open
   return matches.find((m) => !isDone(m.line)) || matches[0] || null
@@ -408,7 +412,7 @@ async function openScanned(code) {
       showToast({ title: errorMessage(e), error: true })
       return
     }
-    if (r.status === 'line') hit = { line: s.value.lines.find((l) => l.po_item === r.po_item), uom: r.uom }
+    if (r.status === 'line') hit = { line: s.value.lines.find((l) => l.po_item === r.po_item), uom: r.uom, expiry: r.expiry_date }
     else if (r.status === 'not_on_order') {
       feedbackError()
       notOnOrder.value = { ...r, qty: 1 }
@@ -425,7 +429,7 @@ async function openScanned(code) {
   }
   if (!hit || !hit.line) return
   feedbackSuccess()
-  openLine(hit.line, { checked: true, uom: hit.uom })
+  openLine(hit.line, { checked: true, uom: hit.uom, expiry: hit.expiry || null })
 }
 
 function reportNotOnOrder(qty) {

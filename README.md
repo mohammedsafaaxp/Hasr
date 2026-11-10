@@ -40,6 +40,7 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 - **Check the item.** Opening an item by hand starts with a scan (or the item code) to confirm it is the right product.
 - **Expiry dates and batches.** Six digits on the keypad (`150327` = 15/03/2027), month-and-year only, the last date
   used, several dates in one delivery. Expired goods are refused, short shelf life is flagged.
+- **GS1 codes.** The long codes on cartons and medicines find the item and fill in the expiry date by themselves.
 - **Wrong items are refused clearly.** An item that is not on the order says so at once. If it came with the
   shipment, the worker reports it for the supervisor.
 - **Unknown barcodes and items that do not match their photo** are reported with a picture.
@@ -102,8 +103,8 @@ not allow custom apps cannot run hasr.
    **User Permissions** on *Warehouse*.
 3. **Supervisors:** give the **Hasr Supervisor** role and the right to create Purchase Receipts (for example
    *Stock User* or *Purchase User*). To add items to an order they also need to change Purchase Orders.
-4. **Hasr Settings** (System Manager): each option explains itself on the page (invoice number, short shelf life warning, supplier
-   offers, approver roles, one-click approval).
+4. **Hasr Settings** (System Manager): each option explains itself on the page (invoice number, short shelf life warning, GS1
+   codes, supplier offers, approver roles, one-click approval).
 
 ## How it works
 

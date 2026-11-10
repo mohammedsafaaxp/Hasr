@@ -61,6 +61,16 @@ On approval hasr creates one ERPNext Batch per date and one Purchase Receipt row
 
 <img src="screenshots/ar-expiry.png" width="230" alt="Expiry dates">
 
+### GS1 codes
+Many cartons and medicines carry a long GS1 code (GS1-128 or DataMatrix) with the product's GTIN, the lot and
+the expiry date. hasr reads it, as the camera or a hardware scanner sends it:
+- The GTIN finds the item, whether its barcode is stored as GTIN-14, EAN-13, UPC-A or EAN-8.
+- The **expiry date fills itself in** on the expiry step; a second date on the same delivery becomes a new row.
+- With *Each scan = 1*, every scanned carton adds to the row of its own date. Undo takes it off that date again.
+- An expired date is refused at the scan.
+
+Turned on by default in **Hasr Settings → Read GS1 Barcodes**.
+
 ### Wrong items
 A scan of an item that is not on this order is refused with the reason (not on the order, already fully received,
 or for a warehouse you do not receive into). Put it aside, or, if it came with the shipment, **report it** with the
@@ -139,6 +149,7 @@ needs access to every warehouse on it. A worker only sees the lines of their own
 |---|---|
 | Short Shelf Life Warning (%) | Warn when less than this share of the item's shelf life is left. 0 turns it off. |
 | Require Supplier Invoice No | The invoice number is needed before a shipment goes for review. |
+| Read GS1 Barcodes | Reads the GTIN, lot and expiry date from GS1 codes and fills in the expiry date. |
 | Free Quantity from Supplier Offers | Shows *of which free* on the phone and adds free rows to the receipt. |
 | Roles That Can Approve | Who approves and decides. Empty: Hasr Supervisor. |
 | One-Click Approval Submits the Receipt | On *Today's Shipments*, the one-click approval also submits. |

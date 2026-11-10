@@ -50,8 +50,8 @@
    "default": "1",
    "fieldname": "gs1_enabled",
    "fieldtype": "Check",
-   "label": "Parse GS1 Barcodes",
-   "hidden": 1
+   "label": "Read GS1 Barcodes",
+   "description": "Read the GTIN, batch and expiry date from GS1-128 and GS1 DataMatrix codes (the long codes on cartons and medicines). The expiry date is filled in for the worker."
   },
   {
    "default": "1",

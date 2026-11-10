@@ -285,6 +285,7 @@ import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'
 import { feedbackError, feedbackSuccess } from '../sound'
 import { daysUntil, digitsToIso, displayDate, isoToDigits, slotParts } from '../expiry'
+import { gtinCandidates, parseGs1 } from '../gs1'
 
 // entry: how the line was opened from a scan ({ checked, uom }): the scan already checked the item and tells the unit
 const props = defineProps({ line: Object, entry: Object, session: String, editable: Boolean, expiryWarningPct: Number, freeEnabled: Boolean })
@@ -411,6 +412,12 @@ watch(
     const saved = line.batches || []
     dates.value = saved.slice(0, -1).map((b) => ({ ...b }))
     entry.value = saved.length ? isoToDigits(saved[saved.length - 1].expiry_date) : ''
+    // a GS1 scan read the date from the carton: a new date goes in as a further row
+    const scanned = props.entry?.expiry
+    if (scanned && line.has_batch_no && daysUntil(scanned) >= 0 && !saved.some((b) => b.expiry_date === scanned)) {
+      if (saved.length) dates.value.push({ ...saved[saved.length - 1] })
+      entry.value = isoToDigits(scanned)
+    }
     freshEntry.value = !!entry.value
     monthOnly.value = false
     lastExpiry.value = recall(`hasr_last_expiry_${line.item_code}`)
@@ -440,8 +447,11 @@ function checkBarcode(code) {
   code = (code || '').trim()
   typed.value = ''
   if (!code || !props.line) return
-  const row = barcodeRows(props.line).find((b) => b.barcode === code)
+  const gs1 = parseGs1(code)
+  const codes = gs1 && gs1.gtin ? gtinCandidates(gs1.gtin) : [code]
+  const row = barcodeRows(props.line).find((b) => codes.includes(b.barcode))
   const ok = !!row || code.toUpperCase() === props.line.item_code.toUpperCase()
+  if (ok && gs1 && gs1.expiry && props.line.has_batch_no && !entry.value && daysUntil(gs1.expiry) >= 0) entry.value = isoToDigits(gs1.expiry)
   check.value = { ok, barcode: code, unit: row ? row.unit : '' }
   if (!ok) return feedbackError()
   feedbackSuccess()
