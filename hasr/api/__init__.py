@@ -29,6 +29,8 @@ def parse_qty(value) -> float:
 		frappe.throw(_("Type a quantity."))
 	if isinstance(value, str):
 		value = value.strip().replace(",", "")
+		if not value:
+			frappe.throw(_("Type a quantity."))
 	try:
 		qty = float(value)
 	except (TypeError, ValueError):
