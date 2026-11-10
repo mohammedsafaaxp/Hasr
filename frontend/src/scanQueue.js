@@ -48,11 +48,10 @@ export function createScanQueue(session, onResult) {
         const scan = pending.value[0]
         let out
         try {
-          // a line typed on the keypad while offline waits here too, in order with the scans
-          out =
-            scan.op === 'set_line'
-              ? { session: await call('hasr.api.receiving.set_line', { ...scan.args, _lang: lang.value }) }
-              : await call('hasr.api.sync.push_scans', { scans: [scan], _lang: lang.value })
+          // other changes made while offline (a typed line, a count) wait here too, in order with the scans
+          out = scan.method
+            ? { answer: await call(`hasr.api.${scan.method}`, { ...scan.args, _lang: lang.value }) }
+            : await call('hasr.api.sync.push_scans', { scans: [scan], _lang: lang.value })
         } catch (e) {
           if (isNetworkError(e)) {
             offline.value = true
@@ -69,7 +68,7 @@ export function createScanQueue(session, onResult) {
         delay = 2000
         pending.value = pending.value.slice(1)
         save()
-        onResult(out.session ? { session: out.session } : { result: out.results[0], lines: out.lines }, scan)
+        onResult(scan.method ? { answer: out.answer } : { result: out.results[0], lines: out.lines }, scan)
       }
     } finally {
       flushing = false

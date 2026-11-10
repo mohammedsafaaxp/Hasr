@@ -463,15 +463,15 @@ function undo(t) {
   if (queue.value) queue.value.add({ ...scanBase(), undo_of: t.undo })
 }
 
-async function onQueueResult({ result: r, lines, session, error }, scan) {
+async function onQueueResult({ result: r, lines, answer, error }, scan) {
   if (error) {
     feedbackError()
     showToast({ title: errorMessage(error), error: true })
-    if (scan.op === 'set_line') load() // the server refused the line typed offline: show what it has
+    if (scan.method) load() // the server refused the line typed offline: show what it has
     return
   }
-  if (session) {
-    s.value = session
+  if (scan.method) {
+    s.value = answer
     return
   }
   mergeLines(lines)
@@ -525,7 +525,7 @@ function closeLine() {
 // saved on the phone without a connection: shown at once, sent when the connection is back
 function onLineQueued(args) {
   if (!queue.value) return
-  queue.value.add({ op: 'set_line', client_uuid: uuid4(), args })
+  queue.value.add({ method: 'receiving.set_line', client_uuid: uuid4(), args })
   const line = s.value.lines.find((l) => l.po_item === args.po_item)
   if (line) {
     line.received_qty = args.received_qty

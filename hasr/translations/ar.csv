@@ -93,7 +93,6 @@ Finish and send for review,إنهاء الشحنة وإرسالها للمراج
 Finish shipment and send for review,إنهاء الاستلام وإرساله إلى المشرف
 Finish shipment {0},إنهاء الشحنة {0}
 For a damaged or missing label. Choose the unit you are counting.,عند تلف الملصق أو فقدانه. اختر الوحدة التي تعدّها.
-For now hasr receives purchase orders.,يستلم حَصر حاليًا أوامر الشراء.
 Frozen,مجمَّد
 Goes with the Purchase Receipt,تُرفق بإيصال الاستلام
 How many {0}?,كم {0}؟
@@ -235,7 +234,6 @@ Sign out,تسجيل الخروج
 Signing in…,جارٍ تسجيل الدخول…
 Something went wrong. Try again.,حدث خطأ. حاول مرة أخرى.
 Status,الحالة
-Stock counts are coming in version 0.3,الجرد متاح في الإصدار 0.3
 Submit the Purchase Receipt now,اعتماد إيصال الاستلام الآن
 Supplier,المورد
 Supplier delivery note,رقم إشعار تسليم المورد
@@ -448,3 +446,246 @@ Saved on this phone,حُفظ على هذا الهاتف
 It is sent when the connection is back.,يُرسل عند عودة الاتصال.
 Not everything is sent yet,لم يُرسل كل شيء بعد
 "Connect to the network; the shipment can be finished once all scans are sent.","اتصل بالشبكة؛ يمكن إنهاء الشحنة بعد إرسال كل المسوحات."
+Your stock counts,عمليات الجرد الخاصة بك
+No stock count for you right now,لا يوجد جرد مسند إليك الآن
+"When a supervisor starts a count and gives you a zone, it shows here.",عندما يبدأ المشرف جردًا ويسند إليك منطقة، يظهر هنا.
+Recount,إعادة العد
+Zone {0},المنطقة {0}
+Full count,جرد شامل
+Cycle count,جرد دوري
+{0} to recount,{0} لإعادة العد
+{0} counted,عُدّ {0}
+Handed over,سُلِّمت
+Counting,جارٍ العد
+You handed over this zone. The supervisor reviews it.,سلّمت هذه المنطقة. يراجعها المشرف الآن.
+these items did not match. Count them again carefully; the earlier count is not shown.,هذه الأصناف لم تتطابق. أعد عدّها بعناية؛ العدّ السابق لا يُعرض.
+{0} of {1} items counted,عُدّ {0} من {1} صنفًا
+{0} items counted,عُدّ {0} صنفًا
+not counted,لم يُعدّ
+No items match.,لا توجد أصناف مطابقة.
+"Scan each item, then type how many are on the shelf.",امسح كل صنف، ثم اكتب عدد ما على الرف.
+Finish zone and hand over,إنهاء المنطقة وتسليمها
+Finish zone {0}?,إنهاء المنطقة {0}؟
+You counted {0} items. After handing over you cannot change the counts; anything not counted is taken as not found.,عددت {0} صنفًا. بعد التسليم لا يمكنك تعديل العدّ، وكل ما لم يُعدّ يُعتبر غير موجود.
+Hand over,تسليم
+Keep counting,متابعة العد
+"Not on this phone, and there is no connection to look it up.",غير موجود على هذا الهاتف، ولا يوجد اتصال للبحث عنه.
+Counted {0},عُدّ {0}
+Connect to the network; the zone can be handed over once all counts are sent.,اتصل بالشبكة؛ يمكن تسليم المنطقة بعد إرسال كل نتائج العد.
+Zone handed over,سُلِّمت المنطقة
+Which batch are you counting?,أي تشغيلة تعدّ؟
+Expires {0},تنتهي {0}
+This item has no batches in ERPNext.,لا توجد تشغيلات لهذا الصنف في ERPNext.
+"Batch not in the list? Scan its GS1 code, or tell your supervisor.",التشغيلة ليست في القائمة؟ امسح رمز GS1 الخاص بها، أو أبلغ المشرف.
+Batch,التشغيلة
+How many are on the shelf?,كم يوجد على الرف؟
+You counted {0} {1}. Type the total again to change it.,عددت {0} {1}. اكتب الإجمالي من جديد لتغييره.
+Save count,حفظ العد
+Hasr Count Zone,منطقة جرد حصر
+Zone,المنطقة
+"An aisle, a shelf or a cold room: one counter per zone.",ممر أو رف أو غرفة تبريد: عادّ واحد لكل منطقة.
+Counter,العادّ
+Handed Over,سُلِّمت
+Handed Over At,وقت التسليم
+Hasr Count Line,سطر جرد حصر
+Item Name,اسم الصنف
+Stock UOM,وحدة المخزون
+ABC Class,فئة ABC
+Tolerance (%),الهامش المسموح (%)
+Found During the Count,وُجد أثناء الجرد
+Not expected in the warehouse; a counter found it.,لم يكن متوقعًا في المستودع؛ وجده أحد العادّين.
+System Qty,كمية النظام
+"Balance when the count started, or when the item was first counted (cycle count without freeze). Never shown on the phone.",الرصيد عند بدء الجرد، أو عند أول عدّ للصنف (جرد دوري بلا تجميد). لا يظهر على الهاتف أبدًا.
+Balance Taken At,وقت أخذ الرصيد
+Valuation Rate,سعر التقييم
+Counted,عُدّ
+Needs Recount,يحتاج إعادة عدّ
+Recount By,إعادة العد بواسطة
+Recounted,أُعيد عدّه
+Test Count Sample,ضمن عينة العد الاختباري
+Test Count,العد الاختباري
+Test Counted,تم العد الاختباري
+Final Qty,الكمية النهائية
+Variance,الفرق
+Variance Value,قيمة الفرق
+Within Tolerance,ضمن الهامش
+Reason,السبب
+Theft,سرقة
+Damage,تلف
+Receiving error,خطأ في الاستلام
+Picking error,خطأ في التجهيز
+Unit of measure error,خطأ في وحدة القياس
+Unknown,غير معروف
+Other,أخرى
+Reason Note,ملاحظة السبب
+Open Stock Reconciliation,فتح تسوية المخزون
+Cancel count,إلغاء الجرد
+Cancel this stock count? Nothing is posted to stock and a freeze is lifted.,إلغاء هذا الجرد؟ لن يُرحَّل شيء إلى المخزون ويُرفع التجميد.
+Start count,بدء الجرد
+Counting started,بدأ الجرد
+"Choose what to count and who counts which zone, then start. The counters see the count on their phones; they never see the system quantity.",اختر ما يُجرد ومن يعدّ كل منطقة، ثم ابدأ. يرى العادّون الجرد على هواتفهم، ولا يرون كمية النظام أبدًا.
+Stock is frozen,المخزون مجمّد
+"Movements of these items in this warehouse are refused until {0}, or until the count is approved.",تُرفض حركات هذه الأصناف في هذا المستودع حتى {0}، أو حتى اعتماد الجرد.
+Movements of these items in this warehouse are refused until the count is approved.,تُرفض حركات هذه الأصناف في هذا المستودع حتى اعتماد الجرد.
+{0} of {1} lines outside tolerance recounted.,أُعيد عدّ {0} من {1} سطرًا خارج الهامش.
+{0} not given to a recounter yet.,{0} لم تُسند لمن يعيد العد بعد.
+{0} of {1} test counts entered.,أُدخل {0} من {1} عدًّا اختباريًا.
+{0} differences still need a reason.,{0} فروقات ما زالت تحتاج سببًا.
+{0} of {1} lines counted,عُدّ {0} من {1} سطرًا
+Differences,الفروقات
+Gain,زيادة
+Loss,نقص
+Test count,عد اختباري
+Not counted,لم يُعدّ
+Within tolerance,ضمن الهامش
+Outside tolerance,خارج الهامش
+Matches,مطابق
+found during the count,وُجد أثناء الجرد
+Zones,المناطق
+ABC,ABC
+System,النظام
+Final,النهائي
+Difference,الفرق
+Lift freeze,رفع التجميد
+Lift the freeze now? Stock can move again while the count is still open.,رفع التجميد الآن؟ سيتحرك المخزون من جديد والجرد ما زال مفتوحًا.
+Freeze lifted,رُفع التجميد
+Close counting,إغلاق العد
+Counting closed,أُغلق العد
+{0} zones have not been handed over. Items they did not count are taken as not found. Close anyway?,{0} مناطق لم تُسلَّم بعد. ما لم يُعدّ فيها يُعتبر غير موجود. الإغلاق على أي حال؟
+Give recount to…,إسناد إعادة العد إلى…
+Enter test counts,إدخال العد الاختباري
+Finish review,إنهاء المراجعة
+Ready for approval,جاهز للاعتماد
+Reasons for differences,أسباب الفروقات
+Approve and create Stock Reconciliation,اعتماد وإنشاء تسوية المخزون
+Give the recount to,إسناد إعادة العد إلى
+"{0} lines are outside tolerance. Someone who did not count them the first time counts them again, blind.",{0} أسطر خارج الهامش. يعيد عدّها شخص لم يعدّها أول مرة، دون أن يرى العدّ السابق.
+Recounter,معيد العد
+Give recount,إسناد إعادة العد
+{0} counted these the first time; give them to someone else: {1},{0} عدّ هذه أول مرة؛ أسندها إلى شخص آخر: {1}
+"Count these yourself, as a spot check of lines that looked right. Do not look at the earlier count first.",عُدّ هذه بنفسك، كفحص عشوائي لأسطر بدت صحيحة. لا تنظر إلى العدّ السابق أولًا.
+Test counts,العد الاختباري
+Save,حفظ
+Same reason for every line without one,السبب نفسه لكل سطر بلا سبب
+Note,ملاحظة
+Saved,حُفظ
+Approve the count,اعتماد الجرد
+A draft Stock Reconciliation is created for the {0} differences. Stock changes when it is submitted; a freeze lasts until then.,تُنشأ مسودة تسوية مخزون للفروقات وعددها {0}. يتغير المخزون عند ترحيلها، ويبقى التجميد حتى ذلك الحين.
+Every line matches the system. Nothing is posted.,كل الأسطر مطابقة للنظام. لن يُرحَّل شيء.
+Submit the Stock Reconciliation now,ترحيل تسوية المخزون الآن
+Count approved,اعتُمد الجرد
+Hasr Count Session,جرد حصر
+Series,السلسلة
+Company,الشركة
+Count Type,نوع الجرد
+"Full: everything in scope at one moment, usually frozen. Cycle: a small batch of items, often by ABC class, while work goes on.",شامل: كل ما في النطاق في وقت واحد، ويُجمَّد عادةً. دوري: دفعة صغيرة من الأصناف، غالبًا حسب فئة ABC، والعمل مستمر.
+Cycle,دوري
+Full,شامل
+How Counters Enter Counts,طريقة إدخال العد
+Scan: counters scan each item and type how many. List: they pick from the list of items in the count.,المسح: يمسح العادّون كل صنف ويكتبون العدد. القائمة: يختارون من قائمة أصناف الجرد.
+Scan,المسح
+List,القائمة
+Draft,مسودة
+Freeze Stock During the Count,تجميد المخزون أثناء الجرد
+"Sales, receipts and transfers of the items in this count are refused in this warehouse until the count is approved or cancelled.",تُرفض المبيعات والاستلامات والتحويلات لأصناف هذا الجرد في هذا المستودع حتى يُعتمد الجرد أو يُلغى.
+Frozen Until,مجمّد حتى
+Started At,وقت البدء
+Counting Closed At,وقت إغلاق العد
+Approved By,اعتمده
+Approved At,وقت الاعتماد
+Stock Reconciliation,تسوية المخزون
+What to Count,ما يُجرد
+Scope,النطاق
+Warehouse: every item with stock there. ABC Due: items whose next count is due by their ABC class. Problem Items: items with a variance in the last 180 days or a negative balance.,المستودع: كل صنف له رصيد فيه. مستحق حسب ABC: الأصناف التي حان موعد جردها حسب فئتها. أصناف المشاكل: أصناف بها فرق خلال آخر 180 يومًا أو رصيدها سالب.
+Item Group,مجموعة الأصناف
+Items,الأصناف
+ABC Due,مستحق حسب ABC
+Problem Items,أصناف المشاكل
+Note for the Counters,ملاحظة للعادّين
+Zones and Counters,المناطق والعادّون
+Count Log,سجل العد
+Entries,القيود
+Hasr Count Entry,قيد جرد حصر
+Round,الجولة
+Test,اختباري
+Counted By,عدّه
+Counted At,وقت العد
+Hasr ABC Class,فئة ABC في حصر
+Value Used in 12 Months,قيمة المستهلك خلال 12 شهرًا
+Last Counted On,آخر جرد في
+Next Count Due,موعد الجرد التالي
+Hasr Stock Freeze,تجميد مخزون حصر
+Empty: every item in the warehouse is frozen.,فارغ: كل أصناف المستودع مجمّدة.
+Stock Count,الجرد
+Active,نشط
+Frozen At,وقت التجميد
+Expires At,ينتهي في
+Released At,وقت الرفع
+Released By,رفعه
+Hasr Count Scope Item,صنف نطاق جرد حصر
+Hasr Settings,إعدادات حصر
+Allow Stock Freeze,السماح بتجميد المخزون
+"Lets a supervisor freeze the items of a count, so nothing moves in or out of the warehouse until the count is approved.",يتيح للمشرف تجميد أصناف الجرد، فلا يدخل المستودع أو يخرج منه شيء منها حتى يُعتمد الجرد.
+Maximum Freeze (Hours),أقصى مدة للتجميد (ساعات)
+"A freeze lifts by itself after this many hours, so a forgotten count never blocks sales for long. 0 means no limit.",يُرفع التجميد تلقائيًا بعد هذا العدد من الساعات، كي لا يعطّل جردٌ منسيّ المبيعات طويلًا. 0 يعني بلا حد.
+Supervisor Test Count (%),العد الاختباري للمشرف (%)
+"Share of the lines within tolerance that the supervisor counts again before approving, as a spot check. Example: 10 means one line in ten. 0 turns it off.",نسبة الأسطر الواقعة ضمن الهامش التي يعيد المشرف عدّها قبل الاعتماد كفحص عشوائي. مثال: 10 تعني سطرًا من كل عشرة. 0 يوقفه.
+Class A: Top Share of Usage Value (%),الفئة A: الحصة العليا من قيمة الاستهلاك (%)
+Items that make up this share of the value used in the last 12 months are class A (counted most often). Default 80.,الأصناف التي تشكّل هذه الحصة من قيمة المستهلك خلال آخر 12 شهرًا هي الفئة A (تُجرد أكثر من غيرها). الافتراضي 80.
+Class B: Up to Share of Usage Value (%),الفئة B: حتى حصة من قيمة الاستهلاك (%)
+The next items up to this cumulative share are class B; the rest are class C. Default 95.,الأصناف التالية حتى هذه الحصة التراكمية هي الفئة B، والباقي الفئة C. الافتراضي 95.
+Tolerance and Count Frequency by ABC Class,الهامش المسموح وتكرار الجرد حسب فئة ABC
+Tolerance A (%),هامش الفئة A (%)
+A count of a class A item may differ from the system by this share of its balance before it is recounted.,يجوز أن يختلف عدّ صنف من الفئة A عن النظام بهذه النسبة من رصيده قبل أن يُعاد عدّه.
+Tolerance B (%),هامش الفئة B (%)
+Tolerance C (%),هامش الفئة C (%)
+Also used for items without an ABC class yet.,يُستخدم أيضًا للأصناف التي لم تُصنَّف بعد.
+Count Class A Every (Days),جرد الفئة A كل (أيام)
+Used by the ABC Due scope: an item is due when it has not been counted for this many days.,يستخدمه نطاق «مستحق حسب ABC»: يستحق الصنف الجرد إذا لم يُجرد منذ هذا العدد من الأيام.
+Count Class B Every (Days),جرد الفئة B كل (أيام)
+Count Class C Every (Days),جرد الفئة C كل (أيام)
+From,من
+To,إلى
+Group By,تجميع حسب
+{0} is frozen in {1} for stock count {2}. Wait until the count is approved.,{0} مجمّد في {1} بسبب الجرد {2}. انتظر حتى يُعتمد الجرد.
+Stock frozen for a count,المخزون مجمّد بسبب جرد
+Stock count {0} not found.,الجرد {0} غير موجود.
+Your role cannot approve stock counts. See Hasr Settings.,دورك لا يسمح باعتماد الجرد. راجع إعدادات حصر.
+You counted in this stock count. Another approver has to approve it.,شاركت في عدّ هذا الجرد. يجب أن يعتمده شخص آخر.
+Stock count {0} is {1}.,حالة الجرد {0}: {1}.
+Choose what to count.,اختر ما يُجرد.
+Add at least one zone with its counter.,أضف منطقة واحدة على الأقل مع عادّها.
+{0} needs the Hasr Counter role to count.,يحتاج {0} إلى دور Hasr Counter ليعدّ.
+Nothing to count: no stock items match this scope in {0}.,لا شيء للجرد: لا توجد أصناف مخزنية تطابق هذا النطاق في {0}.
+Stock freeze is turned off in Hasr Settings.,تجميد المخزون معطّل في إعدادات حصر.
+User {0} not found.,المستخدم {0} غير موجود.
+{0} counted these items the first time. Choose someone else.,{0} عدّ هذه الأصناف أول مرة. اختر شخصًا آخر.
+This line is not in the test sample.,هذا السطر ليس ضمن عينة العد الاختباري.
+Still to be recounted: {0},ما زال بانتظار إعادة العد: {0}
+Recount not finished,لم تنتهِ إعادة العد
+Enter your test counts first: {0},أدخل عدّك الاختباري أولًا: {0}
+Test count not finished,لم ينتهِ العد الاختباري
+{0} is not a reason.,{0} ليس سببًا.
+You need permission to create Stock Reconciliations.,تحتاج صلاحية إنشاء تسويات المخزون.
+You need permission to submit Stock Reconciliations.,تحتاج صلاحية ترحيل تسويات المخزون.
+Give a reason for every difference: {0},اذكر سببًا لكل فرق: {0}
+Reason needed,السبب مطلوب
+Stock count {0} with hasr.,الجرد {0} عبر حصر.
+{0}: the stock moved since it was counted and would become negative. Recount it.,{0}: تحرّك المخزون منذ عدّه وسيصبح سالبًا. أعد عدّه.
+You are not counting in stock count {0}.,أنت لا تشارك في عدّ الجرد {0}.
+Stock count {0} is {1}; counting has ended.,حالة الجرد {0}: {1}؛ انتهى العد.
+{0} is not part of this count.,{0} ليس ضمن هذا الجرد.
+You handed over zone {0}; it can no longer be changed.,سلّمت المنطقة {0}؛ لم يعد تعديلها ممكنًا.
+{0} is counted per batch. Choose the batch.,يُعدّ {0} حسب التشغيلة. اختر التشغيلة.
+Batch {0} is not a batch of {1}.,التشغيلة {0} ليست من تشغيلات {1}.
+{0} is not on your recount list.,{0} ليس في قائمة إعادة العد الخاصة بك.
+Only a zone being counted can be handed over.,لا تُسلَّم إلا منطقة قيد العد.
+Each zone needs its own name.,يجب أن يكون لكل منطقة اسم مختلف.
+Give each counter one zone; a zone has one counter.,أسند لكل عادّ منطقة واحدة؛ لكل منطقة عادّ واحد.
+A stock count is changed with its buttons once counting has started.,بعد بدء العد يُعدَّل الجرد من أزراره فقط.
+Only a draft or cancelled stock count can be deleted.,لا يُحذف إلا جرد مسودة أو ملغى.
+Counts,عمليات الجرد
+Lines Counted,الأسطر المعدودة
+Accuracy (%),الدقة (%)
+Net Difference,صافي الفرق
+Hasr Inventory Accuracy,دقة سجلات المخزون في حصر

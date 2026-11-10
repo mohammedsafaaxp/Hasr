@@ -11,6 +11,7 @@ const routes = [
     component: () => import('./pages/Receive.vue'),
     props: true,
   },
+  { path: '/count/:session', name: 'Count', component: () => import('./pages/Count.vue'), props: true },
   { path: '/items/:itemCode', name: 'ItemDetails', component: () => import('./pages/ItemDetails.vue'), props: true },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

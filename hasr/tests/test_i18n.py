@@ -57,7 +57,7 @@ class TestI18n(FrappeTestCase):
 	def test_desk_strings_have_arabic(self):
 		ar = arabic()
 		missing = set()
-		desk_dirs = [frappe.get_app_path("hasr", "hasr", d) for d in ("doctype", "page")]
+		desk_dirs = [frappe.get_app_path("hasr", "hasr", d) for d in ("doctype", "page", "report")]
 		for base, _dirs, files in (w for d in desk_dirs for w in os.walk(d)):
 			for name in files:
 				if name.endswith(".js"):

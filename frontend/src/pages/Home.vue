@@ -74,18 +74,14 @@
       </ul>
     </main>
 
-    <main v-else class="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-      <LucideClipboardList class="size-8 text-hasr-muted" />
-      <p class="text-[15px] font-medium">{{ __('Stock counts are coming in version 0.3') }}</p>
-      <p class="text-sm text-hasr-muted">{{ __('For now hasr receives purchase orders.') }}</p>
-    </main>
+    <CountList v-else ref="countList" />
 
     <footer class="sticky bottom-0 flex items-center justify-between border-t border-hasr-line bg-white px-4 py-3">
       <span class="flex items-center gap-2 text-[15px] text-hasr-secondary">
         <span class="size-2.5 rounded-full" :class="online ? 'bg-green-600' : 'bg-hasr-warning'" />
         {{ online ? __('Online · {0}', [syncedAt]) : syncedAt ? __('Offline · saved {0}', [syncedAt]) : __('Offline') }}
       </span>
-      <IconButton :label="__('Refresh')" @click="load"><LucideRefreshCw class="size-5" :class="loading ? 'animate-spin' : ''" /></IconButton>
+      <IconButton :label="__('Refresh')" @click="tab === 'count' ? countList?.load() : load()"><LucideRefreshCw class="size-5" :class="loading ? 'animate-spin' : ''" /></IconButton>
     </footer>
 
     <Sheet v-model:open="menuOpen" :label="__('Account')">
@@ -102,13 +98,14 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { TabButtons } from 'frappe-ui'
 import AppLogo from '../components/AppLogo.vue'
 import Pill from '../components/Pill.vue'
 import IconButton from '../components/IconButton.vue'
 import Sheet from '../components/Sheet.vue'
 import LanguageSelect from '../components/LanguageSelect.vue'
+import CountList from './CountList.vue'
 import { api, errorMessage } from '../api'
 import { cachedApi } from '../offline'
 import { __, formatTime, lang } from '../i18n'
@@ -116,7 +113,9 @@ import { initials, logout, session } from '../session'
 import { feedbackError } from '../sound'
 
 const router = useRouter()
-const tab = ref('receive')
+const route = useRoute()
+const tab = ref(route.query.tab === 'count' ? 'count' : 'receive')
+const countList = ref(null)
 const tabs = computed(() => [
   { value: 'receive', label: __('Receive') },
   { value: 'count', label: __('Count') },

@@ -633,15 +633,11 @@ def get_counter_doc(name, for_update=False):
 	frappe.throw(_("Stock count {0} is {1}; counting has ended.").format(doc.name, _(doc.status)))
 
 
-def count_payload(doc):
-	"""Everything the phone needs to count, offline too. Never a system quantity."""
+def phone_items(codes, recount_batches=None) -> list[dict]:
+	"""Items as the phone needs them to recognise a scan and count: units, barcodes, batches. No quantities."""
 	from hasr.receiving import _line_uoms
 
-	user = frappe.session.user
-	round_ = current_round(doc)
-	zone = my_zone(doc, user) if round_ == "Count" else None
-	lines = [l for l in doc.lines if round_ == "Count" or l.recount_by == user]
-	codes = list(dict.fromkeys(l.item_code for l in lines))
+	codes = list(dict.fromkeys(codes))
 	items = {
 		r.name: r
 		for r in frappe.get_all(
@@ -659,6 +655,30 @@ def count_payload(doc):
 	):
 		item_barcodes.setdefault(b.parent, []).append({"barcode": b.barcode, "uom": b.uom})
 	batches = erp_count.item_batches([c for c in codes if items.get(c) and items[c].has_batch_no])
+	return [
+		{
+			"item_code": c,
+			"item_name": items[c].item_name,
+			"image": items[c].image,
+			"brand": items[c].brand,
+			"stock_uom": items[c].stock_uom,
+			"has_batch_no": items[c].has_batch_no,
+			"uoms": _line_uoms(c, items[c].stock_uom),
+			"barcodes": item_barcodes.get(c, []),
+			"batches": batches.get(c, []),
+			"recount_batches": (recount_batches or {}).get(c),
+		}
+		for c in codes
+		if c in items
+	]
+
+
+def count_payload(doc):
+	"""Everything the phone needs to count, offline too. Never a system quantity."""
+	user = frappe.session.user
+	round_ = current_round(doc)
+	zone = my_zone(doc, user) if round_ == "Count" else None
+	lines = [l for l in doc.lines if round_ == "Count" or l.recount_by == user]
 	# a recount is of the lines given to this person only, batch by batch
 	recount_batches = {}
 	if round_ == "Recount":
@@ -671,6 +691,7 @@ def count_payload(doc):
 		for e in doc.entries
 		if e.round == round_ and e.zone == zone_name and e.counted_by == user
 	]
+	counted_codes = [c["item_code"] for c in counts]
 	return {
 		"name": doc.name,
 		"warehouse": doc.warehouse,
@@ -685,22 +706,7 @@ def count_payload(doc):
 		"note": doc.note,
 		"handed_over": bool(zone and zone.handed_over),
 		"editable": not (zone and zone.handed_over),
-		"items": [
-			{
-				"item_code": c,
-				"item_name": items[c].item_name,
-				"image": items[c].image,
-				"brand": items[c].brand,
-				"stock_uom": items[c].stock_uom,
-				"has_batch_no": items[c].has_batch_no,
-				"uoms": _line_uoms(c, items[c].stock_uom),
-				"barcodes": item_barcodes.get(c, []),
-				"batches": batches.get(c, []),
-				"recount_batches": recount_batches.get(c),
-			}
-			for c in codes
-			if c in items
-		],
+		"items": phone_items([l.item_code for l in lines] + counted_codes, recount_batches),
 		"counts": counts,
 	}
 
@@ -727,6 +733,7 @@ def identify(name, code):
 	batch_no = erp_count.find_batch(resolved.item_code, resolved.gs1_batch) if resolved.get("gs1_batch") else None
 	return {
 		"status": "item",
+		"item": None if in_count else (phone_items([resolved.item_code]) or [None])[0],
 		"item_code": resolved.item_code,
 		"item_name": resolved.item_name,
 		"uom": resolved.uom if resolved.barcode else None,
