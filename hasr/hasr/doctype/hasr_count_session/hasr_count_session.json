@@ -1,0 +1,301 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-10 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "warehouse",
+  "company",
+  "count_type",
+  "entry_method",
+  "column_break_1",
+  "status",
+  "freeze",
+  "frozen_until",
+  "started_at",
+  "closed_at",
+  "column_break_2",
+  "approved_by",
+  "approved_at",
+  "stock_reconciliation",
+  "scope_section",
+  "scope_type",
+  "item_group",
+  "brand",
+  "scope_items",
+  "column_break_3",
+  "note",
+  "zones_section",
+  "zones",
+  "review_section",
+  "review_html",
+  "lines_section",
+  "lines",
+  "entries_section",
+  "entries"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "CNT-.YYYY.-.#####",
+   "default": "CNT-.YYYY.-.#####",
+   "hidden": 1,
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "fetch_from": "warehouse.company"
+  },
+  {
+   "fieldname": "count_type",
+   "fieldtype": "Select",
+   "label": "Count Type",
+   "options": "Cycle\nFull",
+   "default": "Cycle",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Full: everything in scope at one moment, usually frozen. Cycle: a small batch of items, often by ABC class, while work goes on."
+  },
+  {
+   "fieldname": "entry_method",
+   "fieldtype": "Select",
+   "label": "How Counters Enter Counts",
+   "options": "Scan\nList",
+   "default": "Scan",
+   "reqd": 1,
+   "description": "Scan: counters scan each item and type how many. List: they pick from the list of items in the count."
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nCounting\nRecount\nPending Approval\nApproved\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "freeze",
+   "fieldtype": "Check",
+   "label": "Freeze Stock During the Count",
+   "description": "Sales, receipts and transfers of the items in this count are refused in this warehouse until the count is approved or cancelled."
+  },
+  {
+   "fieldname": "frozen_until",
+   "fieldtype": "Datetime",
+   "label": "Frozen Until",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "eval:doc.freeze && doc.status!='Draft'"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Counting Closed At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "stock_reconciliation",
+   "fieldtype": "Link",
+   "label": "Stock Reconciliation",
+   "options": "Stock Reconciliation",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "scope_section",
+   "fieldtype": "Section Break",
+   "label": "What to Count"
+  },
+  {
+   "fieldname": "scope_type",
+   "fieldtype": "Select",
+   "label": "Scope",
+   "options": "Warehouse\nItem Group\nBrand\nItems\nABC Due\nProblem Items",
+   "default": "Warehouse",
+   "reqd": 1,
+   "description": "Warehouse: every item with stock there. ABC Due: items whose next count is due by their ABC class. Problem Items: items with a variance in the last 180 days or a negative balance."
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "label": "Item Group",
+   "options": "Item Group",
+   "depends_on": "eval:doc.scope_type=='Item Group'",
+   "mandatory_depends_on": "eval:doc.scope_type=='Item Group'"
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Link",
+   "label": "Brand",
+   "options": "Brand",
+   "depends_on": "eval:doc.scope_type=='Brand'",
+   "mandatory_depends_on": "eval:doc.scope_type=='Brand'"
+  },
+  {
+   "fieldname": "scope_items",
+   "fieldtype": "Table MultiSelect",
+   "label": "Items",
+   "options": "Hasr Count Scope Item",
+   "depends_on": "eval:doc.scope_type=='Items'",
+   "mandatory_depends_on": "eval:doc.scope_type=='Items'"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note for the Counters"
+  },
+  {
+   "fieldname": "zones_section",
+   "fieldtype": "Section Break",
+   "label": "Zones and Counters"
+  },
+  {
+   "fieldname": "zones",
+   "fieldtype": "Table",
+   "label": "Zones",
+   "options": "Hasr Count Zone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Review"
+  },
+  {
+   "fieldname": "review_html",
+   "fieldtype": "HTML",
+   "label": "Review"
+  },
+  {
+   "fieldname": "lines_section",
+   "fieldtype": "Section Break",
+   "label": "Lines",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Lines",
+   "options": "Hasr Count Line",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "entries_section",
+   "fieldtype": "Section Break",
+   "label": "Count Log",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "entries",
+   "fieldtype": "Table",
+   "label": "Entries",
+   "options": "Hasr Count Entry",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hasr",
+ "name": "Hasr Count Session",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Hasr Supervisor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "role": "Stock Manager"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "title_field": "warehouse",
+ "track_changes": 1,
+ "search_fields": "warehouse,status"
+}

@@ -26,12 +26,25 @@ fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "=", "Hasr"]]},
 ]
 
-# The supplier invoice and evidence photos follow the receipt into the Purchase Invoice
 doc_events = {
+	# the supplier invoice and evidence photos follow the receipt into the Purchase Invoice
 	"Purchase Invoice": {
 		"validate": "hasr.receiving.set_supplier_invoice_no",
 		"on_update": "hasr.receiving.copy_receipt_files_to_invoice",
 	},
+	# stock frozen for a count: every stock movement passes here
+	"Stock Ledger Entry": {"validate": "hasr.stock_freeze.validate_sle"},
+	# a count's reconciliation keeps "balance now + counted difference" and ends the freeze
+	"Stock Reconciliation": {
+		"before_validate": "hasr.counting.refresh_reconciliation",
+		"on_submit": "hasr.counting.reconciliation_done",
+		"on_cancel": "hasr.counting.reconciliation_done",
+	},
+}
+
+scheduler_events = {
+	"hourly": ["hasr.stock_freeze.release_expired_freezes"],
+	"weekly": ["hasr.abc.recompute_abc_classes"],
 }
 
 after_install = "hasr.install.after_install"
@@ -39,4 +52,3 @@ after_migrate = "hasr.install.after_migrate"
 
 before_tests = "hasr.tests.utils.before_tests"
 
-# Stock freeze (doc_events on Stock Ledger Entry) and scheduler jobs arrive in milestone 0.3.

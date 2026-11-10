@@ -585,7 +585,7 @@ def _apply_scan(scan, touched):
 	if frappe.db.exists("Hasr Scan", {"client_uuid": uuid}):
 		return _duplicate_result(uuid)
 	if (scan.session_type or "Receiving") != "Receiving":
-		return {"client_uuid": uuid, "status": "rejected", "code": "invalid", "message": _("Counting arrives in a later version.")}
+		return {"client_uuid": uuid, "status": "rejected", "code": "invalid", "message": _("Counts are sent from the count screen.")}
 
 	doc = touched.get(scan.session)
 	if not doc:

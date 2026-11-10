@@ -1,0 +1,232 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-10 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "batch_no",
+  "stock_uom",
+  "abc_class",
+  "tolerance_pct",
+  "added_by_counter",
+  "column_break_sys",
+  "system_qty",
+  "snapshot_at",
+  "valuation_rate",
+  "count_1_qty",
+  "counted",
+  "needs_recount",
+  "recount_by",
+  "count_2_qty",
+  "recounted",
+  "column_break_final",
+  "test_sample",
+  "test_count_qty",
+  "test_counted",
+  "final_qty",
+  "variance_qty",
+  "variance_value",
+  "within_tolerance",
+  "reason",
+  "reason_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "label": "Batch",
+   "options": "Batch",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "abc_class",
+   "fieldtype": "Select",
+   "label": "ABC Class",
+   "options": "\nA\nB\nC",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Tolerance (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "added_by_counter",
+   "fieldtype": "Check",
+   "label": "Found During the Count",
+   "read_only": 1,
+   "description": "Not expected in the warehouse; a counter found it."
+  },
+  {
+   "fieldname": "column_break_sys",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "system_qty",
+   "fieldtype": "Float",
+   "label": "System Qty",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Balance when the count started, or when the item was first counted (cycle count without freeze). Never shown on the phone."
+  },
+  {
+   "fieldname": "snapshot_at",
+   "fieldtype": "Datetime",
+   "label": "Balance Taken At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valuation_rate",
+   "fieldtype": "Currency",
+   "label": "Valuation Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "count_1_qty",
+   "fieldtype": "Float",
+   "label": "Count",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "counted",
+   "fieldtype": "Check",
+   "label": "Counted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "needs_recount",
+   "fieldtype": "Check",
+   "label": "Needs Recount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recount_by",
+   "fieldtype": "Link",
+   "label": "Recount By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "count_2_qty",
+   "fieldtype": "Float",
+   "label": "Recount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recounted",
+   "fieldtype": "Check",
+   "label": "Recounted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_final",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "test_sample",
+   "fieldtype": "Check",
+   "label": "Test Count Sample",
+   "read_only": 1
+  },
+  {
+   "fieldname": "test_count_qty",
+   "fieldtype": "Float",
+   "label": "Test Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "test_counted",
+   "fieldtype": "Check",
+   "label": "Test Counted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_qty",
+   "fieldtype": "Float",
+   "label": "Final Qty",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "variance_qty",
+   "fieldtype": "Float",
+   "label": "Variance",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "variance_value",
+   "fieldtype": "Currency",
+   "label": "Variance Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "within_tolerance",
+   "fieldtype": "Check",
+   "label": "Within Tolerance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Reason",
+   "options": "\nTheft\nDamage\nReceiving error\nPicking error\nUnit of measure error\nUnknown\nOther",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "reason_note",
+   "fieldtype": "Data",
+   "label": "Reason Note",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hasr",
+ "name": "Hasr Count Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

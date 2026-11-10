@@ -89,105 +89,100 @@
   {
    "fieldname": "counting_section",
    "fieldtype": "Section Break",
-   "label": "Counting",
-   "hidden": 1
+   "label": "Counting"
   },
   {
    "default": "1",
    "fieldname": "allow_freeze",
    "fieldtype": "Check",
    "label": "Allow Stock Freeze",
-   "hidden": 1
+   "description": "Lets a supervisor freeze the items of a count, so nothing moves in or out of the warehouse until the count is approved."
   },
   {
    "fieldname": "freeze_max_hours",
    "fieldtype": "Int",
    "label": "Maximum Freeze (Hours)",
-   "hidden": 1
+   "description": "A freeze lifts by itself after this many hours, so a forgotten count never blocks sales for long. 0 means no limit.",
+   "default": "24"
   },
   {
    "fieldname": "test_count_sample_pct",
    "fieldtype": "Percent",
-   "label": "Test Count Sample (%)",
-   "hidden": 1
+   "label": "Supervisor Test Count (%)",
+   "description": "Share of the lines within tolerance that the supervisor counts again before approving, as a spot check. Example: 10 means one line in ten. 0 turns it off.",
+   "default": "10"
   },
   {
    "fieldname": "column_break_cnt",
-   "fieldtype": "Column Break",
-   "hidden": 1
+   "fieldtype": "Column Break"
   },
   {
    "default": "80",
    "fieldname": "abc_a_share",
    "fieldtype": "Percent",
-   "label": "Class A Cumulative Value Share",
-   "hidden": 1
+   "label": "Class A: Top Share of Usage Value (%)",
+   "description": "Items that make up this share of the value used in the last 12 months are class A (counted most often). Default 80."
   },
   {
    "default": "95",
    "fieldname": "abc_b_share",
    "fieldtype": "Percent",
-   "label": "Class B Cumulative Value Share",
-   "hidden": 1
+   "label": "Class B: Up to Share of Usage Value (%)",
+   "description": "The next items up to this cumulative share are class B; the rest are class C. Default 95."
   },
   {
    "fieldname": "tolerance_section",
    "fieldtype": "Section Break",
-   "label": "Variance Tolerance and Frequency",
-   "hidden": 1
+   "label": "Tolerance and Count Frequency by ABC Class"
   },
   {
    "default": "1",
    "fieldname": "tolerance_a_pct",
    "fieldtype": "Percent",
    "label": "Tolerance A (%)",
-   "hidden": 1
+   "description": "A count of a class A item may differ from the system by this share of its balance before it is recounted."
   },
   {
    "default": "2",
    "fieldname": "tolerance_b_pct",
    "fieldtype": "Percent",
-   "label": "Tolerance B (%)",
-   "hidden": 1
+   "label": "Tolerance B (%)"
   },
   {
    "default": "5",
    "fieldname": "tolerance_c_pct",
    "fieldtype": "Percent",
    "label": "Tolerance C (%)",
-   "hidden": 1
+   "description": "Also used for items without an ABC class yet."
   },
   {
    "fieldname": "column_break_freq",
-   "fieldtype": "Column Break",
-   "hidden": 1
+   "fieldtype": "Column Break"
   },
   {
    "default": "30",
    "fieldname": "frequency_a_days",
    "fieldtype": "Int",
-   "label": "Count Every (Days) A",
-   "hidden": 1
+   "label": "Count Class A Every (Days)",
+   "description": "Used by the ABC Due scope: an item is due when it has not been counted for this many days."
   },
   {
    "default": "90",
    "fieldname": "frequency_b_days",
    "fieldtype": "Int",
-   "label": "Count Every (Days) B",
-   "hidden": 1
+   "label": "Count Class B Every (Days)"
   },
   {
    "default": "180",
    "fieldname": "frequency_c_days",
    "fieldtype": "Int",
-   "label": "Count Every (Days) C",
-   "hidden": 1
+   "label": "Count Class C Every (Days)"
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-02 11:29:29.000000",
+ "modified": "2026-11-10 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hasr",
  "name": "Hasr Settings",
