@@ -25,22 +25,38 @@ def get_balance(item_code: str, warehouse: str) -> float:
 	return flt(frappe.db.get_value("Bin", {"item_code": item_code, "warehouse": warehouse}, "actual_qty"))
 
 
+def _batch_rows(item_code=None, warehouse=None, batch_no=None) -> list[dict]:
+	"""Batch balances, expired and negative batches included: a count must see everything on the shelf.
+
+	VERIFIED: v16's whitelisted get_batch_qty checks the user's Batch permission; hasr checks warehouse access
+	itself, so it calls get_auto_batch_nos, which get_batch_qty uses on both v15 and v16.
+	"""
+	from erpnext.stock.doctype.serial_and_batch_bundle.serial_and_batch_bundle import get_auto_batch_nos
+
+	return get_auto_batch_nos(
+		frappe._dict(
+			item_code=item_code,
+			warehouse=warehouse,
+			batch_no=batch_no,
+			based_on=frappe.db.get_single_value("Stock Settings", "pick_serial_and_batch_based_on"),
+			for_stock_levels=True,
+			consider_negative_batches=True,
+		)
+	) or []
+
+
 def get_batch_balances(item_code: str, warehouse: str) -> dict[str, float]:
 	"""Balance per batch of an item in a warehouse (batches with a balance only)."""
-	from erpnext.stock.doctype.batch.batch import get_batch_qty
-
-	rows = get_batch_qty(warehouse=warehouse, item_code=item_code) or []
 	out = {}
-	for r in rows:
-		if flt(r.get("qty")):
+	for r in _batch_rows(item_code=item_code, warehouse=warehouse):
+		if flt(r.get("qty")) and r.get("warehouse", warehouse) == warehouse:
 			out[r["batch_no"]] = out.get(r["batch_no"], 0.0) + flt(r["qty"])
 	return out
 
 
 def get_batch_balance(batch_no: str, warehouse: str) -> float:
-	from erpnext.stock.doctype.batch.batch import get_batch_qty
-
-	return flt(get_batch_qty(batch_no=batch_no, warehouse=warehouse))
+	item_code = frappe.db.get_value("Batch", batch_no, "item")
+	return get_batch_balances(item_code, warehouse).get(batch_no, 0.0) if item_code else 0.0
 
 
 def valuation_rate(item_code: str, warehouse: str) -> float:
