@@ -83,7 +83,7 @@
     <footer class="sticky bottom-0 flex items-center justify-between border-t border-hasr-line bg-white px-4 py-3">
       <span class="flex items-center gap-2 text-[15px] text-hasr-secondary">
         <span class="size-2.5 rounded-full" :class="online ? 'bg-green-600' : 'bg-hasr-warning'" />
-        {{ online ? __('Online · {0}', [syncedAt]) : __('Offline') }}
+        {{ online ? __('Online · {0}', [syncedAt]) : syncedAt ? __('Offline · saved {0}', [syncedAt]) : __('Offline') }}
       </span>
       <IconButton :label="__('Refresh')" @click="load"><LucideRefreshCw class="size-5" :class="loading ? 'animate-spin' : ''" /></IconButton>
     </footer>
@@ -110,6 +110,7 @@ import IconButton from '../components/IconButton.vue'
 import Sheet from '../components/Sheet.vue'
 import LanguageSelect from '../components/LanguageSelect.vue'
 import { api, errorMessage } from '../api'
+import { cachedApi } from '../offline'
 import { __, formatTime, lang } from '../i18n'
 import { initials, logout, session } from '../session'
 import { feedbackError } from '../sound'
@@ -143,9 +144,14 @@ function readWarehouse() {
 async function load() {
   loading.value = true
   try {
-    orders.value = await api('receiving.list_open_orders', { warehouse: warehouse.value || null, search: search.value })
+    const r = await cachedApi(`orders_${warehouse.value}_${search.value}`, 'receiving.list_open_orders', {
+      warehouse: warehouse.value || null,
+      search: search.value,
+    })
+    orders.value = r.data
     error.value = ''
-    syncedAt.value = formatTime(new Date())
+    online.value = !r.offline
+    syncedAt.value = formatTime(r.offline ? new Date(r.at) : new Date())
   } catch (e) {
     error.value = errorMessage(e)
   } finally {
@@ -216,7 +222,10 @@ watch(warehouse, (w) => {
   load()
 })
 
-const setOnline = () => (online.value = navigator.onLine)
+const setOnline = () => {
+  online.value = navigator.onLine
+  if (online.value) load()
+}
 // back from a shipment, or the phone woke up: show the current status
 const onVisible = () => document.visibilityState === 'visible' && load()
 
@@ -224,7 +233,9 @@ onMounted(async () => {
   window.addEventListener('online', setOnline)
   window.addEventListener('offline', setOnline)
   document.addEventListener('visibilitychange', onVisible)
-  warehouses.value = await api('receiving.list_warehouses').catch(() => [])
+  warehouses.value = await cachedApi('warehouses', 'receiving.list_warehouses')
+    .then((r) => r.data)
+    .catch(() => [])
   if (warehouse.value && !warehouses.value.some((w) => w.name === warehouse.value)) warehouse.value = ''
   load()
 })

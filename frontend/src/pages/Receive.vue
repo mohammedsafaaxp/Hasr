@@ -148,7 +148,7 @@
         v-if="s.editable"
         type="button"
         class="h-12 w-full rounded-hasr bg-hasr-ink text-[16px] font-medium text-white"
-        @click="finishOpen = true"
+        @click="openFinish"
       >
         {{ __('Finish shipment and send for review') }}
       </button>
@@ -163,6 +163,7 @@
       :free-enabled="!!(s && s.free_qty_enabled)"
       @close="closeLine"
       @saved="onLineSaved"
+      @queued="onLineQueued"
       @mismatch="(l, code) => openMismatch(l, code || (l.barcodes[0] && l.barcodes[0].barcode), 1)"
       @details="(code) => router.push({ name: 'ItemDetails', params: { itemCode: code } })"
     />
@@ -208,6 +209,7 @@ import { __, formatNumber } from '../i18n'
 import { feedbackError, feedbackSuccess, feedbackWarning } from '../sound'
 import { createScanQueue } from '../scanQueue'
 import { gtinCandidates, parseGs1 } from '../gs1'
+import { cachedApi, writeCache } from '../offline'
 
 const props = defineProps({ session: String, poItem: String })
 const route = useRoute()
@@ -313,7 +315,8 @@ function qtyClass(l) {
 
 async function load() {
   try {
-    s.value = await api('receiving.get_session', { name: props.session })
+    const r = await cachedApi(`session_${props.session}`, 'receiving.get_session', { name: props.session })
+    s.value = r.data
     loadError.value = ''
   } catch (e) {
     loadError.value = errorMessage(e)
@@ -460,10 +463,15 @@ function undo(t) {
   if (queue.value) queue.value.add({ ...scanBase(), undo_of: t.undo })
 }
 
-async function onQueueResult({ result: r, lines, error }, scan) {
+async function onQueueResult({ result: r, lines, session, error }, scan) {
   if (error) {
     feedbackError()
     showToast({ title: errorMessage(error), error: true })
+    if (scan.op === 'set_line') load() // the server refused the line typed offline: show what it has
+    return
+  }
+  if (session) {
+    s.value = session
     return
   }
   mergeLines(lines)
@@ -514,6 +522,22 @@ function closeLine() {
   if (route.name === 'ReceiveLine') router.replace({ name: 'Receive', params: { session: props.session } })
 }
 
+// saved on the phone without a connection: shown at once, sent when the connection is back
+function onLineQueued(args) {
+  if (!queue.value) return
+  queue.value.add({ op: 'set_line', client_uuid: uuid4(), args })
+  const line = s.value.lines.find((l) => l.po_item === args.po_item)
+  if (line) {
+    line.received_qty = args.received_qty
+    if (args.free_qty !== undefined) line.free_qty = args.free_qty
+    if (args.batches) line.batches = args.batches
+    line.needs_expiry = !!(line.has_batch_no && line.received_qty && Math.abs((line.batches || []).reduce((t, b) => t + b.qty, 0) - line.received_qty) > 1e-6)
+  }
+  feedbackSuccess()
+  showToast({ title: __('Saved on this phone'), subtitle: __('It is sent when the connection is back.') })
+  closeLine()
+}
+
 function onLineSaved(session) {
   s.value = session
   feedbackSuccess()
@@ -524,6 +548,16 @@ async function onUnknownSent() {
   unknownBarcode.value = ''
   showToast({ title: __('Sent to the supervisor') })
   await load()
+}
+
+function openFinish() {
+  if (queue.value && queue.value.pending.value.length) {
+    feedbackWarning()
+    showToast({ title: __('Not everything is sent yet'), subtitle: __('Connect to the network; the shipment can be finished once all scans are sent.'), error: true })
+    if (navigator.onLine) queue.value.flush()
+    return
+  }
+  finishOpen.value = true
 }
 
 function onFinished(session) {
@@ -537,6 +571,7 @@ const setOnline = () => {
   if (online.value && queue.value) queue.value.flush()
 }
 watch(() => props.session, load)
+watch(s, (v) => v && writeCache(`session_${v.name}`, v), { deep: true })
 onMounted(() => {
   window.addEventListener('online', setOnline)
   window.addEventListener('offline', setOnline)

@@ -27,7 +27,6 @@ approves. ERPNext stays the source of truth for items, barcodes, units, orders a
 ERPNext's code.
 
 > **Status:** receiving against a purchase order works, with batches, the supplier invoice and supplier offers.
-> Offline mode is next; stock counts come after that.
 
 ## Features
 
@@ -46,8 +45,8 @@ The full guide, with screenshots: **[docs/FEATURES.md](docs/FEATURES.md)**
 - **Unknown barcodes and items that do not match their photo** are reported with a picture.
 - **Supplier offers** (a setting): enter how many of the received units were free.
 - **Supplier invoice:** the invoice number (required, a setting) and photos or a PDF of the invoice.
-- **No lost scans.** Scans wait on the phone until the server confirms them, in order, even without a connection.
-  Each scan carries an ID, so a retry never counts twice. Three sounds: counted, check this line, refused.
+- **Works offline.** The app opens without a connection; scans and quantities wait on the phone and are sent in
+  order when it is back. Each scan carries an ID, so a retry never counts twice.
 
 **In Desk (supervisor)**
 - **Review screen:** summary, every line with its status, the invoice, and decision cards.

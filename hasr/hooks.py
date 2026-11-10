@@ -18,6 +18,8 @@ add_to_apps_screen = [
 
 # The phone app is a single-page app served from /hasr
 website_route_rules = [{"from_route": "/hasr/<path:app_path>", "to_route": "hasr"}]
+# its service worker, at /hasr-sw.js so it may control /hasr (works offline)
+page_renderer = ["hasr.service_worker.ServiceWorker"]
 
 fixtures = [
 	{"dt": "Role", "filters": [["name", "in", ["Hasr Counter", "Hasr Supervisor"]]]},

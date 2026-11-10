@@ -49,12 +49,28 @@ export async function setLanguage(code, { remember = false } = {}) {
       /* private mode: language just isn't remembered */
     }
   }
-  messages.value = code === 'en' ? {} : await call('hasr.api.i18n.get_translations', { lang: code }).catch(() => ({}))
+  messages.value = code === 'en' ? {} : await loadTranslations(code)
   lang.value = code
   const html = document.documentElement
   html.setAttribute('lang', code)
   html.setAttribute('dir', isRTL(code) ? 'rtl' : 'ltr')
   setAppName(code)
+}
+
+// kept on the phone, so the app opens in its language without a connection
+async function loadTranslations(code) {
+  const key = `hasr_cache_tr_${code}`
+  try {
+    const data = await call('hasr.api.i18n.get_translations', { lang: code })
+    localStorage.setItem(key, JSON.stringify(data))
+    return data
+  } catch (e) {
+    try {
+      return JSON.parse(localStorage.getItem(key) || '{}')
+    } catch (err) {
+      return {}
+    }
+  }
 }
 
 // The name and icon a phone uses for the home-screen shortcut follow the app language.

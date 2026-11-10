@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { call } from 'frappe-ui'
 import { lang } from './i18n'
+import { isNetworkError } from './api'
 
 /**
  * Every scan is kept on the phone until the server has answered it, then sent in order.
@@ -38,9 +39,6 @@ export function createScanQueue(session, onResult) {
     flush()
   }
 
-  // a transport failure has no HTTP status; a server answer (even an error) does
-  const isNetworkError = (e) => !e || (e.status === undefined && !e.exc_type && !(e.messages && e.messages.length))
-
   async function flush() {
     if (flushing) return
     flushing = true
@@ -50,7 +48,11 @@ export function createScanQueue(session, onResult) {
         const scan = pending.value[0]
         let out
         try {
-          out = await call('hasr.api.sync.push_scans', { scans: [scan], _lang: lang.value })
+          // a line typed on the keypad while offline waits here too, in order with the scans
+          out =
+            scan.op === 'set_line'
+              ? { session: await call('hasr.api.receiving.set_line', { ...scan.args, _lang: lang.value }) }
+              : await call('hasr.api.sync.push_scans', { scans: [scan], _lang: lang.value })
         } catch (e) {
           if (isNetworkError(e)) {
             offline.value = true
@@ -67,7 +69,7 @@ export function createScanQueue(session, onResult) {
         delay = 2000
         pending.value = pending.value.slice(1)
         save()
-        onResult({ result: out.results[0], lines: out.lines }, scan)
+        onResult(out.session ? { session: out.session } : { result: out.results[0], lines: out.lines }, scan)
       }
     } finally {
       flushing = false

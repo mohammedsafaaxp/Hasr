@@ -99,7 +99,8 @@ import { useRouter } from 'vue-router'
 import IconButton from '../components/IconButton.vue'
 import Pill from '../components/Pill.vue'
 import ImageZoom from '../components/ImageZoom.vue'
-import { api, errorMessage } from '../api'
+import { errorMessage } from '../api'
+import { cachedApi } from '../offline'
 import { __, formatDate, formatNumber } from '../i18n'
 
 const props = defineProps({ itemCode: String })
@@ -164,7 +165,7 @@ function onStripScroll() {
 
 onMounted(async () => {
   try {
-    item.value = await api('items.get_item_details', { item_code: props.itemCode })
+    item.value = (await cachedApi(`item_${props.itemCode}`, 'items.get_item_details', { item_code: props.itemCode })).data
   } catch (e) {
     error.value = errorMessage(e)
   }

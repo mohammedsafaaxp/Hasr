@@ -8,6 +8,9 @@ export function api(method, args = {}) {
   return call(BASE + method, { ...args, _lang: lang.value })
 }
 
+/** No answer from the server at all (offline, or the server is down); an error the server sent has a status. */
+export const isNetworkError = (e) => !e || (e.status === undefined && !e.exc_type && !(e.messages && e.messages.length))
+
 /** A readable message from a frappe-ui request error. */
 export function errorMessage(error) {
   const messages = (error && error.messages) || []

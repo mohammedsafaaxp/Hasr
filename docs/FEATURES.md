@@ -94,10 +94,17 @@ supplier invoice number is filled in.
 
 <img src="screenshots/en-invoice.png" width="230" alt="Supplier invoice">
 
-### Scans are never lost
-Every scan is kept on the phone until the server confirms it, and sent in order, also after a lost connection or
-a reload. Each scan carries its own ID, so sending it twice counts it once. Three sounds: one short beep
-(counted), two beeps (check this line), a long buzz (refused).
+### Works without a connection
+Cold rooms and back stores often have no signal. Once the app has been opened online:
+- **It opens offline**, from the home-screen icon too, with the last list of orders and the shipments you had open.
+- **Scans and typed quantities wait on the phone** and are sent in order when the connection is back. Each scan
+  carries its own ID, so sending it twice counts it once. The header shows how many are waiting.
+- Item photos and details you have seen stay on the phone.
+- Starting a new shipment, sending photos and finishing a shipment need the connection; finishing waits until
+  everything on the phone has been sent.
+
+Three sounds: one short beep (counted), two beeps (check this line), a long buzz (refused). Signing out removes
+the saved data from the phone.
 
 ## Review in Desk
 

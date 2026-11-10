@@ -1,5 +1,6 @@
 import { reactive } from 'vue'
 import { call } from 'frappe-ui'
+import { forgetUserData } from './offline'
 
 export const session = reactive({
   user: 'Guest',
@@ -30,6 +31,7 @@ export async function login(usr, pwd) {
 
 export async function logout() {
   await call('logout').catch(() => {})
+  forgetUserData()
   window.location.href = '/hasr/login'
 }
 

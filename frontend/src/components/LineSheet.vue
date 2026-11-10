@@ -280,7 +280,7 @@ import ItemThumb from './ItemThumb.vue'
 import ImageZoom from './ImageZoom.vue'
 import CameraSheet from './CameraSheet.vue'
 import Keypad from './Keypad.vue'
-import { api, errorMessage } from '../api'
+import { api, errorMessage, isNetworkError } from '../api'
 import { __, formatNumber, lang as langRef } from '../i18n'
 import { barcodeRows, orderedText } from '../uom'
 import { feedbackError, feedbackSuccess } from '../sound'
@@ -289,7 +289,7 @@ import { gtinCandidates, parseGs1 } from '../gs1'
 
 // entry: how the line was opened from a scan ({ checked, uom }): the scan already checked the item and tells the unit
 const props = defineProps({ line: Object, entry: Object, session: String, editable: Boolean, expiryWarningPct: Number, freeEnabled: Boolean })
-const emit = defineEmits(['close', 'saved', 'details', 'mismatch'])
+const emit = defineEmits(['close', 'saved', 'queued', 'details', 'mismatch'])
 
 const step = ref('check')
 const qtyText = ref('')
@@ -547,6 +547,8 @@ function batchesToSend() {
   return list.filter((b) => b.qty > 0)
 }
 
+let lastArgs = null
+
 async function save() {
   saving.value = true
   error.value = ''
@@ -559,11 +561,17 @@ async function save() {
     if (props.freeEnabled) args.free_qty = freeStock.value
     const batches = batchesToSend()
     if (batches) args.batches = batches
+    lastArgs = args
     const session = await api('receiving.set_line', args)
     if (batches && batches.length) remember(`hasr_last_expiry_${props.line.item_code}`, batches[batches.length - 1].expiry_date)
     emit('saved', session)
   } catch (e) {
-    error.value = e && e.messages ? errorMessage(e) : e.message || errorMessage(e)
+    if (isNetworkError(e)) {
+      // no connection: kept on the phone and sent in order with the scans
+      const batches = batchesToSend()
+      if (batches && batches.length) remember(`hasr_last_expiry_${props.line.item_code}`, batches[batches.length - 1].expiry_date)
+      emit('queued', lastArgs)
+    } else error.value = e && e.messages ? errorMessage(e) : e.message || errorMessage(e)
   } finally {
     saving.value = false
   }

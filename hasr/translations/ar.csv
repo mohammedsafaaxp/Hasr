@@ -443,3 +443,8 @@ Never,لم يُستلم بعد
 The file is not a valid {0}.,الملف ليس {0} صالحًا.
 Read GS1 Barcodes,قراءة باركود GS1
 "Read the GTIN, batch and expiry date from GS1-128 and GS1 DataMatrix codes (the long codes on cartons and medicines). The expiry date is filled in for the worker.","يقرأ رقم GTIN والتشغيلة وتاريخ الانتهاء من رموز GS1-128 و GS1 DataMatrix (الرموز الطويلة على الكراتين والأدوية)، ويملأ تاريخ الانتهاء للعامل تلقائيًا."
+Offline · saved {0},غير متصل · محفوظ {0}
+Saved on this phone,حُفظ على هذا الهاتف
+It is sent when the connection is back.,يُرسل عند عودة الاتصال.
+Not everything is sent yet,لم يُرسل كل شيء بعد
+"Connect to the network; the shipment can be finished once all scans are sent.","اتصل بالشبكة؛ يمكن إنهاء الشحنة بعد إرسال كل المسوحات."

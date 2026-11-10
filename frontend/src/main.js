@@ -12,6 +12,7 @@ import App from './App.vue'
 import router from './router'
 import { loadBoot, session } from './session'
 import { pickLanguage, setLanguage, translationPlugin } from './i18n'
+import { registerServiceWorker } from './offline'
 
 async function start() {
   await loadBoot().catch(() => {})
@@ -20,6 +21,7 @@ async function start() {
   app.use(translationPlugin)
   app.use(router)
   app.mount('#app')
+  if (session.loggedIn) registerServiceWorker()
 }
 
 start()
