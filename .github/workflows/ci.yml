@@ -56,7 +56,10 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install MariaDB client
-        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+        # Newer MariaDB clients require TLS by default; the CI database service has none.
+        run: |
+          sudo apt-get update && sudo apt-get install -y mariadb-client
+          printf '[client]\nskip-ssl\n' > ~/.my.cnf
 
       - name: Setup bench
         run: |
