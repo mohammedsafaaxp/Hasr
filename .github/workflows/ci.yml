@@ -58,7 +58,12 @@ jobs:
       - name: Install MariaDB client
         # Newer MariaDB clients require TLS by default; the CI database service has none.
         run: |
-          sudo apt-get update && sudo apt-get install -y mariadb-client
+          # the runner's package mirrors sometimes fail for a few minutes: retry instead of failing the job
+          for i in 1 2 3; do
+            sudo apt-get -o Acquire::Retries=3 update && sudo apt-get -o Acquire::Retries=3 install -y mariadb-client && break
+            echo "apt failed, retrying in 30s"; sleep 30
+          done
+          command -v mariadb
           printf '[client]\nskip-ssl\n' > ~/.my.cnf
 
       - name: Setup bench

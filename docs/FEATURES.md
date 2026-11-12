@@ -121,6 +121,8 @@ Open **Hasr Count Session → New**:
 - **Zones**: an aisle, a shelf or a cold room, with one counter each.
 - **Freeze stock** (optional): sales, receipts and transfers of these items in this warehouse are refused until the
   count is approved. A freeze lifts by itself after the hours set in Hasr Settings.
+  A store that sells around the clock (a dark store, a pharmacy) is better off counting without a freeze: orders
+  keep moving, and each item's balance is taken when it is counted, so sales during the count do not show as a loss.
 
 **Start count** takes the balances and sends the count to the counters' phones.
 
